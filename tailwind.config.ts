@@ -4,12 +4,15 @@ const config: Config = {
   content: [
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
-    "./pages/**/*.{js,ts,jsx,tsx,mdx}", // Extra safety
+    "./src/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
     extend: {
       colors: {
         mint: "#00FFA3",
+      },
+      fontFamily: {
+        jakarta: ["var(--font-jakarta)"],
       },
     },
   },
