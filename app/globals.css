@@ -3,13 +3,18 @@
 @tailwind utilities;
 
 :root {
-  --background: #000000;
-  --foreground: #ffffff;
+  background-color: #000000;
+  color: #ffffff;
 }
 
 body {
-  background-color: #000;
-  color: #fff;
   margin: 0;
   padding: 0;
+  background-color: #000000;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Hide scrollbar for a native app feel */
+::-webkit-scrollbar {
+  display: none;
 }
