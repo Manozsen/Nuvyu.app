@@ -2,20 +2,14 @@ import type { Config } from "tailwindcss";
 
 const config: Config = {
   content: [
-    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
-    "./components/**/*.{js,ts,jsx,tsx,mdx}",
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./components/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
     extend: {
       colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
         mint: "#00FFA3",
-      },
-      fontFamily: {
-        jakarta: ["var(--font-jakarta)"],
-        inter: ["var(--font-inter)"],
+        obsidian: "#050505",
       },
     },
   },
