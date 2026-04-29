@@ -1,21 +1,16 @@
 import type { Metadata } from "next";
-import { Inter, Plus_Jakarta_Sans } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 
-// Google Fonts setup
-const inter = Inter({ 
-  subsets: ["latin"], 
-  variable: "--font-inter" 
-});
-
 const jakarta = Plus_Jakarta_Sans({ 
-  subsets: ["latin"], 
-  variable: "--font-jakarta" 
+  subsets: ["latin"],
+  variable: "--font-jakarta"
 });
 
 export const metadata: Metadata = {
-  title: "Nuvyu | Your AI Coach",
-  description: "Behavioral transformation powered by AI",
+  title: "Nuvyu | AI Coach",
+  description: "Your personalized behavioral transformation OS.",
+  viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0", // Mobile native feel
 };
 
 export default function RootLayout({
@@ -25,9 +20,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body
-        className={`${inter.variable} ${jakarta.variable} antialiased bg-[#000] text-white font-jakarta`}
-      >
+      <body className={`${jakarta.variable} font-sans bg-black text-white min-h-screen`}>
         {children}
       </body>
     </html>
