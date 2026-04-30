@@ -4,7 +4,7 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
 export async function login(formData: FormData) {
-  const cookieStore = await cookies()
+  const cookieStore = cookies()
   
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -43,7 +43,7 @@ export async function login(formData: FormData) {
 }
 
 export async function signup(formData: FormData) {
-  const cookieStore = await cookies()
+  const cookieStore = cookies()
   
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
