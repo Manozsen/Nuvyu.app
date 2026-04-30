@@ -13,12 +13,12 @@ export default function Login() {
   const router = useRouter();
 
   async function handleForm(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault(); // Prevents default form submission loop
+    e.preventDefault(); 
     
     setLoading(true);
     setError(null);
     
-    const formData = new FormData(e.currentTarget); // Extracted manually
+    const formData = new FormData(e.currentTarget); 
     
     try {
       const res = await login(formData);
@@ -26,13 +26,12 @@ export default function Login() {
       if (res?.error) {
         setError(res.error);
       } else if (res?.success) {
-        router.refresh(); 
         router.push('/dashboard'); 
       }
     } catch (err) {
       setError("An unexpected error occurred. Please try again.");
     } finally {
-      setLoading(false); // Spinner ruk jayega har haal mein (success ya error)
+      setLoading(false); 
     }
   }
 
