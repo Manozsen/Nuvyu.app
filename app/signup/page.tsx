@@ -1,5 +1,6 @@
 "use client";
 import { useState } from 'react';
+import { useRouter } from 'next/navigation'; // Naya import
 import { motion } from 'framer-motion';
 import { User, Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
@@ -8,20 +9,23 @@ import { signup } from '../auth/actions';
 export default function Signup() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const router = useRouter(); // Router initialize karo
 
   async function handleForm(formData: FormData) {
     setLoading(true);
     setError(null);
-    try {
-      const result = await signup(formData);
-      if (result?.error) {
-        setError(result.error);
-        setLoading(false);
-      }
-    } catch (e) {
-      // If it's a redirect, the browser will handle it. 
-      // If it's a real error, we catch it.
-      console.log("Signup attempt...");
+    
+    const result = await signup(formData);
+    
+    if (result?.error) {
+      setError(result.error);
+      setLoading(false);
+    } else {
+      // SUCCESS: User ban gaya hai, ab force redirect karo
+      router.refresh(); // Cookies check karne ke liye refresh
+      setTimeout(() => {
+        router.push('/dashboard');
+      }, 500);
     }
   }
 
