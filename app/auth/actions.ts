@@ -4,6 +4,7 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
 export async function login(formData: FormData) {
+  // 🚨 NEXT.JS 15 RULE: 'await' is STRICTLY required here!
   const cookieStore = await cookies()
   
   const supabase = createServerClient(
@@ -48,6 +49,7 @@ export async function login(formData: FormData) {
 }
 
 export async function signup(formData: FormData) {
+  // 🚨 NEXT.JS 15 RULE: 'await' is STRICTLY required here!
   const cookieStore = await cookies()
   
   const supabase = createServerClient(
