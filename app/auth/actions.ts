@@ -32,9 +32,7 @@ export async function login(formData: FormData) {
     password,
   })
 
-  if (error) {
-    return { error: error.message }
-  }
+  if (error) return { error: error.message }
 
   return { success: true }
 }
@@ -68,15 +66,11 @@ export async function signup(formData: FormData) {
     email,
     password,
     options: {
-      data: {
-        full_name: fullName,
-      },
+      data: { full_name: fullName },
     },
   })
 
-  if (error) {
-    return { error: error.message }
-  }
+  if (error) return { error: error.message }
 
   return { success: true }
 }
