@@ -13,7 +13,6 @@ export async function login(formData: FormData) {
     return { error: error.message }
   }
 
-  // Yahan se redirect nahi karenge, bas success signal bhejenge
   return { success: true }
 }
 
