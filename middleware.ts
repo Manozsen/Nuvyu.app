@@ -1,8 +1,9 @@
 import { createServerClient } from '@supabase/ssr'
-import { NextResponse, type NextRequest } from 'next/server'
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
 
-export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request })
+export async function middleware(req: NextRequest) {
+  let response = NextResponse.next()
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -10,40 +11,32 @@ export async function middleware(request: NextRequest) {
     {
       cookies: {
         getAll() {
-          return request.cookies.getAll()
+          return req.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-          supabaseResponse = NextResponse.next({ request })
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          )
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, options)
+          })
         },
       },
     }
   )
 
-  // Session refresh aur user check
-  const { data: { user } } = await supabase.auth.getUser()
+  // 🔥 IMPORTANT: session fetch
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
 
-  const isAuthPage = request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/signup'
-  const isDashboardPage = request.nextUrl.pathname.startsWith('/dashboard')
-
-  if (isDashboardPage && !user) {
-    const url = request.nextUrl.clone()
+  // 🔒 Protect dashboard
+  if (!session && req.nextUrl.pathname.startsWith('/dashboard')) {
+    const url = req.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
 
-  if (isAuthPage && user) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/dashboard'
-    return NextResponse.redirect(url)
-  }
-
-  return supabaseResponse
+  return response
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
+  matcher: ['/dashboard/:path*'],
 }
