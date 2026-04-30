@@ -1,9 +1,8 @@
 import { createServerClient } from '@supabase/ssr'
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { NextResponse, type NextRequest } from 'next/server'
 
-export async function middleware(req: NextRequest) {
-  const res = NextResponse.next()
+export async function middleware(request: NextRequest) {
+  let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -11,34 +10,38 @@ export async function middleware(req: NextRequest) {
     {
       cookies: {
         getAll() {
-          return req.cookies.getAll()
+          return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            res.cookies.set(name, value, options)
-          })
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+          supabaseResponse = NextResponse.next({ request })
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          )
         },
       },
     }
   )
 
-  // 🔥 IMPORTANT: get session
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
+  // User ka session check karo
+  const { data: { user } } = await supabase.auth.getUser()
 
-  const isDashboard = req.nextUrl.pathname.startsWith('/dashboard')
+  const isDashboardPage = request.nextUrl.pathname.startsWith('/dashboard')
 
-  // 🔒 Protect dashboard route
-  if (!session && isDashboard) {
-    const redirectUrl = req.nextUrl.clone()
-    redirectUrl.pathname = '/login'
-    return NextResponse.redirect(redirectUrl)
+  // SIRF DASHBOARD KO PROTECT KARO
+  // Agar koi bina login kiye dashboard pe aaye, toh login pe wapas bhejo
+  if (isDashboardPage && !user) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/login'
+    return NextResponse.redirect(url)
   }
 
-  return res
+  // 🚨 YAHAN SE HUMNE AUTH PAGE REDIRECT HATA DIYA HAI 🚨
+  // Jiske wajah se spinner atak raha tha.
+
+  return supabaseResponse
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
 }
