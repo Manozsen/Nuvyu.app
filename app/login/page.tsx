@@ -12,20 +12,27 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  async function handleForm(formData: FormData) {
+  async function handleForm(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault(); // Prevents default form submission loop
+    
     setLoading(true);
     setError(null);
     
-    const res = await login(formData);
+    const formData = new FormData(e.currentTarget); // Extracted manually
     
-    if (res?.error) {
-      setError(res.error);
-      setLoading(false);
-    } else if (res?.success) {
-      // Step 1: Cookies sync karo
-      router.refresh();
-      // Step 2: Dashboard par bhejo
-      router.push('/dashboard');
+    try {
+      const res = await login(formData);
+      
+      if (res?.error) {
+        setError(res.error);
+      } else if (res?.success) {
+        router.refresh(); 
+        router.push('/dashboard'); 
+      }
+    } catch (err) {
+      setError("An unexpected error occurred. Please try again.");
+    } finally {
+      setLoading(false); // Spinner ruk jayega har haal mein (success ya error)
     }
   }
 
@@ -42,7 +49,7 @@ export default function Login() {
           <p className="text-white/50 text-sm font-medium">Welcome back, Coach is waiting.</p>
         </div>
 
-        <form action={handleForm} className="space-y-4">
+        <form onSubmit={handleForm} className="space-y-4">
           <div className="relative group">
             <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 group-focus-within:text-mint transition-colors" size={20} />
             <input 
