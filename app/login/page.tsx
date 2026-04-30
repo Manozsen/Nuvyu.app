@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
@@ -9,6 +10,7 @@ import { login } from '../auth/actions';
 export default function Login() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   async function handleForm(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault(); 
@@ -23,10 +25,15 @@ export default function Login() {
       
       if (res?.error) {
         setError(res.error);
-        setLoading(false); // Error aane par spinner band karo
+        setLoading(false); 
       } else if (res?.success) {
-        // THE FIX: Hard Redirect. Yeh cache bypass karega aur 100% cookie bhejega.
-        window.location.href = '/dashboard'; 
+        // Step 1: Server se latest cookie fetch karo taaki Next.js cache bypass ho
+        router.refresh(); 
+        
+        // Step 2: 0.5 second ruk kar push karo taaki Middleware ko cookie mil jaye
+        setTimeout(() => {
+          router.push('/dashboard'); 
+        }, 500);
       }
     } catch (err) {
       setError("An unexpected error occurred. Please try again.");
