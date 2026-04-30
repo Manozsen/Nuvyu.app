@@ -1,7 +1,6 @@
 'use server'
 
 import { createClient } from '../../utils/supabase/server'
-import { redirect } from 'next/navigation'
 
 export async function login(formData: FormData) {
   const supabase = await createClient()
@@ -14,8 +13,8 @@ export async function login(formData: FormData) {
     return { error: error.message }
   }
 
-  // Redirect should always be outside of a try-catch if possible
-  redirect('/dashboard')
+  // Yahan se redirect nahi karenge, bas success signal bhejenge
+  return { success: true }
 }
 
 export async function signup(formData: FormData) {
@@ -28,8 +27,7 @@ export async function signup(formData: FormData) {
     email,
     password,
     options: { 
-      data: { full_name: fullName },
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback`
+      data: { full_name: fullName }
     }
   })
 
@@ -37,5 +35,5 @@ export async function signup(formData: FormData) {
     return { error: error.message }
   }
 
-  redirect('/dashboard')
+  return { success: true }
 }
