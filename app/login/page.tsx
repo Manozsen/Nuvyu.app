@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
@@ -10,25 +9,24 @@ import { login } from '../auth/actions';
 export default function Login() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
   async function handleForm(formData: FormData) {
     setLoading(true);
     setError(null);
     
-    const res = await login(formData);
-    
-    if (res?.error) {
-      setError(res.error);
-      setLoading(false);
-    } else if (res?.success) {
-      // Login successful! Pehle browser ko refresh karo taaki cookies set ho jayein
-      router.refresh();
+    try {
+      const res = await login(formData);
       
-      // Aadhe second baad seedha dashboard par bhejo
-      setTimeout(() => {
-        router.push('/dashboard');
-      }, 500);
+      if (res?.error) {
+        setError(res.error);
+        setLoading(false); // Error aaye toh spinner rok do
+      } else if (res?.success) {
+        // THE FIX: Hard Redirect (Bypasses Next.js cache trap)
+        window.location.href = '/dashboard';
+      }
+    } catch (err) {
+      setError("Network error. Please try again.");
+      setLoading(false);
     }
   }
 
