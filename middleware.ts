@@ -23,21 +23,19 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // User ka session check karo
+  // IMPORTANT: Sirf user check karo, session nahi.
   const { data: { user } } = await supabase.auth.getUser()
 
+  const isAuthPage = request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/signup')
   const isDashboardPage = request.nextUrl.pathname.startsWith('/dashboard')
 
-  // SIRF DASHBOARD KO PROTECT KARO
-  // Agar koi bina login kiye dashboard pe aaye, toh login pe wapas bhejo
   if (isDashboardPage && !user) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    return NextResponse.redirect(url)
+    return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // 🚨 YAHAN SE HUMNE AUTH PAGE REDIRECT HATA DIYA HAI 🚨
-  // Jiske wajah se spinner atak raha tha.
+  if (isAuthPage && user) {
+    return NextResponse.redirect(new URL('/dashboard', request.url))
+  }
 
   return supabaseResponse
 }
