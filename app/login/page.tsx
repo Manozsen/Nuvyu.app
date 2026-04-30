@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
@@ -9,18 +10,30 @@ import { login } from '../auth/actions';
 export default function Login() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
-  async function handleSubmit(formData: FormData) {
+  async function handleForm(formData: FormData) {
     setLoading(true);
     setError(null);
+    
     const res = await login(formData);
-    if (res?.error) setError(res.error);
-    setLoading(false);
+    
+    if (res?.error) {
+      setError(res.error);
+      setLoading(false);
+    } else if (res?.success) {
+      // Login successful! Pehle browser ko refresh karo taaki cookies set ho jayein
+      router.refresh();
+      
+      // Aadhe second baad seedha dashboard par bhejo
+      setTimeout(() => {
+        router.push('/dashboard');
+      }, 500);
+    }
   }
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col justify-center px-6 selection:bg-mint/30 relative overflow-hidden">
-      {/* Background Glow */}
       <div className="absolute top-[-20%] left-[-10%] w-96 h-96 bg-mint/10 rounded-full blur-[120px] pointer-events-none" />
 
       <motion.div 
@@ -32,7 +45,7 @@ export default function Login() {
           <p className="text-white/50 text-sm font-medium">Welcome back, Coach is waiting.</p>
         </div>
 
-        <form action={handleSubmit} className="space-y-4">
+        <form action={handleForm} className="space-y-4">
           <div className="relative group">
             <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 group-focus-within:text-mint transition-colors" size={20} />
             <input 
@@ -49,7 +62,7 @@ export default function Login() {
             />
           </div>
 
-          {error && <p className="text-red-500 text-sm text-center font-medium">{error}</p>}
+          {error && <p className="text-red-500 text-sm text-center font-medium bg-red-500/10 py-2 rounded-lg border border-red-500/20">{error}</p>}
 
           <button 
             type="submit" disabled={loading}
