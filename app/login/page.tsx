@@ -1,16 +1,21 @@
 "use client";
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { login } from '../auth/actions';
+// 🚨 THE FIX: Direct Browser Client import kiya
+import { createBrowserClient } from '@supabase/ssr'; 
 
 export default function Login() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
+
+  // 🚨 THE FIX: Client-side Supabase initialize kiya
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
 
   async function handleForm(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault(); 
@@ -19,24 +24,26 @@ export default function Login() {
     setError(null);
     
     const formData = new FormData(e.currentTarget); 
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
     
     try {
-      const res = await login(formData);
+      // 🚨 THE FIX: Seedha browser se login maaro (No Server Action needed)
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
       
-      if (res?.error) {
-        setError(res.error);
-        setLoading(false); 
-      } else if (res?.success) {
-        // Step 1: Server se latest cookie fetch karo taaki Next.js cache bypass ho
-        router.refresh(); 
-        
-        // Step 2: 0.5 second ruk kar push karo taaki Middleware ko cookie mil jaye
-        setTimeout(() => {
-          router.push('/dashboard'); 
-        }, 500);
+      if (authError) {
+        setError(authError.message);
+        setLoading(false); // Error par spinner roko
+      } else {
+        // Success! Browser ne cookie save kar li hai. 
+        // Ab hard redirect maaro Next.js cache ko todne ke liye.
+        window.location.href = '/dashboard'; 
       }
     } catch (err) {
-      setError("An unexpected error occurred. Please try again.");
+      setError("Network error. Please check your connection.");
       setLoading(false); 
     }
   }
