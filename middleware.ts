@@ -23,20 +23,21 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // Asli check: Supabase se confirm karo ki user logged in hai ya nahi
-  const { data: { user } } = await supabase.auth.getUser()
+  // 🚨 THE FIX: getUser() ki jagah getSession() use kiya. 
+  // Yeh fast hai aur Vercel par timeout nahi hota.
+  const { data: { session } } = await supabase.auth.getSession()
 
   const path = request.nextUrl.pathname
   const isDashboard = path.startsWith('/dashboard')
   const isAuthPage = path === '/login' || path === '/signup'
 
-  // Rule 1: Bina login dashboard aane walon ko bahar nikalo
-  if (isDashboard && !user) {
+  // Agar user dashboard par bina session ke aaya toh login par bhejo
+  if (isDashboard && !session) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // Rule 2: Jo pehle se login hai, use login page mat dikhao
-  if (isAuthPage && user) {
+  // Agar user login/signup par hai aur session hai toh dashboard bhejo
+  if (isAuthPage && session) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
@@ -44,13 +45,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
-  ],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
 }
