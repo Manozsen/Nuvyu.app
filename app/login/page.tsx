@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
@@ -10,7 +9,6 @@ import { login } from '../auth/actions';
 export default function Login() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
   async function handleForm(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault(); 
@@ -25,12 +23,13 @@ export default function Login() {
       
       if (res?.error) {
         setError(res.error);
+        setLoading(false); // Error aane par spinner band karo
       } else if (res?.success) {
-        router.push('/dashboard'); 
+        // THE FIX: Hard Redirect. Yeh cache bypass karega aur 100% cookie bhejega.
+        window.location.href = '/dashboard'; 
       }
     } catch (err) {
       setError("An unexpected error occurred. Please try again.");
-    } finally {
       setLoading(false); 
     }
   }
