@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export async function middleware(req: NextRequest) {
-  let response = NextResponse.next()
+  const res = NextResponse.next()
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -15,26 +15,28 @@ export async function middleware(req: NextRequest) {
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value, options }) => {
-            response.cookies.set(name, value, options)
+            res.cookies.set(name, value, options)
           })
         },
       },
     }
   )
 
-  // 🔥 IMPORTANT: session fetch
+  // 🔥 IMPORTANT: get session
   const {
     data: { session },
   } = await supabase.auth.getSession()
 
-  // 🔒 Protect dashboard
-  if (!session && req.nextUrl.pathname.startsWith('/dashboard')) {
-    const url = req.nextUrl.clone()
-    url.pathname = '/login'
-    return NextResponse.redirect(url)
+  const isDashboard = req.nextUrl.pathname.startsWith('/dashboard')
+
+  // 🔒 Protect dashboard route
+  if (!session && isDashboard) {
+    const redirectUrl = req.nextUrl.clone()
+    redirectUrl.pathname = '/login'
+    return NextResponse.redirect(redirectUrl)
   }
 
-  return response
+  return res
 }
 
 export const config = {
