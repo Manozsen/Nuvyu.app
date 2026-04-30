@@ -4,14 +4,13 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-// 🚨 THE FIX: Direct Browser Client import kiya
-import { createBrowserClient } from '@supabase/ssr'; 
+import { createBrowserClient } from '@supabase/ssr';
 
 export default function Login() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // 🚨 THE FIX: Client-side Supabase initialize kiya
+  // Initialize Supabase Client directly in browser
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -28,7 +27,7 @@ export default function Login() {
     const password = formData.get('password') as string;
     
     try {
-      // 🚨 THE FIX: Seedha browser se login maaro (No Server Action needed)
+      // Direct login request
       const { error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -36,14 +35,13 @@ export default function Login() {
       
       if (authError) {
         setError(authError.message);
-        setLoading(false); // Error par spinner roko
+        setLoading(false); 
       } else {
-        // Success! Browser ne cookie save kar li hai. 
-        // Ab hard redirect maaro Next.js cache ko todne ke liye.
+        // Bulletproof hard redirect to break any cache
         window.location.href = '/dashboard'; 
       }
     } catch (err) {
-      setError("Network error. Please check your connection.");
+      setError("Network error. Please try again.");
       setLoading(false); 
     }
   }
