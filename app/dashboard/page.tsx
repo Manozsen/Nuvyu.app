@@ -9,6 +9,9 @@ export default function Dashboard() {
   const [mounted, setMounted] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
+  
+  // Placeholder metrics data
   const data = { score: 82, cal: 1800, steps: 6400, water: 2.5 };
 
   const supabase = createBrowserClient(
@@ -17,16 +20,34 @@ export default function Dashboard() {
   );
 
   useEffect(() => {
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+    const fetchUserData = async () => {
+      // 1. Strictly get authenticated user
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !user) {
         window.location.href = '/login';
-      } else {
-        setMounted(true);
-        setIsCheckingAuth(false);
+        return;
       }
+
+      // 2. Fetch specific user's profile ensuring complete data isolation
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      // 3. If no profile exists, force redirect to onboarding
+      if (profileError || !profile) {
+        window.location.href = '/onboarding';
+        return;
+      }
+
+      setUserProfile(profile);
+      setMounted(true);
+      setIsCheckingAuth(false);
     };
-    checkUser();
+
+    fetchUserData();
   }, [supabase.auth]);
 
   const handleLogout = async () => {
@@ -38,18 +59,30 @@ export default function Dashboard() {
   if (isCheckingAuth) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <Loader2 className="animate-spin text-mint" size={32} />
+        <Loader2 className="animate-spin text-[#00FFA3]" size={32} />
       </div>
     );
   }
 
-  if (!mounted) return null;
+  if (!mounted || !userProfile) return null;
+
+  // Personalized dynamic AI Nudge based on user profile
+  const generateNudge = (profile: any) => {
+    const name = profile.full_name ? profile.full_name.split(' ')[0] : 'Bhai';
+    if (profile.desired_identity === 'Lean & Fit') {
+      return `${name}, lean banne ka rasta consistency se shuru hota hai. Aaj cardio aur diet pe focus rakho!`;
+    }
+    if (profile.desired_identity === 'Muscular') {
+      return `${name}, muscles build karne hain! Aaj protein intake hit karna compulsory hai, no excuses.`;
+    }
+    return `${name}, consistency solid rakh bhai! Aaj ka target poora karke hi rest lena.`;
+  };
 
   return (
-    <div className="relative min-h-screen bg-black text-white pb-28 overflow-hidden selection:bg-mint/30">
+    <div className="relative min-h-screen bg-black text-white pb-28 overflow-hidden selection:bg-[#00FFA3]/30">
       
       {/* PREMIUM BACKGROUND GLOWS */}
-      <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-mint/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-[#00FFA3]/10 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[10%] right-[-10%] w-72 h-72 bg-blue-600/10 rounded-full blur-[100px] pointer-events-none" />
 
       {/* HEADER WITH LOGOUT */}
@@ -59,17 +92,16 @@ export default function Dashboard() {
             initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
             className="text-2xl font-black tracking-tighter"
           >
-            NUVYU<span className="text-mint">.AI</span>
+            NUVYU<span className="text-[#00FFA3]">.AI</span>
           </motion.h1>
           <motion.p 
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}
             className="text-white/50 text-sm font-medium mt-1"
           >
-            Good Evening.
+            Good Evening, {userProfile.full_name ? userProfile.full_name.split(' ')[0] : 'Athlete'}.
           </motion.p>
         </div>
         <div className="flex gap-3 items-center">
-            {/* Sleek Logout Button */}
             <motion.button 
               whileTap={{ scale: 0.9 }} 
               onClick={handleLogout}
@@ -91,7 +123,7 @@ export default function Dashboard() {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
-          className="bg-obsidian border border-white/10 rounded-[2rem] p-6 flex flex-col items-center relative overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
+          className="bg-[#0A0A0A] border border-white/10 rounded-[2rem] p-6 flex flex-col items-center relative overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
         >
           <div className="relative w-52 h-52 flex items-center justify-center mb-4">
               <svg className="absolute w-full h-full transform -rotate-90">
@@ -113,30 +145,30 @@ export default function Dashboard() {
                   >
                     {data.score}
                   </motion.span>
-                  <p className="text-mint text-xs font-bold uppercase tracking-widest mt-1">Daily Score</p>
+                  <p className="text-[#00FFA3] text-xs font-bold uppercase tracking-widest mt-1">Daily Score</p>
               </div>
           </div>
 
-          <div className="w-full bg-gradient-to-r from-mint/10 to-transparent border-l-4 border-mint p-4 rounded-r-xl backdrop-blur-sm">
+          <div className="w-full bg-gradient-to-r from-[#00FFA3]/10 to-transparent border-l-4 border-[#00FFA3] p-4 rounded-r-xl backdrop-blur-sm">
             <div className="flex items-center gap-2 mb-1">
-              <Zap size={16} className="text-mint" fill="#00FFA3" />
-              <span className="text-xs font-bold text-mint uppercase tracking-wider">Coach Nudge</span>
+              <Zap size={16} className="text-[#00FFA3]" fill="#00FFA3" />
+              <span className="text-xs font-bold text-[#00FFA3] uppercase tracking-wider">Coach Nudge</span>
             </div>
             <p className="text-sm font-medium text-white/90 leading-relaxed">
-              &quot;Consistency solid hai bhai! Bas thoda protein low lag raha hai, dinner mein paneer ya soy chunks zaroor add karna.&quot;
+              &quot;{generateNudge(userProfile)}&quot;
             </p>
           </div>
         </motion.section>
 
         {/* BENTO GRID STATS */}
         <section className="grid grid-cols-2 gap-4">
-          <BentoCard icon={Footprints} label="Steps" value={data.steps} target="/ 10k" color="text-mint" delay={0.2} />
+          <BentoCard icon={Footprints} label="Steps" value={data.steps} target="/ 10k" color="text-[#00FFA3]" delay={0.2} />
           <BentoCard icon={Flame} label="Energy" value={data.cal} target="kcal" color="text-orange-500" delay={0.3} />
           <BentoCard icon={Droplets} label="Water" value={data.water} target="Liters" color="text-blue-400" delay={0.4} />
           
           <motion.div 
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
-            className="bg-obsidian border border-white/10 rounded-[1.5rem] p-5 flex flex-col justify-between shadow-xl"
+            className="bg-[#0A0A0A] border border-white/10 rounded-[1.5rem] p-5 flex flex-col justify-between shadow-xl"
           >
             <div className="flex justify-between items-center">
               <span className="text-white/50 text-[10px] font-bold uppercase tracking-widest">Next Level</span>
@@ -147,7 +179,7 @@ export default function Dashboard() {
               <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
                   <motion.div 
                     initial={{ width: 0 }} animate={{ width: "65%" }} transition={{ duration: 1, delay: 0.8 }}
-                    className="h-full bg-gradient-to-r from-blue-500 to-mint rounded-full" 
+                    className="h-full bg-gradient-to-r from-blue-500 to-[#00FFA3] rounded-full" 
                   />
               </div>
             </div>
@@ -158,12 +190,12 @@ export default function Dashboard() {
 
       {/* FLOATING ACTION BAR */}
       <div className="fixed bottom-6 left-6 right-6 flex justify-center z-50">
-        <nav className="bg-obsidian/80 backdrop-blur-xl border border-white/10 rounded-full px-6 py-4 flex items-center gap-12 shadow-[0_10px_40px_rgba(0,0,0,0.8)]">
-          <LayoutDashboard size={24} className="text-mint" strokeWidth={2.5} />
+        <nav className="bg-[#0A0A0A]/80 backdrop-blur-xl border border-white/10 rounded-full px-6 py-4 flex items-center gap-12 shadow-[0_10px_40px_rgba(0,0,0,0.8)]">
+          <LayoutDashboard size={24} className="text-[#00FFA3]" strokeWidth={2.5} />
           
           <motion.div 
             whileTap={{ scale: 0.9 }}
-            className="bg-mint p-4 rounded-full shadow-[0_0_30px_rgba(0,255,163,0.4)] text-black cursor-pointer -mt-8 border-4 border-black"
+            className="bg-[#00FFA3] p-4 rounded-full shadow-[0_0_30px_rgba(0,255,163,0.4)] text-black cursor-pointer -mt-8 border-4 border-black"
           >
             <Camera size={28} strokeWidth={2.5} />
           </motion.div>
@@ -180,7 +212,7 @@ function BentoCard({ icon: Icon, label, value, target, color, delay }: any) {
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay }}
-      className="bg-obsidian border border-white/10 rounded-[1.5rem] p-5 flex flex-col justify-between h-32 shadow-xl"
+      className="bg-[#0A0A0A] border border-white/10 rounded-[1.5rem] p-5 flex flex-col justify-between h-32 shadow-xl"
     >
       <div className="flex items-center gap-2">
         <Icon size={18} className={color} />
