@@ -4,7 +4,6 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
 export async function login(formData: FormData) {
-  // 🚨 NEXT.JS 15 RULE: 'await' is STRICTLY required here!
   const cookieStore = await cookies()
   
   const supabase = createServerClient(
@@ -12,21 +11,16 @@ export async function login(formData: FormData) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value
+        getAll() {
+          return cookieStore.getAll()
         },
-        set(name: string, value: string, options: any) {
+        setAll(cookiesToSet) {
           try {
-            cookieStore.set({ name, value, ...options })
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            )
           } catch (error) {
-            // Handled by middleware
-          }
-        },
-        remove(name: string, options: any) {
-          try {
-            cookieStore.set({ name, value: '', ...options })
-          } catch (error) {
-            // Handled by middleware
+            // Handled safely by Next.js middleware
           }
         },
       },
@@ -49,7 +43,6 @@ export async function login(formData: FormData) {
 }
 
 export async function signup(formData: FormData) {
-  // 🚨 NEXT.JS 15 RULE: 'await' is STRICTLY required here!
   const cookieStore = await cookies()
   
   const supabase = createServerClient(
@@ -57,21 +50,16 @@ export async function signup(formData: FormData) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value
+        getAll() {
+          return cookieStore.getAll()
         },
-        set(name: string, value: string, options: any) {
+        setAll(cookiesToSet) {
           try {
-            cookieStore.set({ name, value, ...options })
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            )
           } catch (error) {
-            // Handled by middleware
-          }
-        },
-        remove(name: string, options: any) {
-          try {
-            cookieStore.set({ name, value: '', ...options })
-          } catch (error) {
-            // Handled by middleware
+            // Handled safely by Next.js middleware
           }
         },
       },
