@@ -2,16 +2,43 @@
 
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Flame, Footprints, Droplets, Camera, Zap, LayoutDashboard, Settings, Bell, ChevronRight } from 'lucide-react';
+import { Flame, Footprints, Droplets, Camera, Zap, LayoutDashboard, Settings, Bell, ChevronRight, Loader2 } from 'lucide-react';
+import { createBrowserClient } from '@supabase/ssr';
 
 export default function Dashboard() {
   const [mounted, setMounted] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const data = { score: 82, cal: 1800, steps: 6400, water: 2.5 };
 
-  // Hydration ke liye zaroori hai (Framer Motion UI ke liye)
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  // Simple, unbreakable client-side route protection
   useEffect(() => {
-    setMounted(true);
-  }, []);
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        window.location.href = '/login';
+      } else {
+        setMounted(true);
+        setIsCheckingAuth(false);
+      }
+    };
+    
+    checkUser();
+  }, [supabase.auth]);
+
+  // Show nothing or a tiny spinner while verifying session to prevent UI flashes
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <Loader2 className="animate-spin text-mint" size={32} />
+      </div>
+    );
+  }
 
   if (!mounted) return null;
 
