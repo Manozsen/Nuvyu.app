@@ -39,21 +39,20 @@ export default function Onboarding() {
   useEffect(() => {
     setHookText(HOOK_TEXTS[Math.floor(Math.random() * HOOK_TEXTS.length)]);
     const getUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error || !user) {
         window.location.href = '/login';
       } else {
-        setUserId(session.user.id);
+        setUserId(user.id);
       }
     };
     getUser();
   }, [supabase.auth]);
 
-  // Animate score in Step 5
   useEffect(() => {
     if (step === 5) {
       let current = 0;
-      const target = Math.floor(Math.random() * (55 - 35 + 1)) + 35; // Random score between 35-55
+      const target = Math.floor(Math.random() * (55 - 35 + 1)) + 35;
       const interval = setInterval(() => {
         current += 1;
         setStartingScore(current);
@@ -111,13 +110,11 @@ export default function Onboarding() {
   return (
     <div className="min-h-screen bg-[#0D0D0D] text-white flex flex-col justify-center px-6 relative overflow-hidden selection:bg-mint/30 font-sans">
       
-      {/* Premium Background Glows */}
       <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-[#00FFA3]/5 rounded-full blur-[150px] pointer-events-none" />
       <div className="absolute bottom-[-20%] right-[-10%] w-[400px] h-[400px] bg-blue-600/5 rounded-full blur-[120px] pointer-events-none" />
 
       <div className="w-full max-w-md mx-auto z-10">
         
-        {/* Progress Indicator (Hidden on Step 0 and 5) */}
         {step > 0 && step < 5 && (
           <div className="mb-12">
             <div className="flex justify-between text-xs font-bold text-white/40 mb-3 tracking-widest uppercase">
@@ -141,7 +138,6 @@ export default function Onboarding() {
 
         <AnimatePresence mode="wait">
           
-          {/* STEP 0: HOOK */}
           {step === 0 && (
             <motion.div 
               key="step0" variants={slideVariants} initial="initial" animate="animate" exit="exit"
@@ -163,7 +159,6 @@ export default function Onboarding() {
             </motion.div>
           )}
 
-          {/* STEP 1: PROBLEM */}
           {step === 1 && (
             <motion.div key="step1" variants={slideVariants} initial="initial" animate="animate" exit="exit" className="space-y-8">
               <div>
@@ -211,7 +206,6 @@ export default function Onboarding() {
             </motion.div>
           )}
 
-          {/* STEP 2: IDENTITY */}
           {step === 2 && (
             <motion.div key="step2" variants={slideVariants} initial="initial" animate="animate" exit="exit" className="space-y-8">
               <div>
@@ -253,7 +247,6 @@ export default function Onboarding() {
             </motion.div>
           )}
 
-          {/* STEP 3: COACH TONE */}
           {step === 3 && (
             <motion.div key="step3" variants={slideVariants} initial="initial" animate="animate" exit="exit" className="space-y-8">
               <div>
@@ -294,7 +287,6 @@ export default function Onboarding() {
             </motion.div>
           )}
 
-          {/* STEP 4: BASIC INFO */}
           {step === 4 && (
             <motion.div key="step4" variants={slideVariants} initial="initial" animate="animate" exit="exit" className="space-y-8">
               <div>
@@ -372,7 +364,6 @@ export default function Onboarding() {
             </motion.div>
           )}
 
-          {/* STEP 5: WOW MOMENT */}
           {step === 5 && (
             <motion.div 
               key="step5" variants={slideVariants} initial="initial" animate="animate"
