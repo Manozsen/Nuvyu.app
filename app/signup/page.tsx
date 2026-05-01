@@ -4,11 +4,17 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { User, Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { signup } from '../auth/actions'; // SSR Server Action Import kiya
+import { createBrowserClient } from '@supabase/ssr';
 
 export default function Signup() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Initialize Supabase Client directly in browser
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
 
   async function handleForm(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault(); 
@@ -17,20 +23,29 @@ export default function Signup() {
     setError(null);
     
     const formData = new FormData(e.currentTarget); 
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
+    const fullName = formData.get('fullName') as string;
     
     try {
-      // Calling SSR Server Action
-      const res = await signup(formData);
+      // Direct signup request from browser
+      const { error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { 
+          data: { full_name: fullName }
+        }
+      });
       
-      if (res?.error) {
-        setError(res.error);
+      if (authError) {
+        setError(authError.message);
         setLoading(false); 
-      } else if (res?.success) {
-        // Hard-redirect to bypass cache and trigger Middleware session check
+      } else {
+        // Success! Hard-redirect to dashboard
         window.location.href = '/dashboard'; 
       }
     } catch (err) {
-      setError("An unexpected error occurred. Please try again.");
+      setError("Network error. Please try again.");
       setLoading(false); 
     }
   }
