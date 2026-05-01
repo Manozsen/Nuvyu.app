@@ -42,7 +42,7 @@ export default function Signup() {
         setLoading(false); 
       } else {
         // Success! Hard-redirect to dashboard
-        window.location.href = '/dashboard'; 
+         window.location.href = '/onboarding'; 
       }
     } catch (err) {
       setError("Network error. Please try again.");
