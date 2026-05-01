@@ -2,12 +2,12 @@
 
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Flame, Footprints, Droplets, Camera, Zap, LayoutDashboard, Settings, Bell, ChevronRight, Loader2 } from 'lucide-react';
+import { Flame, Footprints, Droplets, Camera, Zap, LayoutDashboard, Settings, Bell, ChevronRight, LogOut, Loader2 } from 'lucide-react';
 import { createBrowserClient } from '@supabase/ssr';
 
 export default function Dashboard() {
   const [mounted, setMounted] = useState(false);
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const data = { score: 82, cal: 1800, steps: 6400, water: 2.5 };
 
   const supabase = createBrowserClient(
@@ -15,30 +15,15 @@ export default function Dashboard() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  // Simple, unbreakable client-side route protection
   useEffect(() => {
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        window.location.href = '/login';
-      } else {
-        setMounted(true);
-        setIsCheckingAuth(false);
-      }
-    };
-    
-    checkUser();
-  }, [supabase.auth]);
+    setMounted(true);
+  }, []);
 
-  // Show nothing or a tiny spinner while verifying session to prevent UI flashes
-  if (isCheckingAuth) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <Loader2 className="animate-spin text-mint" size={32} />
-      </div>
-    );
-  }
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    await supabase.auth.signOut();
+    window.location.href = '/login';
+  };
 
   if (!mounted) return null;
 
@@ -64,9 +49,14 @@ export default function Dashboard() {
           </motion.p>
         </div>
         <div className="flex gap-4 items-center">
-            <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center backdrop-blur-md">
-              <Bell size={18} className="text-white/80" />
-            </div>
+            <motion.button 
+              whileTap={{ scale: 0.9 }} 
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center backdrop-blur-md hover:bg-red-500/20 hover:border-red-500/50 transition-all"
+            >
+              {isLoggingOut ? <Loader2 size={18} className="animate-spin text-red-400" /> : <LogOut size={18} className="text-red-400" />}
+            </motion.button>
             <div className="w-10 h-10 rounded-full border border-mint p-0.5">
               <div className="w-full h-full rounded-full bg-gradient-to-tr from-mint to-blue-500" />
             </div>
@@ -74,7 +64,6 @@ export default function Dashboard() {
       </header>
 
       <main className="px-6 space-y-6 z-10 relative">
-        
         <motion.section 
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -140,7 +129,6 @@ export default function Dashboard() {
             </div>
           </motion.div>
         </section>
-
       </main>
 
       <div className="fixed bottom-6 left-6 right-6 flex justify-center z-50">
@@ -157,12 +145,10 @@ export default function Dashboard() {
           <Settings size={24} className="text-white/40 hover:text-white transition-colors" />
         </nav>
       </div>
-
     </div>
   );
 }
 
-// Fixed standard TypeScript definitions for safety
 function BentoCard({ 
   icon: Icon, 
   label, 
