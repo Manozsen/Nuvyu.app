@@ -23,19 +23,19 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // SECURE SSR CHECK: getUser() database se confirm karta hai, fake cookie yahan fail ho jayegi
+  // SECURE CHECK: getUser() server se confirm karta hai ki user asli hai (fake cookie nahi chalegi)
   const { data: { user } } = await supabase.auth.getUser()
 
   const path = request.nextUrl.pathname
   const isDashboard = path.startsWith('/dashboard')
-  const isAuthPage = path === '/login' || path === '/signup'
+  const isAuthPage = path.startsWith('/login') || path.startsWith('/signup')
 
-  // Rule 1: Bina login dashboard par aane walon ko block karke Login pe bhejo
+  // Rule 1: Bina login dashboard aane walon ko bahar nikalo
   if (isDashboard && !user) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // Rule 2: Jo pehle se login hai, use wapas login page mat dikhao
+  // Rule 2: Jo pehle se login hai, use login page mat dikhao, seedha dashboard bhejo
   if (isAuthPage && user) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
