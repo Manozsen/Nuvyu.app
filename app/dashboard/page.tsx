@@ -2,15 +2,43 @@
 
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Flame, Footprints, Droplets, Camera, Zap, LayoutDashboard, Settings, Bell, ChevronRight } from 'lucide-react';
+import { Flame, Footprints, Droplets, Camera, Zap, LayoutDashboard, Settings, Bell, ChevronRight, Loader2 } from 'lucide-react';
+import { createBrowserClient } from '@supabase/ssr';
 
 export default function Dashboard() {
   const [mounted, setMounted] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const data = { score: 82, cal: 1800, steps: 6400, water: 2.5 };
 
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  // Simple, unbreakable client-side route protection
   useEffect(() => {
-    setMounted(true);
-  }, []);
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        window.location.href = '/login';
+      } else {
+        setMounted(true);
+        setIsCheckingAuth(false);
+      }
+    };
+    
+    checkUser();
+  }, [supabase.auth]);
+
+  // Show nothing or a tiny spinner while verifying session to prevent UI flashes
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <Loader2 className="animate-spin text-mint" size={32} />
+      </div>
+    );
+  }
 
   if (!mounted) return null;
 
@@ -32,7 +60,7 @@ export default function Dashboard() {
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}
             className="text-white/50 text-sm font-medium mt-1"
           >
-            Good Evening.
+            Good Evening, Manoj.
           </motion.p>
         </div>
         <div className="flex gap-4 items-center">
@@ -134,7 +162,7 @@ export default function Dashboard() {
   );
 }
 
-// Fixed Types for TypeScript Stability
+// Fixed standard TypeScript definitions for safety
 function BentoCard({ 
   icon: Icon, 
   label, 
