@@ -18,6 +18,7 @@ export default function Onboarding() {
   const [userId, setUserId] = useState<string | null>(null);
   const [hookText, setHookText] = useState("");
   const [startingScore, setStartingScore] = useState(0);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
     problem: '',
@@ -63,32 +64,41 @@ export default function Onboarding() {
   }, [step]);
 
   const handleNext = () => setStep((prev) => prev + 1);
-  const handleBack = () => setStep((prev) => prev - 1);
+  const handleBack = () => {
+    setSubmitError(null);
+    setStep((prev) => prev - 1);
+  };
 
   const handleSubmit = async () => {
     if (!userId) return;
     setLoading(true);
+    setSubmitError(null);
 
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .upsert({ 
-          id: userId, 
-          full_name: formData.name,
-          age: parseInt(formData.age),
-          weight: parseFloat(formData.weight), 
-          height: parseFloat(formData.height),
-          primary_problem: formData.problem === 'Other' ? formData.customProblem : formData.problem,
-          desired_identity: formData.identity,
-          coach_tone: formData.coachTone,
-          activity_level: formData.activityLevel,
-          updated_at: new Date().toISOString()
-        });
+      const payload = {
+        id: userId,
+        full_name: formData.name || 'Athlete',
+        age: parseInt(formData.age) || 0,
+        weight: parseFloat(formData.weight) || 0,
+        height: parseFloat(formData.height) || 0,
+        primary_problem: formData.problem === 'Other' ? (formData.customProblem || 'Not specified') : formData.problem,
+        desired_identity: formData.identity || 'Fit',
+        coach_tone: formData.coachTone || 'Strict',
+        activity_level: formData.activityLevel || 'Moderate',
+        updated_at: new Date().toISOString()
+      };
 
-      if (error) throw error;
+      const { error } = await supabase.from('profiles').upsert(payload);
+
+      if (error) {
+        console.error("Supabase Error Object:", error);
+        throw error;
+      }
+      
       window.location.href = '/dashboard';
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving profile:", error);
+      setSubmitError(error.message || "Database connection error. Try again.");
       setLoading(false);
     }
   };
@@ -110,6 +120,7 @@ export default function Onboarding() {
   return (
     <div className="min-h-screen bg-[#0D0D0D] text-white flex flex-col justify-center px-6 relative overflow-hidden selection:bg-mint/30 font-sans">
       
+      {/* PREMIUM GLOW */}
       <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-[#00FFA3]/5 rounded-full blur-[150px] pointer-events-none" />
       <div className="absolute bottom-[-20%] right-[-10%] w-[400px] h-[400px] bg-blue-600/5 rounded-full blur-[120px] pointer-events-none" />
 
@@ -308,7 +319,7 @@ export default function Onboarding() {
                   <div className="relative group">
                     <Clock className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-[#00FFA3] transition-colors" size={18} />
                     <input 
-                      type="number" placeholder="Age"
+                      type="number" placeholder="Age (e.g., 21)"
                       value={formData.age} onChange={(e) => setFormData({...formData, age: e.target.value})}
                       className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white placeholder:text-white/30 focus:outline-none focus:border-[#00FFA3] transition-all"
                     />
@@ -316,7 +327,7 @@ export default function Onboarding() {
                   <div className="relative group">
                     <WeightIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-[#00FFA3] transition-colors" size={18} />
                     <input 
-                      type="number" placeholder="Weight (kg)"
+                      type="number" placeholder="Weight (kg) (e.g., 74)"
                       value={formData.weight} onChange={(e) => setFormData({...formData, weight: e.target.value})}
                       className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white placeholder:text-white/30 focus:outline-none focus:border-[#00FFA3] transition-all"
                     />
@@ -326,7 +337,7 @@ export default function Onboarding() {
                 <div className="relative group">
                   <Ruler className="absolute left-5 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-[#00FFA3] transition-colors" size={20} />
                   <input 
-                    type="number" placeholder="Height (cm)"
+                    type="number" placeholder="Height (cm) (e.g., 175)"
                     value={formData.height} onChange={(e) => setFormData({...formData, height: e.target.value})}
                     className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-4 pl-14 pr-5 text-white placeholder:text-white/30 focus:outline-none focus:border-[#00FFA3] transition-all"
                   />
@@ -385,13 +396,20 @@ export default function Onboarding() {
                 </div>
               </motion.div>
 
-              <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 1.5 }}>
+              <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 1.5 }} className="w-full">
                 <p className="text-xl font-medium text-white/90 mb-2">
-                  "Bhai, ab game start. Aaj se score badhega."
+                  "Bhai, ab game start. Home workouts mein consistency rakhna hai."
                 </p>
-                <p className="text-white/40 text-sm mb-12">
+                <p className="text-white/40 text-sm mb-10">
                   Your personalized AI Coach is ready.
                 </p>
+
+                {submitError && (
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm font-medium text-center shadow-lg">
+                    ⚠️ Error: {submitError} <br/> 
+                    <span className="text-xs text-red-400/70 mt-1 block">Ensure RLS is disabled in Supabase.</span>
+                  </motion.div>
+                )}
                 
                 <button 
                   onClick={handleSubmit} disabled={loading}
