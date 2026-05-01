@@ -10,7 +10,6 @@ export default function Login() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Initialize Supabase Client directly in browser
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -27,7 +26,6 @@ export default function Login() {
     const password = formData.get('password') as string;
     
     try {
-      // Direct login request
       const { error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -37,7 +35,6 @@ export default function Login() {
         setError(authError.message);
         setLoading(false); 
       } else {
-        // Bulletproof hard redirect to break any cache
         window.location.href = '/dashboard'; 
       }
     } catch (err) {
@@ -87,7 +84,8 @@ export default function Login() {
         </form>
 
         <p className="text-center text-white/50 text-sm mt-8">
-          Don't have an account? <Link href="/signup" className="text-mint font-bold hover:underline">Level up here</Link>
+          {/* THE FIX: Don't -> Don&apos;t */}
+          Don&apos;t have an account? <Link href="/signup" className="text-mint font-bold hover:underline">Level up here</Link>
         </p>
       </motion.div>
     </div>
