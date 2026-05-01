@@ -20,7 +20,7 @@ export async function login(formData: FormData) {
               cookieStore.set(name, value, options)
             )
           } catch (error) {
-            // Handled safely by Next.js middleware
+            // Securely ignored. Middleware handles refreshing dynamically.
           }
         },
       },
@@ -59,7 +59,7 @@ export async function signup(formData: FormData) {
               cookieStore.set(name, value, options)
             )
           } catch (error) {
-            // Handled safely by Next.js middleware
+            // Securely ignored
           }
         },
       },
