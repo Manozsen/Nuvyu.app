@@ -2,12 +2,13 @@
 
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Flame, Footprints, Droplets, Camera, Zap, LayoutDashboard, Settings, Bell, ChevronRight, Loader2 } from 'lucide-react';
+import { Flame, Footprints, Droplets, Camera, Zap, LayoutDashboard, Settings, Bell, ChevronRight, LogOut, Loader2 } from 'lucide-react';
 import { createBrowserClient } from '@supabase/ssr';
 
 export default function Dashboard() {
   const [mounted, setMounted] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const data = { score: 82, cal: 1800, steps: 6400, water: 2.5 };
 
   const supabase = createBrowserClient(
@@ -15,11 +16,9 @@ export default function Dashboard() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  // Simple, unbreakable client-side route protection
   useEffect(() => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      
       if (!session) {
         window.location.href = '/login';
       } else {
@@ -27,11 +26,15 @@ export default function Dashboard() {
         setIsCheckingAuth(false);
       }
     };
-    
     checkUser();
   }, [supabase.auth]);
 
-  // Show nothing or a tiny spinner while verifying session to prevent UI flashes
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    await supabase.auth.signOut();
+    window.location.href = '/login';
+  };
+
   if (isCheckingAuth) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -45,9 +48,11 @@ export default function Dashboard() {
   return (
     <div className="relative min-h-screen bg-black text-white pb-28 overflow-hidden selection:bg-mint/30">
       
+      {/* PREMIUM BACKGROUND GLOWS */}
       <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-mint/10 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[10%] right-[-10%] w-72 h-72 bg-blue-600/10 rounded-full blur-[100px] pointer-events-none" />
 
+      {/* HEADER WITH LOGOUT */}
       <header className="px-6 pt-10 pb-6 flex justify-between items-center z-10 relative">
         <div>
           <motion.h1 
@@ -60,26 +65,33 @@ export default function Dashboard() {
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}
             className="text-white/50 text-sm font-medium mt-1"
           >
-            Good Evening, Manoj.
+            Good Evening.
           </motion.p>
         </div>
-        <div className="flex gap-4 items-center">
+        <div className="flex gap-3 items-center">
+            {/* Sleek Logout Button */}
+            <motion.button 
+              whileTap={{ scale: 0.9 }} 
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center backdrop-blur-md hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-400 transition-all text-white/60"
+            >
+              {isLoggingOut ? <Loader2 size={16} className="animate-spin" /> : <LogOut size={16} />}
+            </motion.button>
             <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center backdrop-blur-md">
               <Bell size={18} className="text-white/80" />
-            </div>
-            <div className="w-10 h-10 rounded-full border border-mint p-0.5">
-              <div className="w-full h-full rounded-full bg-gradient-to-tr from-mint to-blue-500" />
             </div>
         </div>
       </header>
 
       <main className="px-6 space-y-6 z-10 relative">
         
+        {/* BIG SCORE GAUGE */}
         <motion.section 
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
-          className="bg-obsidian border border-white/10 rounded-[2rem] p-6 flex flex-col items-center relative overflow-hidden shadow-2xl"
+          className="bg-obsidian border border-white/10 rounded-[2rem] p-6 flex flex-col items-center relative overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
         >
           <div className="relative w-52 h-52 flex items-center justify-center mb-4">
               <svg className="absolute w-full h-full transform -rotate-90">
@@ -91,13 +103,13 @@ export default function Dashboard() {
                       animate={{ strokeDashoffset: 565 - (565 * data.score) / 100 }}
                       transition={{ duration: 1.5, delay: 0.2, ease: "easeOut" }}
                       strokeLinecap="round"
-                      className="drop-shadow-[0_0_12px_rgba(0,255,163,0.4)]"
+                      className="drop-shadow-[0_0_15px_rgba(0,255,163,0.5)]"
                   />
               </svg>
               <div className="text-center">
                   <motion.span 
                     initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
-                    className="text-6xl font-black tracking-tighter"
+                    className="text-6xl font-black tracking-tighter drop-shadow-lg"
                   >
                     {data.score}
                   </motion.span>
@@ -105,7 +117,7 @@ export default function Dashboard() {
               </div>
           </div>
 
-          <div className="w-full bg-gradient-to-r from-mint/10 to-transparent border-l-4 border-mint p-4 rounded-r-xl">
+          <div className="w-full bg-gradient-to-r from-mint/10 to-transparent border-l-4 border-mint p-4 rounded-r-xl backdrop-blur-sm">
             <div className="flex items-center gap-2 mb-1">
               <Zap size={16} className="text-mint" fill="#00FFA3" />
               <span className="text-xs font-bold text-mint uppercase tracking-wider">Coach Nudge</span>
@@ -116,6 +128,7 @@ export default function Dashboard() {
           </div>
         </motion.section>
 
+        {/* BENTO GRID STATS */}
         <section className="grid grid-cols-2 gap-4">
           <BentoCard icon={Footprints} label="Steps" value={data.steps} target="/ 10k" color="text-mint" delay={0.2} />
           <BentoCard icon={Flame} label="Energy" value={data.cal} target="kcal" color="text-orange-500" delay={0.3} />
@@ -123,7 +136,7 @@ export default function Dashboard() {
           
           <motion.div 
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
-            className="bg-obsidian border border-white/10 rounded-[1.5rem] p-5 flex flex-col justify-between"
+            className="bg-obsidian border border-white/10 rounded-[1.5rem] p-5 flex flex-col justify-between shadow-xl"
           >
             <div className="flex justify-between items-center">
               <span className="text-white/50 text-[10px] font-bold uppercase tracking-widest">Next Level</span>
@@ -143,13 +156,14 @@ export default function Dashboard() {
 
       </main>
 
+      {/* FLOATING ACTION BAR */}
       <div className="fixed bottom-6 left-6 right-6 flex justify-center z-50">
-        <nav className="bg-obsidian/80 backdrop-blur-xl border border-white/10 rounded-full px-6 py-4 flex items-center gap-12 shadow-2xl">
+        <nav className="bg-obsidian/80 backdrop-blur-xl border border-white/10 rounded-full px-6 py-4 flex items-center gap-12 shadow-[0_10px_40px_rgba(0,0,0,0.8)]">
           <LayoutDashboard size={24} className="text-mint" strokeWidth={2.5} />
           
           <motion.div 
             whileTap={{ scale: 0.9 }}
-            className="bg-mint p-4 rounded-full shadow-[0_0_30px_rgba(0,255,163,0.3)] text-black cursor-pointer -mt-8"
+            className="bg-mint p-4 rounded-full shadow-[0_0_30px_rgba(0,255,163,0.4)] text-black cursor-pointer -mt-8 border-4 border-black"
           >
             <Camera size={28} strokeWidth={2.5} />
           </motion.div>
@@ -162,28 +176,11 @@ export default function Dashboard() {
   );
 }
 
-// Fixed standard TypeScript definitions for safety
-function BentoCard({ 
-  icon: Icon, 
-  label, 
-  value, 
-  target, 
-  color, 
-  delay 
-}: { 
-  icon: React.ElementType, 
-  label: string, 
-  value: number | string, 
-  target: string, 
-  color: string, 
-  delay: number 
-}) {
+function BentoCard({ icon: Icon, label, value, target, color, delay }: any) {
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay }}
-      className="bg-obsidian border border-white/10 rounded-[1.5rem] p-5 flex flex-col justify-between h-32"
+      initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay }}
+      className="bg-obsidian border border-white/10 rounded-[1.5rem] p-5 flex flex-col justify-between h-32 shadow-xl"
     >
       <div className="flex items-center gap-2">
         <Icon size={18} className={color} />
