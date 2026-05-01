@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { login } from '../auth/actions';
+import { login } from '../auth/actions'; // Server Action Import kiya
 
 export default function Login() {
   const [error, setError] = useState<string | null>(null);
@@ -19,14 +19,13 @@ export default function Login() {
     const formData = new FormData(e.currentTarget); 
     
     try {
-      // Calling SSR Server Action
       const res = await login(formData);
       
       if (res?.error) {
         setError(res.error);
         setLoading(false); 
       } else if (res?.success) {
-        // Hard-redirect is strictly required here to bypass Next.js cache and trigger Middleware
+        // Hard-redirect to ensure Middleware sees the fresh cookie instantly
         window.location.href = '/dashboard'; 
       }
     } catch (err) {
