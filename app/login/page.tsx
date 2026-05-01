@@ -4,17 +4,11 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { createBrowserClient } from '@supabase/ssr';
+import { login } from '../auth/actions';
 
 export default function Login() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
-  // Initialize Supabase Client directly in browser
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
 
   async function handleForm(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault(); 
@@ -23,24 +17,20 @@ export default function Login() {
     setError(null);
     
     const formData = new FormData(e.currentTarget); 
-    const email = formData.get('email') as string;
-    const password = formData.get('password') as string;
     
     try {
-      const { error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      // Calling SSR Server Action
+      const res = await login(formData);
       
-      if (authError) {
-        setError(authError.message);
+      if (res?.error) {
+        setError(res.error);
         setLoading(false); 
-      } else {
-        // Hard-redirect to completely bypass Next.js cache
+      } else if (res?.success) {
+        // Hard-redirect is strictly required here to bypass Next.js cache and trigger Middleware
         window.location.href = '/dashboard'; 
       }
     } catch (err) {
-      setError("Network error. Please try again.");
+      setError("An unexpected error occurred. Please try again.");
       setLoading(false); 
     }
   }
