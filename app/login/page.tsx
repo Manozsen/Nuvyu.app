@@ -4,11 +4,17 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { login } from '../auth/actions'; // Server Action Import kiya
+import { createBrowserClient } from '@supabase/ssr';
 
 export default function Login() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Initialize Supabase Client directly in browser
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
 
   async function handleForm(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault(); 
@@ -17,19 +23,24 @@ export default function Login() {
     setError(null);
     
     const formData = new FormData(e.currentTarget); 
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
     
     try {
-      const res = await login(formData);
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
       
-      if (res?.error) {
-        setError(res.error);
+      if (authError) {
+        setError(authError.message);
         setLoading(false); 
-      } else if (res?.success) {
-        // Hard-redirect to ensure Middleware sees the fresh cookie instantly
+      } else {
+        // Hard-redirect to completely bypass Next.js cache
         window.location.href = '/dashboard'; 
       }
     } catch (err) {
-      setError("An unexpected error occurred. Please try again.");
+      setError("Network error. Please try again.");
       setLoading(false); 
     }
   }
