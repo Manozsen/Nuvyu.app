@@ -2,69 +2,35 @@
 
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Flame, Footprints, Droplets, Camera, Zap, LayoutDashboard, Settings, Bell, ChevronRight, LogOut, Loader2, Plus } from 'lucide-react';
+import { Flame, Footprints, Droplets, Camera, Zap, LayoutDashboard, Settings, Bell, ChevronRight, LogOut, Loader2, Plus, Activity } from 'lucide-react';
 import { createBrowserClient } from '@supabase/ssr';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function Dashboard() {
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
   
-  const [metrics, setMetrics] = useState({ score: 0, cal: 0, steps: 0, water: 0 });
+  const [metrics, setMetrics] = useState({ score: 0, steps: 0, water: 0, logsCount: 0 });
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  const fetchTodayLogs = async (uid: string, baseScore: number) => {
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
-
-    const { data: logs, error: logsError } = await supabase
-      .from('daily_logs')
-      .select('*')
-      .eq('user_id', uid)
-      .gte('created_at', startOfDay.toISOString());
-
-    let totalSteps = 0;
-    let totalWater = 0;
-    let totalCal = 0;
-
-    if (logs && !logsError) {
-      logs.forEach(log => {
-        const val = Number(log.data?.value || log.data?.amount || log.data?.[log.log_type] || 0);
-        if (log.log_type === 'steps') totalSteps += val;
-        if (log.log_type === 'water') totalWater += val;
-        if (log.log_type === 'calories' || log.log_type === 'food') totalCal += val;
-      });
-    }
-
-    let dynamicScore = baseScore; 
-    
-    if (totalSteps > 0) dynamicScore += Math.min(20, (totalSteps / 1000) * 2);
-    if (totalWater > 0) dynamicScore += Math.min(10, totalWater * 2); // Water is now calculated properly even with large inputs (though you may tweak the multiplier later)
-    if (totalCal > 0) dynamicScore += 5;
-
-    setMetrics({
-      score: Math.floor(dynamicScore),
-      steps: totalSteps,
-      water: totalWater,
-      cal: totalCal
-    });
-  };
-
   useEffect(() => {
-    const fetchUserData = async () => {
+    const fetchDashboardData = async () => {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       
       if (authError || !user) {
-        window.location.href = '/login';
+        router.push('/login');
         return;
       }
 
+      // 1. Fetch specific user's profile
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
@@ -72,24 +38,101 @@ export default function Dashboard() {
         .single();
 
       if (profileError || !profile) {
-        window.location.href = '/onboarding';
+        router.push('/onboarding');
         return;
       }
 
       setUserProfile(profile);
-      await fetchTodayLogs(user.id, profile.current_score || 40);
+
+      // 2. Fetch today's logs & Run Dynamic Engine
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const { data: logs } = await supabase
+        .from('daily_logs')
+        .select('*')
+        .eq('user_id', user.id)
+        .gte('created_at', startOfDay.toISOString());
+
+      let totalSteps = 0;
+      let totalWater = 0;
+      let lastLogTime = 0;
+      let logsCount = logs ? logs.length : 0;
+
+      if (logs) {
+        logs.forEach(log => {
+          const val = Number(log.data?.amount || 0);
+          if (log.log_type === 'steps') totalSteps += val;
+          if (log.log_type === 'water') totalWater += val;
+          
+          const logTime = new Date(log.created_at).getTime();
+          if (logTime > lastLogTime) lastLogTime = logTime;
+        });
+      }
+
+      let dynamicScore = 40; // Base
+      
+      if (totalSteps >= 6000) dynamicScore += 20;
+      else if (totalSteps >= 3000) dynamicScore += 10;
+
+      if (totalWater >= 2000) dynamicScore += 15;
+      else if (totalWater >= 1000) dynamicScore += 8;
+
+      if (logsCount >= 2) dynamicScore += 5;
+
+      // Time Penalty Check
+      const currentHour = new Date().getHours();
+      if (logsCount === 0) {
+        if (currentHour >= 14) dynamicScore -= 10; // 2 PM
+        else if (currentHour >= 10) dynamicScore -= 5; // 10 AM
+      } else {
+        const hoursSinceLast = (Date.now() - lastLogTime) / (1000 * 60 * 60);
+        if (hoursSinceLast >= 6) dynamicScore -= 10;
+        else if (hoursSinceLast >= 4) dynamicScore -= 5;
+      }
+
+      dynamicScore = Math.max(0, Math.min(100, Math.floor(dynamicScore)));
+
+      // If score changed due to time penalty, save it to DB silently
+      if (dynamicScore !== profile.current_score) {
+        await supabase.from('profiles').update({ current_score: dynamicScore }).eq('id', user.id);
+      }
+
+      setMetrics({
+        score: dynamicScore,
+        steps: totalSteps,
+        water: totalWater,
+        logsCount: logsCount
+      });
 
       setMounted(true);
       setIsCheckingAuth(false);
     };
 
-    fetchUserData();
-  }, [supabase.auth]);
+    fetchDashboardData();
+  }, [supabase.auth, router]);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
     await supabase.auth.signOut();
     window.location.href = '/login';
+  };
+
+  // Rule-based Smart Nudge (No AI)
+  const getSmartNudge = () => {
+    const hour = new Date().getHours();
+    
+    if (metrics.water < 1000 && hour >= 15) {
+      return "Paani pee le bhai. Target hit kar.";
+    }
+    if (metrics.steps < 2000 && hour >= 14) {
+      return "Move kar. 10 min walk kar.";
+    }
+    
+    if (metrics.score >= 80) return "Beast mode ON! Kya solid score hai aaj.";
+    if (metrics.logsCount === 0) return "Din shuru ho chuka hai. Pehla log enter kar!";
+    
+    return "Good progress. Keep going.";
   };
 
   if (isCheckingAuth) {
@@ -101,17 +144,6 @@ export default function Dashboard() {
   }
 
   if (!mounted || !userProfile) return null;
-
-  const generateNudge = (profile: any) => {
-    const name = profile.full_name ? profile.full_name.split(' ')[0] : 'Bhai';
-    if (profile.desired_identity === 'Lean & Fit') {
-      return `${name}, lean banne ka rasta consistency se shuru hota hai. Aaj cardio aur diet pe focus rakho!`;
-    }
-    if (profile.desired_identity === 'Muscular') {
-      return `${name}, muscles build karne hain! Aaj protein intake hit karna compulsory hai, no excuses.`;
-    }
-    return `${name}, consistency solid rakh bhai! Aaj ka target poora karke hi rest lena.`;
-  };
 
   return (
     <div className="relative min-h-screen bg-black text-white pb-28 overflow-hidden selection:bg-[#00FFA3]/30">
@@ -129,7 +161,7 @@ export default function Dashboard() {
           </motion.h1>
           <motion.p 
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}
-            className="text-white/50 text-sm font-medium mt-1"
+            className="text-white/50 text-sm font-medium mt-1 capitalize"
           >
             Good Evening, {userProfile.full_name ? userProfile.full_name.split(' ')[0] : 'Athlete'}.
           </motion.p>
@@ -187,7 +219,7 @@ export default function Dashboard() {
               <span className="text-xs font-bold text-[#00FFA3] uppercase tracking-wider">Coach Nudge</span>
             </div>
             <p className="text-sm font-medium text-white/90 leading-relaxed">
-              &quot;{generateNudge(userProfile)}&quot;
+              &quot;{getSmartNudge()}&quot;
             </p>
           </div>
         </motion.section>
@@ -203,26 +235,28 @@ export default function Dashboard() {
         </div>
 
         <section className="grid grid-cols-2 gap-4">
-          <BentoCard icon={Footprints} label="Steps" value={metrics.steps} target="/ 10k" color="text-[#00FFA3]" delay={0.2} />
-          <BentoCard icon={Flame} label="Energy" value={metrics.cal} target="kcal" color="text-orange-500" delay={0.3} />
-          <BentoCard icon={Droplets} label="Water (ml)" value={metrics.water} target="ml" color="text-blue-400" delay={0.4} />
+          <BentoCard icon={Footprints} label="Steps" value={metrics.steps} target="" color="text-[#00FFA3]" delay={0.2} />
           
+          {/* Energy Card mapped to TDEE Target */}
+          <BentoCard icon={Flame} label="Energy" value={0} target={`/ ${userProfile.tdee || 0} kcal`} color="text-orange-500" delay={0.3} />
+          
+          <BentoCard icon={Droplets} label="Water" value={metrics.water} target="ml" color="text-blue-400" delay={0.4} />
+          
+          {/* BMR Display mapping seamlessly onto 4th card */}
           <motion.div 
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
             className="bg-[#0A0A0A] border border-white/10 rounded-[1.5rem] p-5 flex flex-col justify-between shadow-xl"
           >
             <div className="flex justify-between items-center">
-              <span className="text-white/50 text-[10px] font-bold uppercase tracking-widest">Next Level</span>
-              <ChevronRight size={16} className="text-white/30" />
+              <span className="text-white/50 text-[10px] font-bold uppercase tracking-widest">Base Met.</span>
+              <Activity size={16} className="text-white/30" />
             </div>
-            <div>
-              <div className="text-xl font-bold mb-2">Level 4</div>
-              <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
-                  <motion.div 
-                    initial={{ width: 0 }} animate={{ width: "65%" }} transition={{ duration: 1, delay: 0.8 }}
-                    className="h-full bg-gradient-to-r from-blue-500 to-[#00FFA3] rounded-full" 
-                  />
+            <div className="mt-2">
+              <div className="flex items-baseline gap-1 mb-1">
+                <span className="text-2xl font-bold">{userProfile.bmr || 0}</span>
+                <span className="text-white/40 text-[10px] font-medium">kcal/day</span>
               </div>
+              <div className="text-[#00FFA3] text-[10px] font-bold uppercase tracking-widest">BMR</div>
             </div>
           </motion.div>
         </section>
