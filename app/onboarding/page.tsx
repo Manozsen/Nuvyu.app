@@ -30,7 +30,7 @@ export default function Onboarding() {
     age: '',
     weight: '',
     height: '',
-    gender: '', // New Gender Field
+    gender: '',
     activityLevel: 'Moderate'
   });
 
@@ -78,18 +78,42 @@ export default function Onboarding() {
     setSubmitError(null);
 
     try {
+      // Parse values
+      const weight = parseFloat(formData.weight) || 0;
+      const height = parseFloat(formData.height) || 0;
+      const age = parseInt(formData.age) || 0;
+
+      // BMR Calculation logic
+      let calculatedBMR = 0;
+      if (formData.gender === 'Female') {
+        calculatedBMR = (10 * weight) + (6.25 * height) - (5 * age) - 161;
+      } else {
+        // Defaults to male formula if "Prefer not to say" or "Male"
+        calculatedBMR = (10 * weight) + (6.25 * height) - (5 * age) + 5;
+      }
+      
+      // TDEE Calculation Logic
+      let activityFactor = 1.2; // Sedentary
+      if (formData.activityLevel === 'Moderate') activityFactor = 1.55;
+      else if (formData.activityLevel === 'Active') activityFactor = 1.725;
+      
+      const calculatedTDEE = Math.round(calculatedBMR * activityFactor);
+      calculatedBMR = Math.round(calculatedBMR);
+
       const payload = {
         id: userId,
         full_name: formData.name || 'Athlete',
-        age: parseInt(formData.age) || 0,
-        weight: parseFloat(formData.weight) || 0,
-        height: parseFloat(formData.height) || 0,
-        gender: formData.gender, // Save Gender to DB
+        age: age,
+        weight: weight,
+        height: height,
+        gender: formData.gender,
         primary_problem: formData.problem === 'Other' ? (formData.customProblem || 'Not specified') : formData.problem,
         desired_identity: formData.identity || 'Fit',
         coach_tone: formData.coachTone || 'Strict',
         activity_level: formData.activityLevel || 'Moderate',
         current_score: finalScore,
+        bmr: calculatedBMR,
+        tdee: calculatedTDEE,
         updated_at: new Date().toISOString()
       };
 
@@ -112,7 +136,7 @@ export default function Onboarding() {
     if (step === 1) return formData.problem && (formData.problem !== 'Other' || formData.customProblem.trim().length > 0);
     if (step === 2) return formData.identity;
     if (step === 3) return formData.coachTone;
-    if (step === 4) return formData.name && formData.age && formData.weight && formData.height && formData.gender; // Validate Gender
+    if (step === 4) return formData.name && formData.age && formData.weight && formData.height && formData.gender; 
     return true;
   };
 
@@ -125,7 +149,6 @@ export default function Onboarding() {
   return (
     <div className="min-h-screen bg-[#0D0D0D] text-white flex flex-col justify-center px-6 relative overflow-hidden selection:bg-mint/30 font-sans">
       
-      {/* PREMIUM GLOW */}
       <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-[#00FFA3]/5 rounded-full blur-[150px] pointer-events-none" />
       <div className="absolute bottom-[-20%] right-[-10%] w-[400px] h-[400px] bg-blue-600/5 rounded-full blur-[120px] pointer-events-none" />
 
@@ -320,7 +343,6 @@ export default function Onboarding() {
                   />
                 </div>
 
-                {/* GENDER FIELD (New Addition matching Activity Level design) */}
                 <div>
                   <p className="text-white/50 text-xs font-bold uppercase tracking-widest mb-3 mt-1">Gender</p>
                   <div className="flex bg-white/[0.03] p-1 rounded-2xl border border-white/10">
@@ -430,7 +452,7 @@ export default function Onboarding() {
                 {submitError && (
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm font-medium text-center shadow-lg">
                     ⚠️ Error: {submitError} <br/> 
-                    <span className="text-xs text-red-400/70 mt-1 block">Ensure RLS is disabled in Supabase.</span>
+                    <span className="text-xs text-red-400/70 mt-1 block">Ensure columns are added in Supabase.</span>
                   </motion.div>
                 )}
                 
