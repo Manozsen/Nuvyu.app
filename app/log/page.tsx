@@ -50,12 +50,19 @@ export default function LogActivity() {
         throw error;
       }
       
-      // Success -> Hard redirect to dashboard to refresh data
       window.location.href = '/dashboard';
     } catch (error: any) {
       console.error("Error saving log:", error);
       setSubmitError(error.message || "Table 'daily_logs' missing or RLS is enabled.");
       setLoading(false);
+    }
+  };
+
+  const handleBackNavigation = () => {
+    if (window.history.length > 2) {
+      router.back();
+    } else {
+      router.push('/dashboard');
     }
   };
 
@@ -70,13 +77,12 @@ export default function LogActivity() {
   return (
     <div className="min-h-screen bg-[#0D0D0D] text-white flex flex-col px-6 relative overflow-hidden selection:bg-[#00FFA3]/30">
       
-      {/* PREMIUM GLOWS */}
       <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-[#00FFA3]/10 rounded-full blur-[150px] pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[400px] h-[400px] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none" />
 
       <header className="pt-10 pb-6 flex items-center gap-4 z-10 relative">
         <button 
-          onClick={() => router.push('/dashboard')}
+          onClick={handleBackNavigation}
           className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center backdrop-blur-xl hover:bg-white/10 transition-all text-white/60 hover:text-white shadow-lg"
         >
           <ArrowLeft size={22} />
@@ -94,7 +100,6 @@ export default function LogActivity() {
           transition={{ duration: 0.4, ease: "easeOut" }}
           className="bg-[#0A0A0A]/90 backdrop-blur-2xl border border-white/10 rounded-[2rem] p-6 shadow-[0_10px_40px_rgba(0,0,0,0.5)] relative"
         >
-          {/* TYPE SELECTOR */}
           <div className="flex gap-2 mb-8 bg-black/50 p-1.5 rounded-2xl border border-white/5 shadow-inner">
             <button 
               onClick={() => { setLogType('water'); setAmount(''); setSubmitError(null); }}
@@ -115,7 +120,6 @@ export default function LogActivity() {
           </div>
 
           <div className="space-y-6 mb-8">
-            {/* QUICK ADD BUTTONS */}
             <AnimatePresence mode="wait">
               {logType === 'water' && (
                 <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
@@ -136,7 +140,6 @@ export default function LogActivity() {
               )}
             </AnimatePresence>
 
-            {/* MANUAL INPUT (Typography Fixed) */}
             <div>
               <p className="text-white/50 text-[10px] font-bold uppercase tracking-widest mb-3">
                 {logType === 'water' ? 'Manual Amount (ml)' : 'Manual Amount (Steps)'}
@@ -157,7 +160,6 @@ export default function LogActivity() {
             </div>
           </div>
 
-          {/* ERROR ALERT */}
           <AnimatePresence>
             {submitError && (
               <motion.div 
@@ -173,7 +175,6 @@ export default function LogActivity() {
             )}
           </AnimatePresence>
 
-          {/* SUBMIT BUTTON */}
           <motion.button 
             whileTap={!amount || loading ? {} : { scale: 0.98 }}
             onClick={handleSave} 
