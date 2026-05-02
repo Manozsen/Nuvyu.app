@@ -18,6 +18,7 @@ export default function Onboarding() {
   const [userId, setUserId] = useState<string | null>(null);
   const [hookText, setHookText] = useState("");
   const [startingScore, setStartingScore] = useState(0);
+  const [finalScore, setFinalScore] = useState(40); // Holds the actual generated score
   const [submitError, setSubmitError] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
@@ -54,6 +55,7 @@ export default function Onboarding() {
     if (step === 5) {
       let current = 0;
       const target = Math.floor(Math.random() * (55 - 35 + 1)) + 35;
+      setFinalScore(target); // Lock in the generated target score
       const interval = setInterval(() => {
         current += 1;
         setStartingScore(current);
@@ -85,6 +87,7 @@ export default function Onboarding() {
         desired_identity: formData.identity || 'Fit',
         coach_tone: formData.coachTone || 'Strict',
         activity_level: formData.activityLevel || 'Moderate',
+        current_score: finalScore, // Save the dynamically generated score
         updated_at: new Date().toISOString()
       };
 
