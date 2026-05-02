@@ -11,8 +11,7 @@ export default function Dashboard() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
   
-  // Real dynamic metrics from database
-  const [metrics, setMetrics] = useState({ score: 40, cal: 0, steps: 0, water: 0 });
+  const [metrics, setMetrics] = useState({ score: 0, cal: 0, steps: 0, water: 0 });
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -53,33 +52,33 @@ export default function Dashboard() {
         .eq('user_id', user.id)
         .gte('created_at', startOfDay.toISOString());
 
-      if (logs && !logsError) {
-        let totalSteps = 0;
-        let totalWater = 0;
-        let totalCal = 0;
+      let totalSteps = 0;
+      let totalWater = 0;
+      let totalCal = 0;
 
+      if (logs && !logsError) {
         logs.forEach(log => {
-          // Flexible JSON parsing (extracts value, amount, or log_type key)
           const val = Number(log.data?.value || log.data?.amount || log.data?.[log.log_type] || 0);
-          
           if (log.log_type === 'steps') totalSteps += val;
           if (log.log_type === 'water') totalWater += val;
           if (log.log_type === 'calories' || log.log_type === 'food') totalCal += val;
         });
-
-        // Dynamic base score calculation based on daily activity
-        let dynamicScore = 40; 
-        if (totalSteps > 0) dynamicScore += Math.min(20, (totalSteps / 1000) * 2);
-        if (totalWater > 0) dynamicScore += Math.min(10, totalWater * 2);
-        if (totalCal > 0) dynamicScore += 5;
-
-        setMetrics({
-          score: Math.floor(dynamicScore),
-          steps: totalSteps,
-          water: totalWater,
-          cal: totalCal
-        });
       }
+
+      // Fetch the exact score saved during onboarding (defaults to 40 if not found)
+      let dynamicScore = profile.current_score || 40; 
+      
+      // Calculate dynamic additions based on today's logs
+      if (totalSteps > 0) dynamicScore += Math.min(20, (totalSteps / 1000) * 2);
+      if (totalWater > 0) dynamicScore += Math.min(10, totalWater * 2);
+      if (totalCal > 0) dynamicScore += 5;
+
+      setMetrics({
+        score: Math.floor(dynamicScore),
+        steps: totalSteps,
+        water: totalWater,
+        cal: totalCal
+      });
 
       setMounted(true);
       setIsCheckingAuth(false);
