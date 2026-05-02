@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { Flame, Footprints, Droplets, Camera, Zap, LayoutDashboard, Settings, Bell, ChevronRight, LogOut, Loader2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Flame, Footprints, Droplets, Zap, LayoutDashboard, Settings, Bell, ChevronRight, LogOut, Loader2, Plus, X } from 'lucide-react';
 import { createBrowserClient } from '@supabase/ssr';
 
 export default function Dashboard() {
@@ -11,16 +11,59 @@ export default function Dashboard() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
   
+  // Metrics state
   const [metrics, setMetrics] = useState({ score: 0, cal: 0, steps: 0, water: 0 });
+
+  // Logging Modal state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [logType, setLogType] = useState<'water' | 'steps'>('water');
+  const [logValue, setLogValue] = useState('');
+  const [isSubmittingLog, setIsSubmittingLog] = useState(false);
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
+  const fetchTodayLogs = async (uid: string, baseScore: number) => {
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const { data: logs, error: logsError } = await supabase
+      .from('daily_logs')
+      .select('*')
+      .eq('user_id', uid)
+      .gte('created_at', startOfDay.toISOString());
+
+    let totalSteps = 0;
+    let totalWater = 0;
+    let totalCal = 0;
+
+    if (logs && !logsError) {
+      logs.forEach(log => {
+        const val = Number(log.data?.value || log.data?.amount || log.data?.[log.log_type] || 0);
+        if (log.log_type === 'steps') totalSteps += val;
+        if (log.log_type === 'water') totalWater += val;
+        if (log.log_type === 'calories' || log.log_type === 'food') totalCal += val;
+      });
+    }
+
+    let dynamicScore = baseScore; 
+    
+    if (totalSteps > 0) dynamicScore += Math.min(20, (totalSteps / 1000) * 2);
+    if (totalWater > 0) dynamicScore += Math.min(10, totalWater * 2);
+    if (totalCal > 0) dynamicScore += 5;
+
+    setMetrics({
+      score: Math.floor(dynamicScore),
+      steps: totalSteps,
+      water: totalWater,
+      cal: totalCal
+    });
+  };
+
   useEffect(() => {
     const fetchUserData = async () => {
-      // 1. Get authenticated user
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       
       if (authError || !user) {
@@ -28,7 +71,6 @@ export default function Dashboard() {
         return;
       }
 
-      // 2. Fetch specific user's profile
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
@@ -41,44 +83,7 @@ export default function Dashboard() {
       }
 
       setUserProfile(profile);
-
-      // 3. Fetch ONLY today's logs for this specific user
-      const startOfDay = new Date();
-      startOfDay.setHours(0, 0, 0, 0);
-
-      const { data: logs, error: logsError } = await supabase
-        .from('daily_logs')
-        .select('*')
-        .eq('user_id', user.id)
-        .gte('created_at', startOfDay.toISOString());
-
-      let totalSteps = 0;
-      let totalWater = 0;
-      let totalCal = 0;
-
-      if (logs && !logsError) {
-        logs.forEach(log => {
-          const val = Number(log.data?.value || log.data?.amount || log.data?.[log.log_type] || 0);
-          if (log.log_type === 'steps') totalSteps += val;
-          if (log.log_type === 'water') totalWater += val;
-          if (log.log_type === 'calories' || log.log_type === 'food') totalCal += val;
-        });
-      }
-
-      // Fetch the exact score saved during onboarding (defaults to 40 if not found)
-      let dynamicScore = profile.current_score || 40; 
-      
-      // Calculate dynamic additions based on today's logs
-      if (totalSteps > 0) dynamicScore += Math.min(20, (totalSteps / 1000) * 2);
-      if (totalWater > 0) dynamicScore += Math.min(10, totalWater * 2);
-      if (totalCal > 0) dynamicScore += 5;
-
-      setMetrics({
-        score: Math.floor(dynamicScore),
-        steps: totalSteps,
-        water: totalWater,
-        cal: totalCal
-      });
+      await fetchTodayLogs(user.id, profile.current_score || 40);
 
       setMounted(true);
       setIsCheckingAuth(false);
@@ -93,6 +98,27 @@ export default function Dashboard() {
     window.location.href = '/login';
   };
 
+  const handleAddLog = async () => {
+    if (!logValue || isNaN(Number(logValue)) || !userProfile) return;
+    setIsSubmittingLog(true);
+
+    const { error } = await supabase.from('daily_logs').insert({
+      user_id: userProfile.id,
+      log_type: logType,
+      data: { amount: Number(logValue) }
+    });
+
+    if (!error) {
+      await fetchTodayLogs(userProfile.id, userProfile.current_score || 40);
+      setIsModalOpen(false);
+      setLogValue('');
+    } else {
+      console.error("Failed to add log:", error);
+    }
+    
+    setIsSubmittingLog(false);
+  };
+
   if (isCheckingAuth) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -103,7 +129,6 @@ export default function Dashboard() {
 
   if (!mounted || !userProfile) return null;
 
-  // Personalized dynamic AI Nudge
   const generateNudge = (profile: any) => {
     const name = profile.full_name ? profile.full_name.split(' ')[0] : 'Bhai';
     if (profile.desired_identity === 'Lean & Fit') {
@@ -118,11 +143,9 @@ export default function Dashboard() {
   return (
     <div className="relative min-h-screen bg-black text-white pb-28 overflow-hidden selection:bg-[#00FFA3]/30">
       
-      {/* PREMIUM BACKGROUND GLOWS */}
       <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-[#00FFA3]/10 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[10%] right-[-10%] w-72 h-72 bg-blue-600/10 rounded-full blur-[100px] pointer-events-none" />
 
-      {/* HEADER WITH LOGOUT */}
       <header className="px-6 pt-10 pb-6 flex justify-between items-center z-10 relative">
         <div>
           <motion.h1 
@@ -155,7 +178,6 @@ export default function Dashboard() {
 
       <main className="px-6 space-y-6 z-10 relative">
         
-        {/* BIG SCORE GAUGE */}
         <motion.section 
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -197,7 +219,16 @@ export default function Dashboard() {
           </div>
         </motion.section>
 
-        {/* BENTO GRID STATS */}
+        <div className="flex justify-between items-end">
+           <h3 className="text-white/60 font-bold uppercase tracking-widest text-[10px] ml-2">Today's Activity</h3>
+           <button 
+             onClick={() => setIsModalOpen(true)}
+             className="flex items-center gap-1 text-[#00FFA3] text-xs font-bold uppercase tracking-widest bg-[#00FFA3]/10 px-3 py-1.5 rounded-full border border-[#00FFA3]/30 hover:bg-[#00FFA3]/20 transition-all"
+           >
+             <Plus size={14} /> Add Log
+           </button>
+        </div>
+
         <section className="grid grid-cols-2 gap-4">
           <BentoCard icon={Footprints} label="Steps" value={metrics.steps} target="/ 10k" color="text-[#00FFA3]" delay={0.2} />
           <BentoCard icon={Flame} label="Energy" value={metrics.cal} target="kcal" color="text-orange-500" delay={0.3} />
@@ -225,21 +256,77 @@ export default function Dashboard() {
 
       </main>
 
-      {/* FLOATING ACTION BAR */}
-      <div className="fixed bottom-6 left-6 right-6 flex justify-center z-50">
+      <div className="fixed bottom-6 left-6 right-6 flex justify-center z-40">
         <nav className="bg-[#0A0A0A]/80 backdrop-blur-xl border border-white/10 rounded-full px-6 py-4 flex items-center gap-12 shadow-[0_10px_40px_rgba(0,0,0,0.8)]">
           <LayoutDashboard size={24} className="text-[#00FFA3]" strokeWidth={2.5} />
           
-          <motion.div 
+          <motion.button 
             whileTap={{ scale: 0.9 }}
-            className="bg-[#00FFA3] p-4 rounded-full shadow-[0_0_30px_rgba(0,255,163,0.4)] text-black cursor-pointer -mt-8 border-4 border-black"
+            onClick={() => setIsModalOpen(true)}
+            className="bg-[#00FFA3] p-4 rounded-full shadow-[0_0_30px_rgba(0,255,163,0.4)] text-black cursor-pointer -mt-8 border-4 border-black flex items-center justify-center"
           >
-            <Camera size={28} strokeWidth={2.5} />
-          </motion.div>
+            <Plus size={28} strokeWidth={3} />
+          </motion.button>
           
           <Settings size={24} className="text-white/40 hover:text-white transition-colors" />
         </nav>
       </div>
+
+      <AnimatePresence>
+        {isModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }} 
+              animate={{ opacity: 1, scale: 1, y: 0 }} 
+              exit={{ opacity: 0, scale: 0.95, y: 20 }} 
+              className="bg-[#0A0A0A] border border-white/10 rounded-[2rem] p-6 w-full max-w-sm shadow-2xl relative"
+            >
+              <button 
+                onClick={() => setIsModalOpen(false)} 
+                className="absolute top-5 right-5 text-white/40 hover:text-white transition-colors"
+              >
+                <X size={24} />
+              </button>
+              
+              <h3 className="text-2xl font-black tracking-tighter mb-6">Add Log</h3>
+
+              <div className="flex gap-2 mb-6">
+                {['water', 'steps'].map((type) => (
+                  <button 
+                    key={type} 
+                    onClick={() => { setLogType(type as 'water' | 'steps'); setLogValue(''); }} 
+                    className={`flex-1 py-4 rounded-2xl border font-bold capitalize transition-all ${
+                      logType === type 
+                        ? 'bg-[#00FFA3]/10 border-[#00FFA3] text-[#00FFA3] shadow-[0_0_15px_rgba(0,255,163,0.15)]' 
+                        : 'bg-white/5 border-white/10 text-white/50 hover:bg-white/10'
+                    }`}
+                  >
+                    {type}
+                  </button>
+                ))}
+              </div>
+
+              <div className="relative mb-6">
+                <input 
+                  type="number" 
+                  value={logValue} 
+                  onChange={e => setLogValue(e.target.value)} 
+                  placeholder={logType === 'water' ? 'Amount (e.g. 1.5 Liters)' : 'Amount (e.g. 2000 steps)'} 
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-xl font-bold text-white placeholder:text-white/20 focus:border-[#00FFA3] focus:ring-1 focus:ring-[#00FFA3] focus:outline-none transition-all" 
+                />
+              </div>
+
+              <button 
+                onClick={handleAddLog} 
+                disabled={!logValue || isSubmittingLog} 
+                className="w-full bg-[#00FFA3] text-black font-black text-lg py-5 rounded-2xl flex justify-center items-center gap-2 disabled:opacity-50 disabled:grayscale transition-all hover:shadow-[0_0_20px_rgba(0,255,163,0.4)]"
+              >
+                {isSubmittingLog ? <Loader2 className="animate-spin" size={24}/> : "Save Progress"}
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
     </div>
   );
