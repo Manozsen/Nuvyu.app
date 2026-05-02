@@ -4,9 +4,10 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Loader2, Droplets, Footprints, CheckCircle2, AlertCircle } from 'lucide-react';
 import { createBrowserClient } from '@supabase/ssr';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function LogActivity() {
+  const router = useRouter();
   const [logType, setLogType] = useState<'water' | 'steps'>('water');
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
@@ -23,14 +24,14 @@ export default function LogActivity() {
     const checkUser = async () => {
       const { data: { user }, error } = await supabase.auth.getUser();
       if (error || !user) {
-        window.location.href = '/login';
+        router.push('/login');
       } else {
         setUserId(user.id);
         setIsAuthChecking(false);
       }
     };
     checkUser();
-  }, [supabase.auth]);
+  }, [supabase.auth, router]);
 
   const handleSave = async () => {
     if (!amount || isNaN(Number(amount)) || !userId) return;
@@ -74,9 +75,12 @@ export default function LogActivity() {
       <div className="absolute bottom-[-10%] right-[-10%] w-[400px] h-[400px] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none" />
 
       <header className="pt-10 pb-6 flex items-center gap-4 z-10 relative">
-        <Link href="/dashboard" className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center backdrop-blur-xl hover:bg-white/10 transition-all text-white/60 hover:text-white shadow-lg">
+        <button 
+          onClick={() => router.push('/dashboard')}
+          className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center backdrop-blur-xl hover:bg-white/10 transition-all text-white/60 hover:text-white shadow-lg"
+        >
           <ArrowLeft size={22} />
-        </Link>
+        </button>
         <div>
           <h1 className="text-3xl font-black tracking-tighter leading-none">Add <span className="text-[#00FFA3]">Log</span></h1>
           <p className="text-white/40 text-xs font-medium mt-1">Track your daily progress</p>
@@ -90,7 +94,7 @@ export default function LogActivity() {
           transition={{ duration: 0.4, ease: "easeOut" }}
           className="bg-[#0A0A0A]/90 backdrop-blur-2xl border border-white/10 rounded-[2rem] p-6 shadow-[0_10px_40px_rgba(0,0,0,0.5)] relative"
         >
-          {/* TYPE SELECTOR (Segmented Control Style) */}
+          {/* TYPE SELECTOR */}
           <div className="flex gap-2 mb-8 bg-black/50 p-1.5 rounded-2xl border border-white/5 shadow-inner">
             <button 
               onClick={() => { setLogType('water'); setAmount(''); setSubmitError(null); }}
@@ -132,7 +136,7 @@ export default function LogActivity() {
               )}
             </AnimatePresence>
 
-            {/* MANUAL INPUT */}
+            {/* MANUAL INPUT (Typography Fixed) */}
             <div>
               <p className="text-white/50 text-[10px] font-bold uppercase tracking-widest mb-3">
                 {logType === 'water' ? 'Manual Amount (ml)' : 'Manual Amount (Steps)'}
@@ -143,17 +147,17 @@ export default function LogActivity() {
                   value={amount} 
                   onChange={e => setAmount(e.target.value)} 
                   placeholder={logType === 'water' ? 'e.g. 300' : 'e.g. 2500'} 
-                  className="w-full bg-black/40 border border-white/10 rounded-2xl p-6 text-3xl font-black text-center text-white placeholder:text-white/10 focus:border-[#00FFA3] focus:ring-1 focus:ring-[#00FFA3] focus:outline-none transition-all shadow-inner" 
+                  className="w-full bg-black/40 border border-white/10 rounded-2xl p-6 text-2xl font-black text-center text-white placeholder:text-sm placeholder:font-medium placeholder:text-white/20 focus:border-[#00FFA3] focus:ring-1 focus:ring-[#00FFA3] focus:outline-none transition-all shadow-inner" 
                   autoFocus
                 />
-                <span className="absolute right-6 top-1/2 -translate-y-1/2 text-white/20 font-bold tracking-widest">
+                <span className="absolute right-6 top-1/2 -translate-y-1/2 text-white/20 text-sm font-bold tracking-widest">
                   {logType === 'water' ? 'ML' : 'STEPS'}
                 </span>
               </div>
             </div>
           </div>
 
-          {/* ERROR ALERT (Visible only if Supabase rejects data) */}
+          {/* ERROR ALERT */}
           <AnimatePresence>
             {submitError && (
               <motion.div 
