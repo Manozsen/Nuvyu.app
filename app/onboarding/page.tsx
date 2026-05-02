@@ -18,7 +18,7 @@ export default function Onboarding() {
   const [userId, setUserId] = useState<string | null>(null);
   const [hookText, setHookText] = useState("");
   const [startingScore, setStartingScore] = useState(0);
-  const [finalScore, setFinalScore] = useState(40); // Holds the actual generated score
+  const [finalScore, setFinalScore] = useState(40);
   const [submitError, setSubmitError] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
@@ -30,6 +30,7 @@ export default function Onboarding() {
     age: '',
     weight: '',
     height: '',
+    gender: '', // New Gender Field
     activityLevel: 'Moderate'
   });
 
@@ -55,7 +56,7 @@ export default function Onboarding() {
     if (step === 5) {
       let current = 0;
       const target = Math.floor(Math.random() * (55 - 35 + 1)) + 35;
-      setFinalScore(target); // Lock in the generated target score
+      setFinalScore(target);
       const interval = setInterval(() => {
         current += 1;
         setStartingScore(current);
@@ -83,11 +84,12 @@ export default function Onboarding() {
         age: parseInt(formData.age) || 0,
         weight: parseFloat(formData.weight) || 0,
         height: parseFloat(formData.height) || 0,
+        gender: formData.gender, // Save Gender to DB
         primary_problem: formData.problem === 'Other' ? (formData.customProblem || 'Not specified') : formData.problem,
         desired_identity: formData.identity || 'Fit',
         coach_tone: formData.coachTone || 'Strict',
         activity_level: formData.activityLevel || 'Moderate',
-        current_score: finalScore, // Save the dynamically generated score
+        current_score: finalScore,
         updated_at: new Date().toISOString()
       };
 
@@ -110,7 +112,7 @@ export default function Onboarding() {
     if (step === 1) return formData.problem && (formData.problem !== 'Other' || formData.customProblem.trim().length > 0);
     if (step === 2) return formData.identity;
     if (step === 3) return formData.coachTone;
-    if (step === 4) return formData.name && formData.age && formData.weight && formData.height;
+    if (step === 4) return formData.name && formData.age && formData.weight && formData.height && formData.gender; // Validate Gender
     return true;
   };
 
@@ -316,6 +318,24 @@ export default function Onboarding() {
                     value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})}
                     className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-4 pl-14 pr-5 text-white placeholder:text-white/30 focus:outline-none focus:border-[#00FFA3] focus:ring-1 focus:ring-[#00FFA3] transition-all"
                   />
+                </div>
+
+                {/* GENDER FIELD (New Addition matching Activity Level design) */}
+                <div>
+                  <p className="text-white/50 text-xs font-bold uppercase tracking-widest mb-3 mt-1">Gender</p>
+                  <div className="flex bg-white/[0.03] p-1 rounded-2xl border border-white/10">
+                    {['Male', 'Female', 'Prefer not to say'].map((genderOption) => (
+                      <button
+                        key={genderOption}
+                        onClick={() => setFormData({...formData, gender: genderOption})}
+                        className={`flex-1 py-3 text-[11px] sm:text-sm font-medium rounded-xl transition-all ${
+                          formData.gender === genderOption ? 'bg-white/10 text-white shadow-md' : 'text-white/40 hover:text-white/80'
+                        }`}
+                      >
+                        {genderOption}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
