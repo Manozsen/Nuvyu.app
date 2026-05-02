@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Loader2, Droplets, Footprints, CheckCircle2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Loader2, Droplets, Footprints, CheckCircle2, AlertCircle, AlertTriangle } from 'lucide-react';
 import { createBrowserClient } from '@supabase/ssr';
 import { useRouter } from 'next/navigation';
 
@@ -14,6 +14,7 @@ export default function LogActivity() {
   const [userId, setUserId] = useState<string | null>(null);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -33,32 +34,93 @@ export default function LogActivity() {
     checkUser();
   }, [supabase.auth, router]);
 
-  const handleSave = async () => {
-    if (!amount || isNaN(Number(amount)) || !userId) return;
+  const handleInitialSave = () => {
+    const numAmount = Number(amount);
+    if (!amount || isNaN(numAmount)) return;
+    
+    // SMART VALIDATION (Anti-Cheat)
+    if (logType === 'water' && numAmount > 700) {
+      setShowConfirm(true);
+      return;
+    }
+    
+    executeSave();
+  };
+
+  const executeSave = async () => {
+    if (!userId) return;
     setLoading(true);
+    setShowConfirm(false);
     setSubmitError(null);
 
     try {
-      const { error } = await supabase.from('daily_logs').insert({
+      // 1. Insert the new log
+      const { error: insertError } = await supabase.from('daily_logs').insert({
         user_id: userId,
         log_type: logType,
         data: { amount: Number(amount) }
       });
 
-      if (error) {
-        console.error("Supabase Error:", error);
-        throw error;
+      if (insertError) throw insertError;
+
+      // 2. Fetch all logs for today to calculate the new dynamic score
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const { data: logs } = await supabase
+        .from('daily_logs')
+        .select('*')
+        .eq('user_id', userId)
+        .gte('created_at', startOfDay.toISOString());
+
+      // 3. Score Engine Calculation
+      if (logs) {
+        let totalSteps = 0;
+        let totalWater = 0;
+        let lastLogTime = 0;
+
+        logs.forEach(log => {
+          const val = Number(log.data?.amount || 0);
+          if (log.log_type === 'steps') totalSteps += val;
+          if (log.log_type === 'water') totalWater += val;
+          const logTime = new Date(log.created_at).getTime();
+          if (logTime > lastLogTime) lastLogTime = logTime;
+        });
+
+        let newScore = 40; // Base
+        
+        // Positive Triggers
+        if (totalSteps >= 6000) newScore += 20;
+        else if (totalSteps >= 3000) newScore += 10;
+
+        if (totalWater >= 2000) newScore += 15;
+        else if (totalWater >= 1000) newScore += 8;
+
+        if (logs.length >= 2) newScore += 5;
+
+        // Time Penalty
+        const hoursSinceLast = (Date.now() - lastLogTime) / (1000 * 60 * 60);
+        if (hoursSinceLast >= 6) newScore -= 10;
+        else if (hoursSinceLast >= 4) newScore -= 5;
+
+        // Clamp 0-100
+        newScore = Math.max(0, Math.min(100, Math.floor(newScore)));
+
+        // 4. Update Profile with new score
+        await supabase.from('profiles').update({ current_score: newScore }).eq('id', userId);
       }
       
-      window.location.href = '/dashboard';
+      // Success -> Route back to refresh dashboard automatically
+      router.push('/dashboard');
+      
     } catch (error: any) {
       console.error("Error saving log:", error);
-      setSubmitError(error.message || "Table 'daily_logs' missing or RLS is enabled.");
+      setSubmitError(error.message || "Failed to save log.");
       setLoading(false);
     }
   };
 
-  const handleBackNavigation = () => {
+  const goBack = () => {
     if (window.history.length > 2) {
       router.back();
     } else {
@@ -80,10 +142,11 @@ export default function LogActivity() {
       <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-[#00FFA3]/10 rounded-full blur-[150px] pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[400px] h-[400px] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none" />
 
-      <header className="pt-10 pb-6 flex items-center gap-4 z-10 relative">
+      {/* HEADER WITH Z-50 FIX */}
+      <header className="pt-10 pb-6 flex items-center gap-4 z-50 relative pointer-events-auto">
         <button 
-          onClick={handleBackNavigation}
-          className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center backdrop-blur-xl hover:bg-white/10 transition-all text-white/60 hover:text-white shadow-lg"
+          onClick={goBack}
+          className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center backdrop-blur-xl hover:bg-white/10 transition-all text-white/60 hover:text-white shadow-lg cursor-pointer"
         >
           <ArrowLeft size={22} />
         </button>
@@ -151,7 +214,6 @@ export default function LogActivity() {
                   onChange={e => setAmount(e.target.value)} 
                   placeholder={logType === 'water' ? 'e.g. 300' : 'e.g. 2500'} 
                   className="w-full bg-black/40 border border-white/10 rounded-2xl p-6 text-2xl font-black text-center text-white placeholder:text-sm placeholder:font-medium placeholder:text-white/20 focus:border-[#00FFA3] focus:ring-1 focus:ring-[#00FFA3] focus:outline-none transition-all shadow-inner" 
-                  autoFocus
                 />
                 <span className="absolute right-6 top-1/2 -translate-y-1/2 text-white/20 text-sm font-bold tracking-widest">
                   {logType === 'water' ? 'ML' : 'STEPS'}
@@ -177,7 +239,7 @@ export default function LogActivity() {
 
           <motion.button 
             whileTap={!amount || loading ? {} : { scale: 0.98 }}
-            onClick={handleSave} 
+            onClick={handleInitialSave} 
             disabled={!amount || loading} 
             className="w-full bg-[#00FFA3] text-black font-black text-lg py-5 rounded-2xl flex justify-center items-center gap-3 disabled:opacity-30 disabled:grayscale transition-all hover:shadow-[0_0_25px_rgba(0,255,163,0.4)]"
           >
@@ -185,6 +247,44 @@ export default function LogActivity() {
           </motion.button>
         </motion.div>
       </main>
+
+      {/* SMART VALIDATION MODAL */}
+      <AnimatePresence>
+        {showConfirm && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }} 
+              animate={{ opacity: 1, scale: 1 }} 
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="bg-[#0A0A0A] border border-white/10 rounded-[2rem] p-6 w-full max-w-sm shadow-2xl relative"
+            >
+              <div className="w-14 h-14 bg-orange-500/20 rounded-full flex items-center justify-center mb-4 mx-auto border border-orange-500/30">
+                <AlertTriangle size={28} className="text-orange-400" />
+              </div>
+              <h3 className="text-2xl font-black tracking-tighter text-center mb-2">Are you sure?</h3>
+              <p className="text-center text-white/50 text-sm mb-8 leading-relaxed">
+                You entered <strong className="text-white">{amount}ml</strong> at once. This is a very large amount for a single entry.
+              </p>
+              
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => setShowConfirm(false)} 
+                  className="flex-1 py-4 rounded-xl bg-white/5 border border-white/10 text-white/70 font-bold hover:bg-white/10 transition-all text-sm"
+                >
+                  Edit
+                </button>
+                <button 
+                  onClick={executeSave} 
+                  className="flex-1 py-4 rounded-xl bg-orange-500 text-black font-black hover:bg-orange-400 hover:shadow-[0_0_20px_rgba(249,115,22,0.4)] transition-all text-sm"
+                >
+                  Confirm & Save
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 }
