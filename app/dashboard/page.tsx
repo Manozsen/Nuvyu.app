@@ -11,8 +11,8 @@ export default function Dashboard() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
   
-  // Placeholder metrics data
-  const data = { score: 82, cal: 1800, steps: 6400, water: 2.5 };
+  // Real dynamic metrics from database
+  const [metrics, setMetrics] = useState({ score: 40, cal: 0, steps: 0, water: 0 });
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -21,7 +21,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     const fetchUserData = async () => {
-      // 1. Strictly get authenticated user
+      // 1. Get authenticated user
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       
       if (authError || !user) {
@@ -29,20 +29,58 @@ export default function Dashboard() {
         return;
       }
 
-      // 2. Fetch specific user's profile ensuring complete data isolation
+      // 2. Fetch specific user's profile
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
         .single();
 
-      // 3. If no profile exists, force redirect to onboarding
       if (profileError || !profile) {
         window.location.href = '/onboarding';
         return;
       }
 
       setUserProfile(profile);
+
+      // 3. Fetch ONLY today's logs for this specific user
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const { data: logs, error: logsError } = await supabase
+        .from('daily_logs')
+        .select('*')
+        .eq('user_id', user.id)
+        .gte('created_at', startOfDay.toISOString());
+
+      if (logs && !logsError) {
+        let totalSteps = 0;
+        let totalWater = 0;
+        let totalCal = 0;
+
+        logs.forEach(log => {
+          // Flexible JSON parsing (extracts value, amount, or log_type key)
+          const val = Number(log.data?.value || log.data?.amount || log.data?.[log.log_type] || 0);
+          
+          if (log.log_type === 'steps') totalSteps += val;
+          if (log.log_type === 'water') totalWater += val;
+          if (log.log_type === 'calories' || log.log_type === 'food') totalCal += val;
+        });
+
+        // Dynamic base score calculation based on daily activity
+        let dynamicScore = 40; 
+        if (totalSteps > 0) dynamicScore += Math.min(20, (totalSteps / 1000) * 2);
+        if (totalWater > 0) dynamicScore += Math.min(10, totalWater * 2);
+        if (totalCal > 0) dynamicScore += 5;
+
+        setMetrics({
+          score: Math.floor(dynamicScore),
+          steps: totalSteps,
+          water: totalWater,
+          cal: totalCal
+        });
+      }
+
       setMounted(true);
       setIsCheckingAuth(false);
     };
@@ -66,7 +104,7 @@ export default function Dashboard() {
 
   if (!mounted || !userProfile) return null;
 
-  // Personalized dynamic AI Nudge based on user profile
+  // Personalized dynamic AI Nudge
   const generateNudge = (profile: any) => {
     const name = profile.full_name ? profile.full_name.split(' ')[0] : 'Bhai';
     if (profile.desired_identity === 'Lean & Fit') {
@@ -132,7 +170,7 @@ export default function Dashboard() {
                       cx="104" cy="104" r="90" stroke="#00FFA3" strokeWidth="12" fill="transparent"
                       strokeDasharray={565}
                       initial={{ strokeDashoffset: 565 }}
-                      animate={{ strokeDashoffset: 565 - (565 * data.score) / 100 }}
+                      animate={{ strokeDashoffset: 565 - (565 * metrics.score) / 100 }}
                       transition={{ duration: 1.5, delay: 0.2, ease: "easeOut" }}
                       strokeLinecap="round"
                       className="drop-shadow-[0_0_15px_rgba(0,255,163,0.5)]"
@@ -143,7 +181,7 @@ export default function Dashboard() {
                     initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
                     className="text-6xl font-black tracking-tighter drop-shadow-lg"
                   >
-                    {data.score}
+                    {metrics.score}
                   </motion.span>
                   <p className="text-[#00FFA3] text-xs font-bold uppercase tracking-widest mt-1">Daily Score</p>
               </div>
@@ -162,9 +200,9 @@ export default function Dashboard() {
 
         {/* BENTO GRID STATS */}
         <section className="grid grid-cols-2 gap-4">
-          <BentoCard icon={Footprints} label="Steps" value={data.steps} target="/ 10k" color="text-[#00FFA3]" delay={0.2} />
-          <BentoCard icon={Flame} label="Energy" value={data.cal} target="kcal" color="text-orange-500" delay={0.3} />
-          <BentoCard icon={Droplets} label="Water" value={data.water} target="Liters" color="text-blue-400" delay={0.4} />
+          <BentoCard icon={Footprints} label="Steps" value={metrics.steps} target="/ 10k" color="text-[#00FFA3]" delay={0.2} />
+          <BentoCard icon={Flame} label="Energy" value={metrics.cal} target="kcal" color="text-orange-500" delay={0.3} />
+          <BentoCard icon={Droplets} label="Water" value={metrics.water} target="Liters" color="text-blue-400" delay={0.4} />
           
           <motion.div 
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
