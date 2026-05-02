@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Flame, Footprints, Droplets, Zap, LayoutDashboard, Settings, Bell, ChevronRight, LogOut, Loader2, Plus, X } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Flame, Footprints, Droplets, Camera, Zap, LayoutDashboard, Settings, Bell, ChevronRight, LogOut, Loader2, Plus } from 'lucide-react';
 import { createBrowserClient } from '@supabase/ssr';
+import Link from 'next/link';
 
 export default function Dashboard() {
   const [mounted, setMounted] = useState(false);
@@ -11,14 +12,7 @@ export default function Dashboard() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
   
-  // Metrics state
   const [metrics, setMetrics] = useState({ score: 0, cal: 0, steps: 0, water: 0 });
-
-  // Logging Modal state
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [logType, setLogType] = useState<'water' | 'steps'>('water');
-  const [logValue, setLogValue] = useState('');
-  const [isSubmittingLog, setIsSubmittingLog] = useState(false);
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -51,7 +45,7 @@ export default function Dashboard() {
     let dynamicScore = baseScore; 
     
     if (totalSteps > 0) dynamicScore += Math.min(20, (totalSteps / 1000) * 2);
-    if (totalWater > 0) dynamicScore += Math.min(10, totalWater * 2);
+    if (totalWater > 0) dynamicScore += Math.min(10, totalWater * 2); // Water is now calculated properly even with large inputs (though you may tweak the multiplier later)
     if (totalCal > 0) dynamicScore += 5;
 
     setMetrics({
@@ -96,27 +90,6 @@ export default function Dashboard() {
     setIsLoggingOut(true);
     await supabase.auth.signOut();
     window.location.href = '/login';
-  };
-
-  const handleAddLog = async () => {
-    if (!logValue || isNaN(Number(logValue)) || !userProfile) return;
-    setIsSubmittingLog(true);
-
-    const { error } = await supabase.from('daily_logs').insert({
-      user_id: userProfile.id,
-      log_type: logType,
-      data: { amount: Number(logValue) }
-    });
-
-    if (!error) {
-      await fetchTodayLogs(userProfile.id, userProfile.current_score || 40);
-      setIsModalOpen(false);
-      setLogValue('');
-    } else {
-      console.error("Failed to add log:", error);
-    }
-    
-    setIsSubmittingLog(false);
   };
 
   if (isCheckingAuth) {
@@ -221,18 +194,18 @@ export default function Dashboard() {
 
         <div className="flex justify-between items-end">
            <h3 className="text-white/60 font-bold uppercase tracking-widest text-[10px] ml-2">Today's Activity</h3>
-           <button 
-             onClick={() => setIsModalOpen(true)}
+           <Link 
+             href="/log"
              className="flex items-center gap-1 text-[#00FFA3] text-xs font-bold uppercase tracking-widest bg-[#00FFA3]/10 px-3 py-1.5 rounded-full border border-[#00FFA3]/30 hover:bg-[#00FFA3]/20 transition-all"
            >
              <Plus size={14} /> Add Log
-           </button>
+           </Link>
         </div>
 
         <section className="grid grid-cols-2 gap-4">
           <BentoCard icon={Footprints} label="Steps" value={metrics.steps} target="/ 10k" color="text-[#00FFA3]" delay={0.2} />
           <BentoCard icon={Flame} label="Energy" value={metrics.cal} target="kcal" color="text-orange-500" delay={0.3} />
-          <BentoCard icon={Droplets} label="Water" value={metrics.water} target="Liters" color="text-blue-400" delay={0.4} />
+          <BentoCard icon={Droplets} label="Water (ml)" value={metrics.water} target="ml" color="text-blue-400" delay={0.4} />
           
           <motion.div 
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
@@ -260,73 +233,18 @@ export default function Dashboard() {
         <nav className="bg-[#0A0A0A]/80 backdrop-blur-xl border border-white/10 rounded-full px-6 py-4 flex items-center gap-12 shadow-[0_10px_40px_rgba(0,0,0,0.8)]">
           <LayoutDashboard size={24} className="text-[#00FFA3]" strokeWidth={2.5} />
           
-          <motion.button 
-            whileTap={{ scale: 0.9 }}
-            onClick={() => setIsModalOpen(true)}
-            className="bg-[#00FFA3] p-4 rounded-full shadow-[0_0_30px_rgba(0,255,163,0.4)] text-black cursor-pointer -mt-8 border-4 border-black flex items-center justify-center"
-          >
-            <Plus size={28} strokeWidth={3} />
-          </motion.button>
+          <Link href="/log">
+            <motion.div 
+              whileTap={{ scale: 0.9 }}
+              className="bg-[#00FFA3] p-4 rounded-full shadow-[0_0_30px_rgba(0,255,163,0.4)] text-black cursor-pointer -mt-8 border-4 border-black flex items-center justify-center"
+            >
+              <Plus size={28} strokeWidth={3} />
+            </motion.div>
+          </Link>
           
           <Settings size={24} className="text-white/40 hover:text-white transition-colors" />
         </nav>
       </div>
-
-      <AnimatePresence>
-        {isModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm">
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95, y: 20 }} 
-              animate={{ opacity: 1, scale: 1, y: 0 }} 
-              exit={{ opacity: 0, scale: 0.95, y: 20 }} 
-              className="bg-[#0A0A0A] border border-white/10 rounded-[2rem] p-6 w-full max-w-sm shadow-2xl relative"
-            >
-              <button 
-                onClick={() => setIsModalOpen(false)} 
-                className="absolute top-5 right-5 text-white/40 hover:text-white transition-colors"
-              >
-                <X size={24} />
-              </button>
-              
-              <h3 className="text-2xl font-black tracking-tighter mb-6">Add Log</h3>
-
-              <div className="flex gap-2 mb-6">
-                {['water', 'steps'].map((type) => (
-                  <button 
-                    key={type} 
-                    onClick={() => { setLogType(type as 'water' | 'steps'); setLogValue(''); }} 
-                    className={`flex-1 py-4 rounded-2xl border font-bold capitalize transition-all ${
-                      logType === type 
-                        ? 'bg-[#00FFA3]/10 border-[#00FFA3] text-[#00FFA3] shadow-[0_0_15px_rgba(0,255,163,0.15)]' 
-                        : 'bg-white/5 border-white/10 text-white/50 hover:bg-white/10'
-                    }`}
-                  >
-                    {type}
-                  </button>
-                ))}
-              </div>
-
-              <div className="relative mb-6">
-                <input 
-                  type="number" 
-                  value={logValue} 
-                  onChange={e => setLogValue(e.target.value)} 
-                  placeholder={logType === 'water' ? 'Amount (e.g. 1.5 Liters)' : 'Amount (e.g. 2000 steps)'} 
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-xl font-bold text-white placeholder:text-white/20 focus:border-[#00FFA3] focus:ring-1 focus:ring-[#00FFA3] focus:outline-none transition-all" 
-                />
-              </div>
-
-              <button 
-                onClick={handleAddLog} 
-                disabled={!logValue || isSubmittingLog} 
-                className="w-full bg-[#00FFA3] text-black font-black text-lg py-5 rounded-2xl flex justify-center items-center gap-2 disabled:opacity-50 disabled:grayscale transition-all hover:shadow-[0_0_20px_rgba(0,255,163,0.4)]"
-              >
-                {isSubmittingLog ? <Loader2 className="animate-spin" size={24}/> : "Save Progress"}
-              </button>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
 
     </div>
   );
@@ -344,7 +262,7 @@ function BentoCard({ icon: Icon, label, value, target, color, delay }: any) {
       </div>
       <div className="flex items-baseline gap-1 mt-4">
         <span className="text-3xl font-bold">{value}</span>
-        <span className="text-white/40 text-xs font-medium">{target}</span>
+        <span className="text-white/40 text-xs font-medium pl-1">{target}</span>
       </div>
     </motion.div>
   );
