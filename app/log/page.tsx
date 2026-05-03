@@ -117,9 +117,9 @@ export default function LogActivity() {
 
       if (insertError) throw insertError;
 
-      // 3. Recalculate Score with Reset Logic Base (Using UTC Start of Day)
+      // 3. Recalculate Score with Reset Logic Base 
       const startOfDay = new Date();
-      startOfDay.setUTCHours(0, 0, 0, 0);
+      startOfDay.setHours(0, 0, 0, 0); // Strictly use local user midnight
 
       // Optimized query: selecting only needed columns
       const { data: logs } = await supabase
@@ -135,7 +135,9 @@ export default function LogActivity() {
         let lastLogTime = 0;
 
         logs.forEach(log => {
-          const val = parseFloat(log.data?.amount || 0);
+          // SAFE PARSING: Ensure we only extract numbers, fallback to 0 for text logs
+          const val = Number(log.data?.amount) || 0;
+          
           if (log.log_type === 'steps') totalSteps += val;
           if (log.log_type === 'water') totalWater += val;
           if (log.log_type === 'workout') workoutLogsCount += 1;
@@ -144,10 +146,9 @@ export default function LogActivity() {
           if (logTime > lastLogTime) lastLogTime = logTime;
         });
 
-        // PREVENT SCORE ABUSE: Cap effective steps for score calculation ONLY
+        // PREVENT SCORE ABUSE: Cap effective steps
         const effectiveSteps = Math.min(totalSteps, 12000);
 
-        // Use the baseline onboarding score for daily resets
         let newScore = profile.onboarding_score || 50; 
         
         if (effectiveSteps >= 6000) newScore += 20;
@@ -157,8 +158,6 @@ export default function LogActivity() {
         else if (totalWater >= 1000) newScore += 8;
 
         if (logs.length >= 2) newScore += 5;
-        
-        // Workout scoring logic (+5 per workout log)
         if (workoutLogsCount > 0) newScore += (workoutLogsCount * 5);
 
         const hoursSinceLast = (Date.now() - lastLogTime) / (1000 * 60 * 60);
@@ -167,13 +166,28 @@ export default function LogActivity() {
 
         newScore = Math.max(0, Math.min(100, Math.floor(newScore)));
 
-        await supabase.from('profiles').update({ current_score: newScore }).eq('id', userId);
+        // DEBUG LOGS (Check console to verify math)
+        console.log("=== SCORE ENGINE DEBUG ===");
+        console.log("Total Steps:", totalSteps);
+        console.log("Total Water:", totalWater);
+        console.log("Logs Length:", logs.length);
+        console.log("Calculated New Score:", newScore);
+
+        // Explicit error checking on update
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ current_score: newScore })
+          .eq('id', userId);
+          
+        if (updateError) console.error("Score Update Failed:", updateError);
+
       } else {
-        // Fallback if logs array is somehow completely empty
         const fallbackScore = profile.onboarding_score || 50;
         await supabase.from('profiles').update({ current_score: fallbackScore }).eq('id', userId);
       }
       
+      // CRITICAL FIX: Invalidate Next.js cache so dashboard actually re-fetches
+      router.refresh(); 
       router.push('/dashboard');
       
     } catch (error: any) {
