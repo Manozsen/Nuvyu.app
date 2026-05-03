@@ -14,7 +14,14 @@ export default function Dashboard() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
   
-  const [metrics, setMetrics] = useState({ score: 0, steps: 0, water: 0, logsCount: 0 });
+  const [metrics, setMetrics] = useState({ 
+    score: 0, 
+    steps: 0, 
+    water: 0, 
+    logsCount: 0,
+    energy_burned: 0,
+    energy_intake: 0
+  });
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -44,7 +51,7 @@ export default function Dashboard() {
 
       setUserProfile(profile);
 
-      // 2. Fetch today's logs & Run Dynamic Engine
+      // 2. Fetch today's logs
       const startOfDay = new Date();
       startOfDay.setHours(0, 0, 0, 0);
 
@@ -56,6 +63,7 @@ export default function Dashboard() {
 
       let totalSteps = 0;
       let totalWater = 0;
+      let energyIntake = 0;
       let lastLogTime = 0;
       let logsCount = logs ? logs.length : 0;
 
@@ -64,45 +72,55 @@ export default function Dashboard() {
           const val = Number(log.data?.amount || 0);
           if (log.log_type === 'steps') totalSteps += val;
           if (log.log_type === 'water') totalWater += val;
+          if (log.log_type === 'food') energyIntake += val; // Assuming basic food input for future
           
           const logTime = new Date(log.created_at).getTime();
           if (logTime > lastLogTime) lastLogTime = logTime;
         });
       }
 
-      let dynamicScore = 40; // Base
+      // Base Energy Burned Calculation (Approx 0.04 kcal per step)
+      const energyBurned = Math.round(totalSteps * 0.04);
+
+      // 3. Score Engine (Strictly updates DB if changed, but displays DB value as truth)
+      let dynamicScore = profile.current_score || 50; 
       
-      if (totalSteps >= 6000) dynamicScore += 20;
-      else if (totalSteps >= 3000) dynamicScore += 10;
+      // Calculate what score SHOULD be today
+      let calculatedScore = 50; // We reset to 50 base for daily calculation
+      if (totalSteps >= 6000) calculatedScore += 20;
+      else if (totalSteps >= 3000) calculatedScore += 10;
 
-      if (totalWater >= 2000) dynamicScore += 15;
-      else if (totalWater >= 1000) dynamicScore += 8;
+      if (totalWater >= 2000) calculatedScore += 15;
+      else if (totalWater >= 1000) calculatedScore += 8;
 
-      if (logsCount >= 2) dynamicScore += 5;
+      if (logsCount >= 2) calculatedScore += 5;
 
-      // Time Penalty Check
+      // Time Penalty
       const currentHour = new Date().getHours();
       if (logsCount === 0) {
-        if (currentHour >= 14) dynamicScore -= 10; // 2 PM
-        else if (currentHour >= 10) dynamicScore -= 5; // 10 AM
+        if (currentHour >= 14) calculatedScore -= 10;
+        else if (currentHour >= 10) calculatedScore -= 5;
       } else {
         const hoursSinceLast = (Date.now() - lastLogTime) / (1000 * 60 * 60);
-        if (hoursSinceLast >= 6) dynamicScore -= 10;
-        else if (hoursSinceLast >= 4) dynamicScore -= 5;
+        if (hoursSinceLast >= 6) calculatedScore -= 10;
+        else if (hoursSinceLast >= 4) calculatedScore -= 5;
       }
 
-      dynamicScore = Math.max(0, Math.min(100, Math.floor(dynamicScore)));
+      calculatedScore = Math.max(0, Math.min(100, Math.floor(calculatedScore)));
 
-      // If score changed due to time penalty, save it to DB silently
-      if (dynamicScore !== profile.current_score) {
-        await supabase.from('profiles').update({ current_score: dynamicScore }).eq('id', user.id);
+      // If score changed due to time passing, update DB silently
+      if (calculatedScore !== profile.current_score && logsCount === 0) {
+        await supabase.from('profiles').update({ current_score: calculatedScore }).eq('id', user.id);
+        dynamicScore = calculatedScore;
       }
 
       setMetrics({
-        score: dynamicScore,
+        score: dynamicScore, // DB drives this now
         steps: totalSteps,
         water: totalWater,
-        logsCount: logsCount
+        logsCount: logsCount,
+        energy_burned: energyBurned,
+        energy_intake: energyIntake
       });
 
       setMounted(true);
@@ -118,7 +136,6 @@ export default function Dashboard() {
     window.location.href = '/login';
   };
 
-  // Rule-based Smart Nudge (No AI)
   const getSmartNudge = () => {
     const hour = new Date().getHours();
     
@@ -144,6 +161,15 @@ export default function Dashboard() {
   }
 
   if (!mounted || !userProfile) return null;
+
+  // Energy System Dynamic Colors
+  const targetCalories = userProfile.target_calories || userProfile.tdee || 2000;
+  let energyColorClass = "text-[#00FFA3]"; // Default Green (Under Target)
+  if (metrics.energy_intake > 0) {
+    const intakeRatio = metrics.energy_intake / targetCalories;
+    if (intakeRatio > 1.1) energyColorClass = "text-red-500"; // Above Target
+    else if (intakeRatio >= 0.9) energyColorClass = "text-yellow-500"; // Near Target
+  }
 
   return (
     <div className="relative min-h-screen bg-black text-white pb-28 overflow-hidden selection:bg-[#00FFA3]/30">
@@ -237,12 +263,10 @@ export default function Dashboard() {
         <section className="grid grid-cols-2 gap-4">
           <BentoCard icon={Footprints} label="Steps" value={metrics.steps} target="" color="text-[#00FFA3]" delay={0.2} />
           
-          {/* Energy Card mapped to TDEE Target */}
-          <BentoCard icon={Flame} label="Energy" value={0} target={`/ ${userProfile.tdee || 0} kcal`} color="text-orange-500" delay={0.3} />
+          <BentoCard icon={Flame} label="Energy In" value={metrics.energy_intake} target={`/ ${targetCalories} kcal`} color={energyColorClass} delay={0.3} />
           
           <BentoCard icon={Droplets} label="Water" value={metrics.water} target="ml" color="text-blue-400" delay={0.4} />
           
-          {/* BMR Display mapping seamlessly onto 4th card */}
           <motion.div 
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
             className="bg-[#0A0A0A] border border-white/10 rounded-[1.5rem] p-5 flex flex-col justify-between shadow-xl"
