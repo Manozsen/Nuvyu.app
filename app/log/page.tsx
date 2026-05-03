@@ -44,19 +44,47 @@ export default function LogActivity() {
     return textInput.trim().length > 2;
   };
 
-  const handleInitialSave = () => {
+  const handleInitialSave = async () => {
     if (!isFormValid()) return;
+    setLoading(true);
+    setSubmitError(null);
     
-    // SMART ANTI-CHEAT VALIDATION
+    // A) HARD LIMIT REJECTION
+    if (logType === 'steps' && parseFloat(amount) > 30000) {
+      setSubmitError("Entry rejected: Step count exceeds realistic limits.");
+      setLoading(false);
+      return;
+    }
+
+    // C) ANTI-SPAM (Detect rapid multiple logs in 5 minutes)
+    if (userId) {
+      const fiveMinsAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+      const { count } = await supabase
+        .from('daily_logs')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .gte('created_at', fiveMinsAgo);
+
+      if (count && count >= 3) {
+        setSubmitError("Too many logs submitted rapidly. Please wait a moment.");
+        setLoading(false);
+        return;
+      }
+    }
+
+    // B) SMART ANTI-CHEAT VALIDATION (Soft Confirmation)
     if (logType === 'water' && parseFloat(amount) > 700) {
       setShowConfirm(true);
+      setLoading(false);
       return;
     }
-    if (logType === 'steps' && parseFloat(amount) > 50000) {
+    if (logType === 'steps' && parseFloat(amount) > 10000) {
       setShowConfirm(true);
+      setLoading(false);
       return;
     }
     
+    // Execute save will handle its own loading/error state continuation
     executeSave();
   };
 
@@ -116,11 +144,14 @@ export default function LogActivity() {
           if (logTime > lastLogTime) lastLogTime = logTime;
         });
 
+        // PREVENT SCORE ABUSE: Cap effective steps for score calculation ONLY
+        const effectiveSteps = Math.min(totalSteps, 12000);
+
         // Use the baseline onboarding score for daily resets
         let newScore = profile.onboarding_score || 50; 
         
-        if (totalSteps >= 6000) newScore += 20;
-        else if (totalSteps >= 3000) newScore += 10;
+        if (effectiveSteps >= 6000) newScore += 20;
+        else if (effectiveSteps >= 3000) newScore += 10;
 
         if (totalWater >= 2000) newScore += 15;
         else if (totalWater >= 1000) newScore += 8;
