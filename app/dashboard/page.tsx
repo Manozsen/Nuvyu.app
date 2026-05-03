@@ -69,7 +69,7 @@ export default function Dashboard() {
 
       if (logs) {
         logs.forEach(log => {
-          const val = Number(log.data?.amount || 0);
+          const val = Number(log.data?.amount) || 0;
           if (log.log_type === 'steps') totalSteps += val;
           if (log.log_type === 'water') totalWater += val;
           if (log.log_type === 'food') energyIntake += val; 
