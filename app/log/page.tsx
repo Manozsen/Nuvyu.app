@@ -2,14 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Loader2, Droplets, Footprints, CheckCircle2, AlertCircle, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Loader2, Droplets, Footprints, Utensils, Dumbbell, CheckCircle2, AlertCircle, AlertTriangle, Camera, Sparkles } from 'lucide-react';
 import { createBrowserClient } from '@supabase/ssr';
 import { useRouter } from 'next/navigation';
 
 export default function LogActivity() {
   const router = useRouter();
-  const [logType, setLogType] = useState<'water' | 'steps'>('water');
+  const [logType, setLogType] = useState<'water' | 'steps' | 'food' | 'workout'>('water');
+  
+  // States for different input types
   const [amount, setAmount] = useState('');
+  const [textInput, setTextInput] = useState('');
+  
   const [loading, setLoading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
@@ -34,12 +38,18 @@ export default function LogActivity() {
     checkUser();
   }, [supabase.auth, router]);
 
+  const isFormValid = () => {
+    if (logType === 'water' || logType === 'steps') {
+      return amount !== '' && !isNaN(Number(amount)) && Number(amount) > 0;
+    }
+    return textInput.trim().length > 2;
+  };
+
   const handleInitialSave = () => {
-    const numAmount = Number(amount);
-    if (!amount || isNaN(numAmount)) return;
+    if (!isFormValid()) return;
     
-    // SMART VALIDATION (Anti-Cheat)
-    if (logType === 'water' && numAmount > 700) {
+    // SMART VALIDATION (Anti-Cheat for Water)
+    if (logType === 'water' && Number(amount) > 700) {
       setShowConfirm(true);
       return;
     }
@@ -54,16 +64,21 @@ export default function LogActivity() {
     setSubmitError(null);
 
     try {
+      // Flexible JSON payload based on log type
+      const payloadData = (logType === 'water' || logType === 'steps') 
+        ? { amount: Number(amount) } 
+        : { text: textInput.trim() };
+
       // 1. Insert the new log
       const { error: insertError } = await supabase.from('daily_logs').insert({
         user_id: userId,
         log_type: logType,
-        data: { amount: Number(amount) }
+        data: payloadData
       });
 
       if (insertError) throw insertError;
 
-      // 2. Fetch all logs for today to calculate the new dynamic score
+      // 2. Fetch all logs for today to recalculate dynamic score
       const startOfDay = new Date();
       startOfDay.setHours(0, 0, 0, 0);
 
@@ -83,6 +98,7 @@ export default function LogActivity() {
           const val = Number(log.data?.amount || 0);
           if (log.log_type === 'steps') totalSteps += val;
           if (log.log_type === 'water') totalWater += val;
+          
           const logTime = new Date(log.created_at).getTime();
           if (logTime > lastLogTime) lastLogTime = logTime;
         });
@@ -96,7 +112,9 @@ export default function LogActivity() {
         if (totalWater >= 2000) newScore += 15;
         else if (totalWater >= 1000) newScore += 8;
 
+        // Logging consistency bonus (now includes food and workout logs)
         if (logs.length >= 2) newScore += 5;
+        if (logs.length >= 5) newScore += 5;
 
         // Time Penalty
         const hoursSinceLast = (Date.now() - lastLogTime) / (1000 * 60 * 60);
@@ -152,7 +170,7 @@ export default function LogActivity() {
         </button>
         <div>
           <h1 className="text-3xl font-black tracking-tighter leading-none">Add <span className="text-[#00FFA3]">Log</span></h1>
-          <p className="text-white/40 text-xs font-medium mt-1">Track your daily progress</p>
+          <p className="text-white/40 text-xs font-medium mt-1">Train your AI Coach</p>
         </div>
       </header>
 
@@ -163,63 +181,119 @@ export default function LogActivity() {
           transition={{ duration: 0.4, ease: "easeOut" }}
           className="bg-[#0A0A0A]/90 backdrop-blur-2xl border border-white/10 rounded-[2rem] p-6 shadow-[0_10px_40px_rgba(0,0,0,0.5)] relative"
         >
-          <div className="flex gap-2 mb-8 bg-black/50 p-1.5 rounded-2xl border border-white/5 shadow-inner">
+          {/* TYPE SELECTOR (Upgraded to 2x2 Grid for Phase 3) */}
+          <div className="grid grid-cols-2 gap-2 mb-8 bg-black/50 p-1.5 rounded-2xl border border-white/5 shadow-inner">
             <button 
-              onClick={() => { setLogType('water'); setAmount(''); setSubmitError(null); }}
-              className={`flex-1 py-4 rounded-xl flex items-center justify-center gap-2 font-bold transition-all ${
+              onClick={() => { setLogType('water'); setAmount(''); setTextInput(''); setSubmitError(null); }}
+              className={`py-3.5 rounded-xl flex items-center justify-center gap-2 font-bold transition-all text-sm ${
                 logType === 'water' ? 'bg-blue-500/20 text-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.2)] border border-blue-500/30' : 'text-white/40 hover:text-white/80'
               }`}
             >
-              <Droplets size={18} /> Water
+              <Droplets size={16} /> Water
             </button>
             <button 
-              onClick={() => { setLogType('steps'); setAmount(''); setSubmitError(null); }}
-              className={`flex-1 py-4 rounded-xl flex items-center justify-center gap-2 font-bold transition-all ${
+              onClick={() => { setLogType('steps'); setAmount(''); setTextInput(''); setSubmitError(null); }}
+              className={`py-3.5 rounded-xl flex items-center justify-center gap-2 font-bold transition-all text-sm ${
                 logType === 'steps' ? 'bg-[#00FFA3]/20 text-[#00FFA3] shadow-[0_0_15px_rgba(0,255,163,0.2)] border border-[#00FFA3]/30' : 'text-white/40 hover:text-white/80'
               }`}
             >
-              <Footprints size={18} /> Steps
+              <Footprints size={16} /> Steps
+            </button>
+            <button 
+              onClick={() => { setLogType('food'); setAmount(''); setTextInput(''); setSubmitError(null); }}
+              className={`py-3.5 rounded-xl flex items-center justify-center gap-2 font-bold transition-all text-sm ${
+                logType === 'food' ? 'bg-orange-500/20 text-orange-400 shadow-[0_0_15px_rgba(249,115,22,0.2)] border border-orange-500/30' : 'text-white/40 hover:text-white/80'
+              }`}
+            >
+              <Utensils size={16} /> Food
+            </button>
+            <button 
+              onClick={() => { setLogType('workout'); setAmount(''); setTextInput(''); setSubmitError(null); }}
+              className={`py-3.5 rounded-xl flex items-center justify-center gap-2 font-bold transition-all text-sm ${
+                logType === 'workout' ? 'bg-purple-500/20 text-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.2)] border border-purple-500/30' : 'text-white/40 hover:text-white/80'
+              }`}
+            >
+              <Dumbbell size={16} /> Workout
             </button>
           </div>
 
           <div className="space-y-6 mb-8">
+            
+            {/* WATER & STEPS INPUT UI */}
             <AnimatePresence mode="wait">
-              {logType === 'water' && (
-                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
-                  <p className="text-white/50 text-[10px] font-bold uppercase tracking-widest mb-3">Quick Add</p>
-                  <div className="flex gap-3 mb-6">
-                    {[ { label: '+250ml', val: '250' }, { label: '+500ml', val: '500' }, { label: '+1L', val: '1000' } ].map((btn) => (
+              {(logType === 'water' || logType === 'steps') && (
+                <motion.div key="numeric-input" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                  
+                  {logType === 'water' && (
+                    <div className="mb-6">
+                      <p className="text-white/50 text-[10px] font-bold uppercase tracking-widest mb-3">Quick Add</p>
+                      <div className="flex gap-3">
+                        {[ { label: '+250ml', val: '250' }, { label: '+500ml', val: '500' }, { label: '+1L', val: '1000' } ].map((btn) => (
+                          <motion.button 
+                            whileTap={{ scale: 0.95 }}
+                            key={btn.val}
+                            onClick={() => setAmount(btn.val)}
+                            className="flex-1 py-3.5 rounded-xl bg-white/[0.03] border border-white/10 text-white/80 font-bold hover:bg-blue-500/10 hover:border-blue-500/50 hover:text-blue-400 transition-all text-sm shadow-sm"
+                          >
+                            {btn.label}
+                          </motion.button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div>
+                    <p className="text-white/50 text-[10px] font-bold uppercase tracking-widest mb-3">
+                      {logType === 'water' ? 'Manual Amount (ml)' : 'Manual Amount (Steps)'}
+                    </p>
+                    <div className="relative group">
+                      <input 
+                        type="number" 
+                        value={amount} 
+                        onChange={e => setAmount(e.target.value)} 
+                        placeholder={logType === 'water' ? 'e.g. 300' : 'e.g. 2500'} 
+                        className="w-full bg-black/40 border border-white/10 rounded-2xl p-6 text-2xl font-black text-center text-white placeholder:text-sm placeholder:font-medium placeholder:text-white/20 focus:border-[#00FFA3] focus:ring-1 focus:ring-[#00FFA3] focus:outline-none transition-all shadow-inner" 
+                        autoFocus
+                      />
+                      <span className="absolute right-6 top-1/2 -translate-y-1/2 text-white/20 text-sm font-bold tracking-widest">
+                        {logType === 'water' ? 'ML' : 'STEPS'}
+                      </span>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* FOOD & WORKOUT NLP UI */}
+              {(logType === 'food' || logType === 'workout') && (
+                <motion.div key="text-input" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                  <p className="text-white/50 text-[10px] font-bold uppercase tracking-widest mb-3 flex items-center justify-between">
+                    <span>{logType === 'food' ? 'Describe Meal' : 'Describe Workout'}</span>
+                    <span className="text-[#00FFA3]/60 flex items-center gap-1"><Sparkles size={12}/> AI Ready</span>
+                  </p>
+                  <div className="relative">
+                    <textarea 
+                      value={textInput}
+                      onChange={e => setTextInput(e.target.value)}
+                      placeholder={logType === 'food' ? "e.g., 2 scrambled eggs with toast and a black coffee..." : "e.g., 20 mins HIIT and 50 pushups..."}
+                      className="w-full bg-black/40 border border-white/10 rounded-2xl p-5 text-base font-medium text-white placeholder:text-white/20 focus:border-[#00FFA3] focus:ring-1 focus:ring-[#00FFA3] focus:outline-none transition-all shadow-inner resize-none h-36"
+                      autoFocus
+                    />
+                    
+                    {/* Vision AI Camera Button Placeholder (Currently just adds visual premium prep) */}
+                    {logType === 'food' && (
                       <motion.button 
+                        whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        key={btn.val}
-                        onClick={() => setAmount(btn.val)}
-                        className="flex-1 py-3.5 rounded-xl bg-white/[0.03] border border-white/10 text-white/80 font-bold hover:bg-blue-500/10 hover:border-blue-500/50 hover:text-blue-400 transition-all text-sm shadow-sm"
+                        className="absolute bottom-4 right-4 bg-[#00FFA3]/10 text-[#00FFA3] p-3 rounded-xl border border-[#00FFA3]/30 hover:bg-[#00FFA3]/20 transition-all flex items-center gap-2 backdrop-blur-md"
+                        title="Vision AI Coming Soon"
                       >
-                        {btn.label}
+                        <Camera size={20} />
                       </motion.button>
-                    ))}
+                    )}
                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
-
-            <div>
-              <p className="text-white/50 text-[10px] font-bold uppercase tracking-widest mb-3">
-                {logType === 'water' ? 'Manual Amount (ml)' : 'Manual Amount (Steps)'}
-              </p>
-              <div className="relative group">
-                <input 
-                  type="number" 
-                  value={amount} 
-                  onChange={e => setAmount(e.target.value)} 
-                  placeholder={logType === 'water' ? 'e.g. 300' : 'e.g. 2500'} 
-                  className="w-full bg-black/40 border border-white/10 rounded-2xl p-6 text-2xl font-black text-center text-white placeholder:text-sm placeholder:font-medium placeholder:text-white/20 focus:border-[#00FFA3] focus:ring-1 focus:ring-[#00FFA3] focus:outline-none transition-all shadow-inner" 
-                />
-                <span className="absolute right-6 top-1/2 -translate-y-1/2 text-white/20 text-sm font-bold tracking-widest">
-                  {logType === 'water' ? 'ML' : 'STEPS'}
-                </span>
-              </div>
-            </div>
           </div>
 
           <AnimatePresence>
@@ -238,9 +312,9 @@ export default function LogActivity() {
           </AnimatePresence>
 
           <motion.button 
-            whileTap={!amount || loading ? {} : { scale: 0.98 }}
+            whileTap={!isFormValid() || loading ? {} : { scale: 0.98 }}
             onClick={handleInitialSave} 
-            disabled={!amount || loading} 
+            disabled={!isFormValid() || loading} 
             className="w-full bg-[#00FFA3] text-black font-black text-lg py-5 rounded-2xl flex justify-center items-center gap-3 disabled:opacity-30 disabled:grayscale transition-all hover:shadow-[0_0_25px_rgba(0,255,163,0.4)]"
           >
             {loading ? <Loader2 className="animate-spin" size={24}/> : <><CheckCircle2 size={22} strokeWidth={3} /> Save Progress</>}
@@ -248,7 +322,7 @@ export default function LogActivity() {
         </motion.div>
       </main>
 
-      {/* SMART VALIDATION MODAL */}
+      {/* SMART VALIDATION MODAL (Anti-Cheat) */}
       <AnimatePresence>
         {showConfirm && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md">
