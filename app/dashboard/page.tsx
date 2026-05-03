@@ -104,6 +104,20 @@ export default function Dashboard() {
       // ... [Time penalty logic] ...
 
       calculatedScore = Math.max(0, Math.min(100, Math.floor(calculatedScore)));
+      // DEBUG LOGS
+      console.log("=== DASHBOARD LOAD DEBUG ===");
+      console.log("Fetched Logs Count:", logsCount);
+      console.log("Calculated Score:", calculatedScore);
+      console.log("DB Current Score:", profile.current_score);
+
+      if (calculatedScore !== profile.current_score) {
+        const { error: dashUpdateError } = await supabase
+          .from('profiles')
+          .update({ current_score: calculatedScore })
+          .eq('id', user.id);
+          
+        if (dashUpdateError) console.error("Dashboard Score Sync Failed:", dashUpdateError);
+      }
 
       // 3. Strict Profile Update Sync (Matches Dashboard Load requirement)
       // Ensures DB matches exactly what is rendered if a log decay or day-reset happened
