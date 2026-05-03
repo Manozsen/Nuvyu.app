@@ -90,11 +90,23 @@ export default function Dashboard() {
       const baseScore = profile.onboarding_score || 50; 
       let calculatedScore = baseScore;
 
-      // ... [score modifiers logic remains unchanged] ...
+      // PREVENT SCORE ABUSE: Cap effective steps for score calculation ONLY
+      const effectiveSteps = Math.min(totalSteps, 12000);
 
-      // 3. Strict Profile Update Sync
-      // Removed the logsCount === 0 restriction so the UI consistently acts as the 
-      // behavior engine's source of truth, fully executing the daily reset natively.
+      if (effectiveSteps >= 6000) calculatedScore += 20;
+      else if (effectiveSteps >= 3000) calculatedScore += 10;
+
+      if (totalWater >= 2000) calculatedScore += 15;
+      else if (totalWater >= 1000) calculatedScore += 8;
+
+      if (logsCount >= 2) calculatedScore += 5;
+
+      // ... [Time penalty logic] ...
+
+      calculatedScore = Math.max(0, Math.min(100, Math.floor(calculatedScore)));
+
+      // 3. Strict Profile Update Sync (Matches Dashboard Load requirement)
+      // Ensures DB matches exactly what is rendered if a log decay or day-reset happened
       if (calculatedScore !== profile.current_score) {
         await supabase.from('profiles').update({ current_score: calculatedScore }).eq('id', user.id);
       }
