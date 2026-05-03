@@ -18,7 +18,7 @@ export default function Onboarding() {
   const [userId, setUserId] = useState<string | null>(null);
   const [hookText, setHookText] = useState("");
   const [startingScore, setStartingScore] = useState(0);
-  const [finalScore, setFinalScore] = useState(40);
+  const [finalScore, setFinalScore] = useState(50);
   const [submitError, setSubmitError] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
@@ -26,6 +26,8 @@ export default function Onboarding() {
     customProblem: '',
     identity: '',
     coachTone: '',
+    workoutType: '',
+    customWorkout: '',
     name: '',
     age: '',
     weight: '',
@@ -53,18 +55,30 @@ export default function Onboarding() {
   }, [supabase.auth]);
 
   useEffect(() => {
-    if (step === 5) {
+    if (step === 6) { // WOW Moment is now Step 6
+      let calculated = 50; // Base score
+
+      // Adjust based on activity level
+      if (formData.activityLevel === 'Active') calculated += 10;
+      else if (formData.activityLevel === 'Moderate') calculated += 5;
+      else if (formData.activityLevel === 'Sedentary') calculated -= 5;
+
+      // Adjust based on goal (identity)
+      if (formData.identity === 'Lean & Fit' || formData.identity === 'Muscular') calculated += 5;
+      
+      // Clamp between 30 and 70
+      calculated = Math.max(30, Math.min(70, calculated));
+      setFinalScore(calculated);
+
       let current = 0;
-      const target = Math.floor(Math.random() * (55 - 35 + 1)) + 35;
-      setFinalScore(target);
       const interval = setInterval(() => {
         current += 1;
         setStartingScore(current);
-        if (current >= target) clearInterval(interval);
-      }, 40);
+        if (current >= calculated) clearInterval(interval);
+      }, 30);
       return () => clearInterval(interval);
     }
-  }, [step]);
+  }, [step, formData]);
 
   const handleNext = () => setStep((prev) => prev + 1);
   const handleBack = () => {
@@ -83,22 +97,29 @@ export default function Onboarding() {
       const height = parseFloat(formData.height) || 0;
       const age = parseInt(formData.age) || 0;
 
-      // BMR Calculation logic
+      // BMR Calculation
       let calculatedBMR = 0;
       if (formData.gender === 'Female') {
         calculatedBMR = (10 * weight) + (6.25 * height) - (5 * age) - 161;
       } else {
-        // Defaults to male formula if "Prefer not to say" or "Male"
         calculatedBMR = (10 * weight) + (6.25 * height) - (5 * age) + 5;
       }
       
-      // TDEE Calculation Logic
+      // TDEE Calculation
       let activityFactor = 1.2; // Sedentary
       if (formData.activityLevel === 'Moderate') activityFactor = 1.55;
       else if (formData.activityLevel === 'Active') activityFactor = 1.725;
       
       const calculatedTDEE = Math.round(calculatedBMR * activityFactor);
       calculatedBMR = Math.round(calculatedBMR);
+
+      // Calorie Target Logic
+      let targetCalories = calculatedTDEE;
+      if (formData.identity === 'Lean & Fit') {
+        targetCalories -= 400; // Fat loss
+      } else if (formData.identity === 'Muscular') {
+        targetCalories += 300; // Muscle gain
+      } // Maintenance for others
 
       const payload = {
         id: userId,
@@ -110,10 +131,12 @@ export default function Onboarding() {
         primary_problem: formData.problem === 'Other' ? (formData.customProblem || 'Not specified') : formData.problem,
         desired_identity: formData.identity || 'Fit',
         coach_tone: formData.coachTone || 'Strict',
+        workout_type: formData.workoutType === 'Custom' ? (formData.customWorkout || 'Not specified') : formData.workoutType,
         activity_level: formData.activityLevel || 'Moderate',
         current_score: finalScore,
         bmr: calculatedBMR,
         tdee: calculatedTDEE,
+        target_calories: targetCalories,
         updated_at: new Date().toISOString()
       };
 
@@ -136,7 +159,8 @@ export default function Onboarding() {
     if (step === 1) return formData.problem && (formData.problem !== 'Other' || formData.customProblem.trim().length > 0);
     if (step === 2) return formData.identity;
     if (step === 3) return formData.coachTone;
-    if (step === 4) return formData.name && formData.age && formData.weight && formData.height && formData.gender; 
+    if (step === 4) return formData.workoutType && (formData.workoutType !== 'Custom' || formData.customWorkout.trim().length > 0);
+    if (step === 5) return formData.name && formData.age && formData.weight && formData.height && formData.gender; 
     return true;
   };
 
@@ -154,14 +178,14 @@ export default function Onboarding() {
 
       <div className="w-full max-w-md mx-auto z-10">
         
-        {step > 0 && step < 5 && (
+        {step > 0 && step < 6 && (
           <div className="mb-12">
             <div className="flex justify-between text-xs font-bold text-white/40 mb-3 tracking-widest uppercase">
               <span>Step {step}</span>
-              <span>4</span>
+              <span>5</span>
             </div>
             <div className="flex justify-between items-center gap-2">
-              {[1, 2, 3, 4].map((i) => (
+              {[1, 2, 3, 4, 5].map((i) => (
                 <div key={i} className="h-1 flex-1 bg-white/5 rounded-full overflow-hidden">
                   <motion.div 
                     className="h-full bg-[#00FFA3] shadow-[0_0_10px_rgba(0,255,163,0.5)]"
@@ -326,8 +350,56 @@ export default function Onboarding() {
             </motion.div>
           )}
 
+          {/* NEW STEP 4: WORKOUT TYPE */}
           {step === 4 && (
             <motion.div key="step4" variants={slideVariants} initial="initial" animate="animate" exit="exit" className="space-y-8">
+              <div>
+                <h2 className="text-3xl font-black tracking-tighter mb-3">Where do you train?</h2>
+                <p className="text-white/50 text-sm font-medium">Select your primary workout location.</p>
+              </div>
+              <div className="space-y-3">
+                {['Home', 'Gym', 'Both', 'Custom'].map((type) => (
+                  <button
+                    key={type}
+                    onClick={() => setFormData({ ...formData, workoutType: type, customWorkout: '' })}
+                    className={`w-full p-5 rounded-[1.25rem] border text-left font-medium transition-all flex items-center justify-between ${
+                      formData.workoutType === type 
+                        ? 'bg-[#00FFA3]/10 border-[#00FFA3] text-white shadow-[0_0_20px_rgba(0,255,163,0.15)] ring-1 ring-[#00FFA3]/50' 
+                        : 'bg-white/[0.03] border-white/5 text-white/60 hover:bg-white/[0.06] hover:text-white'
+                    }`}
+                  >
+                    {type}
+                    {formData.workoutType === type && <div className="w-2 h-2 rounded-full bg-[#00FFA3] shadow-[0_0_8px_#00FFA3]" />}
+                  </button>
+                ))}
+              </div>
+              
+              {formData.workoutType === 'Custom' && (
+                <motion.input 
+                  initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}
+                  type="text" value={formData.customWorkout} onChange={(e) => setFormData({...formData, customWorkout: e.target.value})}
+                  placeholder="e.g. Park, Swimming pool..."
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-white placeholder:text-white/30 focus:outline-none focus:border-[#00FFA3] focus:ring-1 focus:ring-[#00FFA3] transition-all backdrop-blur-md"
+                  autoFocus
+                />
+              )}
+
+              <div className="flex gap-4 pt-4">
+                <button onClick={handleBack} className="p-5 rounded-2xl bg-white/[0.03] border border-white/5 text-white/60 hover:bg-white/[0.08] hover:text-white transition-all">
+                  <ArrowLeft size={22} />
+                </button>
+                <button 
+                  onClick={handleNext} disabled={!isStepValid()}
+                  className="flex-1 bg-[#00FFA3] text-black font-bold py-5 rounded-2xl flex justify-center items-center gap-2 disabled:opacity-20 disabled:grayscale transition-all"
+                >
+                  Continue <ArrowRight size={20} />
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {step === 5 && (
+            <motion.div key="step5" variants={slideVariants} initial="initial" animate="animate" exit="exit" className="space-y-8">
               <div>
                 <h2 className="text-3xl font-black tracking-tighter mb-3">Final Details</h2>
                 <p className="text-white/50 text-sm font-medium">To calibrate your baseline metrics.</p>
@@ -420,9 +492,9 @@ export default function Onboarding() {
             </motion.div>
           )}
 
-          {step === 5 && (
+          {step === 6 && (
             <motion.div 
-              key="step5" variants={slideVariants} initial="initial" animate="animate"
+              key="step6" variants={slideVariants} initial="initial" animate="animate"
               className="flex flex-col items-center justify-center min-h-[70vh] text-center"
             >
               <motion.div 
@@ -443,7 +515,7 @@ export default function Onboarding() {
 
               <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 1.5 }} className="w-full">
                 <p className="text-xl font-medium text-white/90 mb-2">
-                  "Bhai, ab game start. Home workouts mein consistency rakhna hai."
+                  "Bhai, ab game start. {formData.workoutType === 'Gym' ? 'Gym mein jor lagana hai' : 'Consistency rakhna hai'}."
                 </p>
                 <p className="text-white/40 text-sm mb-10">
                   Your personalized AI Coach is ready.
