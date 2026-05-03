@@ -272,11 +272,12 @@ export default function Dashboard() {
         </div>
 
         <section className="grid grid-cols-2 gap-4">
-          <BentoCard icon={Footprints} label="Steps" value={metrics.steps} target="" color="text-[#00FFA3]" delay={0.2} />
-          
-          <BentoCard icon={Flame} label="Energy In" value={metrics.energy_intake} target={`/ ${targetCalories} kcal`} color={energyColorClass} delay={0.3} />
-          
-          <BentoCard icon={Droplets} label="Water" value={metrics.water} target="ml" color="text-blue-400" delay={0.4} />
+  <BentoCard icon={Footprints} label="Steps" value={metrics.steps} target="" color="text-[#00FFA3]" delay={0.2} />
+  
+  {/* Connected Real Energy Burned & Intake vs TDEE target */}
+  <BentoCard icon={Flame} label="Burned" value={metrics.energy_burned} target={`(In: ${metrics.energy_intake} / ${userProfile.tdee})`} color={energyColorClass} delay={0.3} />
+  
+  <BentoCard icon={Droplets} label="Water" value={metrics.water} target="ml" color="text-blue-400" delay={0.4} />
           
           <motion.div 
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
