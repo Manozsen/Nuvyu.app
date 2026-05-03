@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Loader2, Save, User, Activity, Edit3, Target, Dumbbell, Clock, Weight, Ruler } from 'lucide-react';
+import { ArrowLeft, Loader2, Save, User, Activity, Edit3, Target, Dumbbell, Clock, Weight, Ruler, Flame } from 'lucide-react';
 import { createBrowserClient } from '@supabase/ssr';
 import { useRouter } from 'next/navigation';
 
