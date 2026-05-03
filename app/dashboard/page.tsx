@@ -37,7 +37,6 @@ export default function Dashboard() {
         return;
       }
 
-      // 1. Fetch specific user's profile
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
@@ -51,7 +50,6 @@ export default function Dashboard() {
 
       setUserProfile(profile);
 
-      // 2. Fetch today's logs
       const startOfDay = new Date();
       startOfDay.setHours(0, 0, 0, 0);
 
@@ -64,6 +62,7 @@ export default function Dashboard() {
       let totalSteps = 0;
       let totalWater = 0;
       let energyIntake = 0;
+      let workoutLogsCount = 0;
       let lastLogTime = 0;
       let logsCount = logs ? logs.length : 0;
 
@@ -72,21 +71,24 @@ export default function Dashboard() {
           const val = Number(log.data?.amount || 0);
           if (log.log_type === 'steps') totalSteps += val;
           if (log.log_type === 'water') totalWater += val;
-          if (log.log_type === 'food') energyIntake += val; // Assuming basic food input for future
+          if (log.log_type === 'food') energyIntake += val; 
+          if (log.log_type === 'workout') workoutLogsCount += 1;
           
           const logTime = new Date(log.created_at).getTime();
           if (logTime > lastLogTime) lastLogTime = logTime;
         });
       }
 
-      // Base Energy Burned Calculation (Approx 0.04 kcal per step)
-      const energyBurned = Math.round(totalSteps * 0.04);
+      // Energy System Calculation
+      const passiveKcal = Math.round((profile.bmr || 0) * 0.1);
+      const stepsKcal = Math.round(totalSteps * 0.04);
+      const workoutKcal = workoutLogsCount * 50;
+      const energyBurned = stepsKcal + workoutKcal + passiveKcal;
 
-      // 3. Score Engine (Strictly updates DB if changed, but displays DB value as truth)
-      let dynamicScore = profile.current_score || 50; 
-      
-      // Calculate what score SHOULD be today
-      let calculatedScore = 50; // We reset to 50 base for daily calculation
+      // Score Engine (Daily Reset Base)
+      const baseScore = profile.onboarding_score || 50; 
+      let calculatedScore = baseScore;
+
       if (totalSteps >= 6000) calculatedScore += 20;
       else if (totalSteps >= 3000) calculatedScore += 10;
 
@@ -95,7 +97,7 @@ export default function Dashboard() {
 
       if (logsCount >= 2) calculatedScore += 5;
 
-      // Time Penalty
+      // Time Penalty Check
       const currentHour = new Date().getHours();
       if (logsCount === 0) {
         if (currentHour >= 14) calculatedScore -= 10;
@@ -108,14 +110,13 @@ export default function Dashboard() {
 
       calculatedScore = Math.max(0, Math.min(100, Math.floor(calculatedScore)));
 
-      // If score changed due to time passing, update DB silently
-      if (calculatedScore !== profile.current_score && logsCount === 0) {
+      // Sync calculated score to DB natively
+      if (calculatedScore !== profile.current_score) {
         await supabase.from('profiles').update({ current_score: calculatedScore }).eq('id', user.id);
-        dynamicScore = calculatedScore;
       }
 
       setMetrics({
-        score: dynamicScore, // DB drives this now
+        score: calculatedScore,
         steps: totalSteps,
         water: totalWater,
         logsCount: logsCount,
@@ -162,13 +163,12 @@ export default function Dashboard() {
 
   if (!mounted || !userProfile) return null;
 
-  // Energy System Dynamic Colors
   const targetCalories = userProfile.target_calories || userProfile.tdee || 2000;
-  let energyColorClass = "text-[#00FFA3]"; // Default Green (Under Target)
+  let energyColorClass = "text-[#00FFA3]";
   if (metrics.energy_intake > 0) {
     const intakeRatio = metrics.energy_intake / targetCalories;
-    if (intakeRatio > 1.1) energyColorClass = "text-red-500"; // Above Target
-    else if (intakeRatio >= 0.9) energyColorClass = "text-yellow-500"; // Near Target
+    if (intakeRatio > 1.1) energyColorClass = "text-red-500";
+    else if (intakeRatio >= 0.9) energyColorClass = "text-yellow-500";
   }
 
   return (
