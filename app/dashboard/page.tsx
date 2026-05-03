@@ -82,7 +82,34 @@ export default function Dashboard() {
         });
       }
 
-      // ... [score calc math remains identical] ...
+      // 1. Energy Clarity Fix
+      const energyBurned = Math.round(totalSteps * 0.04);
+      const safeEnergyIntake = energyIntake || 0;
+
+      // 2. Exact Score Engine Calculation (Matches Log Page perfectly)
+      const effectiveSteps = Math.min(totalSteps, 12000);
+      let calculatedScore = profile.onboarding_score || 50; 
+      
+      if (effectiveSteps >= 6000) calculatedScore += 20;
+      else if (effectiveSteps >= 3000) calculatedScore += 10;
+
+      if (totalWater >= 2000) calculatedScore += 15;
+      else if (totalWater >= 1000) calculatedScore += 8;
+
+      if (logsCount >= 2) calculatedScore += 5;
+      if (workoutLogsCount > 0) calculatedScore += (workoutLogsCount * 5);
+
+      const currentHour = new Date().getHours();
+      if (logsCount === 0) {
+        if (currentHour >= 14) calculatedScore -= 10;
+        else if (currentHour >= 10) calculatedScore -= 5;
+      } else {
+        const hoursSinceLast = (Date.now() - lastLogTime) / (1000 * 60 * 60);
+        if (hoursSinceLast >= 6) calculatedScore -= 10;
+        else if (hoursSinceLast >= 4) calculatedScore -= 5;
+      }
+
+      calculatedScore = Math.max(0, Math.min(100, Math.floor(calculatedScore)));
 
       // DEBUG LOGS
       console.log("=== DASHBOARD LOAD DEBUG ===");
