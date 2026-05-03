@@ -10,7 +10,6 @@ export default function LogActivity() {
   const router = useRouter();
   const [logType, setLogType] = useState<'water' | 'steps' | 'food' | 'workout'>('water');
   
-  // States for different input types
   const [amount, setAmount] = useState('');
   const [textInput, setTextInput] = useState('');
   
@@ -40,7 +39,7 @@ export default function LogActivity() {
 
   const isFormValid = () => {
     if (logType === 'water' || logType === 'steps') {
-      return amount !== '' && !isNaN(Number(amount)) && Number(amount) > 0;
+      return amount !== '' && !isNaN(parseFloat(amount)) && parseFloat(amount) > 0;
     }
     return textInput.trim().length > 2;
   };
@@ -48,8 +47,12 @@ export default function LogActivity() {
   const handleInitialSave = () => {
     if (!isFormValid()) return;
     
-    // SMART VALIDATION (Anti-Cheat for Water)
-    if (logType === 'water' && Number(amount) > 700) {
+    // SMART ANTI-CHEAT VALIDATION
+    if (logType === 'water' && parseFloat(amount) > 700) {
+      setShowConfirm(true);
+      return;
+    }
+    if (logType === 'steps' && parseFloat(amount) > 50000) {
       setShowConfirm(true);
       return;
     }
@@ -58,18 +61,26 @@ export default function LogActivity() {
   };
 
   const executeSave = async () => {
-    if (!userId) return;
+    if (!userId) return; 
     setLoading(true);
     setShowConfirm(false);
     setSubmitError(null);
 
     try {
-      // Flexible JSON payload based on log type
+      // 1. Fetch Profile First for Onboarding Base Score
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      
+      if (profileError || !profile) throw profileError || new Error("Profile not found");
+
       const payloadData = (logType === 'water' || logType === 'steps') 
-        ? { amount: Number(amount) } 
+        ? { amount: parseFloat(amount) } 
         : { text: textInput.trim() };
 
-      // 1. Insert the new log
+      // 2. Insert Log
       const { error: insertError } = await supabase.from('daily_logs').insert({
         user_id: userId,
         log_type: logType,
@@ -78,57 +89,60 @@ export default function LogActivity() {
 
       if (insertError) throw insertError;
 
-      // 2. Fetch all logs for today to recalculate dynamic score
+      // 3. Recalculate Score with Reset Logic Base (Using UTC Start of Day)
       const startOfDay = new Date();
-      startOfDay.setHours(0, 0, 0, 0);
+      startOfDay.setUTCHours(0, 0, 0, 0);
 
+      // Optimized query: selecting only needed columns
       const { data: logs } = await supabase
         .from('daily_logs')
-        .select('*')
+        .select('log_type, data, created_at')
         .eq('user_id', userId)
         .gte('created_at', startOfDay.toISOString());
 
-      // 3. Score Engine Calculation
-      if (logs) {
+      if (logs && logs.length > 0) {
         let totalSteps = 0;
         let totalWater = 0;
+        let workoutLogsCount = 0;
         let lastLogTime = 0;
 
         logs.forEach(log => {
-          const val = Number(log.data?.amount || 0);
+          const val = parseFloat(log.data?.amount || 0);
           if (log.log_type === 'steps') totalSteps += val;
           if (log.log_type === 'water') totalWater += val;
+          if (log.log_type === 'workout') workoutLogsCount += 1;
           
           const logTime = new Date(log.created_at).getTime();
           if (logTime > lastLogTime) lastLogTime = logTime;
         });
 
-        let newScore = 40; // Base
+        // Use the baseline onboarding score for daily resets
+        let newScore = profile.onboarding_score || 50; 
         
-        // Positive Triggers
         if (totalSteps >= 6000) newScore += 20;
         else if (totalSteps >= 3000) newScore += 10;
 
         if (totalWater >= 2000) newScore += 15;
         else if (totalWater >= 1000) newScore += 8;
 
-        // Logging consistency bonus (now includes food and workout logs)
         if (logs.length >= 2) newScore += 5;
-        if (logs.length >= 5) newScore += 5;
+        
+        // Workout scoring logic (+5 per workout log)
+        if (workoutLogsCount > 0) newScore += (workoutLogsCount * 5);
 
-        // Time Penalty
         const hoursSinceLast = (Date.now() - lastLogTime) / (1000 * 60 * 60);
         if (hoursSinceLast >= 6) newScore -= 10;
         else if (hoursSinceLast >= 4) newScore -= 5;
 
-        // Clamp 0-100
         newScore = Math.max(0, Math.min(100, Math.floor(newScore)));
 
-        // 4. Update Profile with new score
         await supabase.from('profiles').update({ current_score: newScore }).eq('id', userId);
+      } else {
+        // Fallback if logs array is somehow completely empty
+        const fallbackScore = profile.onboarding_score || 50;
+        await supabase.from('profiles').update({ current_score: fallbackScore }).eq('id', userId);
       }
       
-      // Success -> Route back to refresh dashboard automatically
       router.push('/dashboard');
       
     } catch (error: any) {
@@ -160,7 +174,6 @@ export default function LogActivity() {
       <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-[#00FFA3]/10 rounded-full blur-[150px] pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[400px] h-[400px] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none" />
 
-      {/* HEADER WITH Z-50 FIX */}
       <header className="pt-10 pb-6 flex items-center gap-4 z-50 relative pointer-events-auto">
         <button 
           onClick={goBack}
@@ -181,7 +194,6 @@ export default function LogActivity() {
           transition={{ duration: 0.4, ease: "easeOut" }}
           className="bg-[#0A0A0A]/90 backdrop-blur-2xl border border-white/10 rounded-[2rem] p-6 shadow-[0_10px_40px_rgba(0,0,0,0.5)] relative"
         >
-          {/* TYPE SELECTOR (Upgraded to 2x2 Grid for Phase 3) */}
           <div className="grid grid-cols-2 gap-2 mb-8 bg-black/50 p-1.5 rounded-2xl border border-white/5 shadow-inner">
             <button 
               onClick={() => { setLogType('water'); setAmount(''); setTextInput(''); setSubmitError(null); }}
@@ -219,7 +231,6 @@ export default function LogActivity() {
 
           <div className="space-y-6 mb-8">
             
-            {/* WATER & STEPS INPUT UI */}
             <AnimatePresence mode="wait">
               {(logType === 'water' || logType === 'steps') && (
                 <motion.div key="numeric-input" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
@@ -263,7 +274,6 @@ export default function LogActivity() {
                 </motion.div>
               )}
 
-              {/* FOOD & WORKOUT NLP UI */}
               {(logType === 'food' || logType === 'workout') && (
                 <motion.div key="text-input" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                   <p className="text-white/50 text-[10px] font-bold uppercase tracking-widest mb-3 flex items-center justify-between">
@@ -279,7 +289,6 @@ export default function LogActivity() {
                       autoFocus
                     />
                     
-                    {/* Vision AI Camera Button Placeholder (Currently just adds visual premium prep) */}
                     {logType === 'food' && (
                       <motion.button 
                         whileHover={{ scale: 1.05 }}
@@ -322,7 +331,6 @@ export default function LogActivity() {
         </motion.div>
       </main>
 
-      {/* SMART VALIDATION MODAL (Anti-Cheat) */}
       <AnimatePresence>
         {showConfirm && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md">
@@ -337,7 +345,7 @@ export default function LogActivity() {
               </div>
               <h3 className="text-2xl font-black tracking-tighter text-center mb-2">Are you sure?</h3>
               <p className="text-center text-white/50 text-sm mb-8 leading-relaxed">
-                You entered <strong className="text-white">{amount}ml</strong> at once. This is a very large amount for a single entry.
+                You entered <strong className="text-white">{amount} {logType === 'water' ? 'ml' : 'steps'}</strong> at once. This is a very large amount for a single entry.
               </p>
               
               <div className="flex gap-3">
