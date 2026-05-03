@@ -48,7 +48,8 @@ export default function Dashboard() {
         return;
       }
 
-      setUserProfile(profile);
+      // Safely attach the user email for avatar fallback logic
+      setUserProfile({ ...profile, email: user.email });
 
       const startOfDay = new Date();
       startOfDay.setHours(0, 0, 0, 0);
@@ -79,13 +80,11 @@ export default function Dashboard() {
         });
       }
 
-      // Energy System Calculation
       const passiveKcal = Math.round((profile.bmr || 0) * 0.1);
       const stepsKcal = Math.round(totalSteps * 0.04);
       const workoutKcal = workoutLogsCount * 50;
       const energyBurned = stepsKcal + workoutKcal + passiveKcal;
 
-      // Score Engine (Daily Reset Base)
       const baseScore = profile.onboarding_score || 50; 
       let calculatedScore = baseScore;
 
@@ -97,7 +96,6 @@ export default function Dashboard() {
 
       if (logsCount >= 2) calculatedScore += 5;
 
-      // Time Penalty Check
       const currentHour = new Date().getHours();
       if (logsCount === 0) {
         if (currentHour >= 14) calculatedScore -= 10;
@@ -110,7 +108,6 @@ export default function Dashboard() {
 
       calculatedScore = Math.max(0, Math.min(100, Math.floor(calculatedScore)));
 
-      // Sync calculated score to DB natively
       if (calculatedScore !== profile.current_score) {
         await supabase.from('profiles').update({ current_score: calculatedScore }).eq('id', user.id);
       }
@@ -197,13 +194,27 @@ export default function Dashboard() {
               whileTap={{ scale: 0.9 }} 
               onClick={handleLogout}
               disabled={isLoggingOut}
-              className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center backdrop-blur-md hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-400 transition-all text-white/60"
+              className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center backdrop-blur-md hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-400 transition-all text-white/60 shrink-0"
             >
               {isLoggingOut ? <Loader2 size={16} className="animate-spin" /> : <LogOut size={16} />}
             </motion.button>
-            <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center backdrop-blur-md">
+            
+            <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center backdrop-blur-md shrink-0">
               <Bell size={18} className="text-white/80" />
             </div>
+
+            <Link href="/profile">
+              <motion.div 
+                whileTap={{ scale: 0.9 }}
+                className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center backdrop-blur-md overflow-hidden hover:border-[#00FFA3]/50 transition-all cursor-pointer shrink-0"
+              >
+                <img 
+                  src={`https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(userProfile.full_name || userProfile.email || 'user')}&backgroundColor=00FFA3&textColor=000000`} 
+                  alt="Profile" 
+                  className="w-full h-full object-cover"
+                />
+              </motion.div>
+            </Link>
         </div>
       </header>
 
@@ -300,7 +311,9 @@ export default function Dashboard() {
             </motion.div>
           </Link>
           
-          <Settings size={24} className="text-white/40 hover:text-white transition-colors" />
+          <Link href="/profile">
+            <Settings size={24} className="text-white/40 hover:text-white transition-colors cursor-pointer" />
+          </Link>
         </nav>
       </div>
 
