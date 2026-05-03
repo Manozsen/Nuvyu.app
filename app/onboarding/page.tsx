@@ -55,18 +55,15 @@ export default function Onboarding() {
   }, [supabase.auth]);
 
   useEffect(() => {
-    if (step === 6) { // WOW Moment is now Step 6
-      let calculated = 50; // Base score
+    if (step === 6) { 
+      let calculated = 50; 
 
-      // Adjust based on activity level
       if (formData.activityLevel === 'Active') calculated += 10;
       else if (formData.activityLevel === 'Moderate') calculated += 5;
       else if (formData.activityLevel === 'Sedentary') calculated -= 5;
 
-      // Adjust based on goal (identity)
       if (formData.identity === 'Lean & Fit' || formData.identity === 'Muscular') calculated += 5;
       
-      // Clamp between 30 and 70
       calculated = Math.max(30, Math.min(70, calculated));
       setFinalScore(calculated);
 
@@ -87,17 +84,15 @@ export default function Onboarding() {
   };
 
   const handleSubmit = async () => {
-    if (!userId) return;
+    if (!userId) return; 
     setLoading(true);
     setSubmitError(null);
 
     try {
-      // Parse values
       const weight = parseFloat(formData.weight) || 0;
       const height = parseFloat(formData.height) || 0;
       const age = parseInt(formData.age) || 0;
 
-      // BMR Calculation
       let calculatedBMR = 0;
       if (formData.gender === 'Female') {
         calculatedBMR = (10 * weight) + (6.25 * height) - (5 * age) - 161;
@@ -105,21 +100,16 @@ export default function Onboarding() {
         calculatedBMR = (10 * weight) + (6.25 * height) - (5 * age) + 5;
       }
       
-      // TDEE Calculation
-      let activityFactor = 1.2; // Sedentary
+      let activityFactor = 1.2;
       if (formData.activityLevel === 'Moderate') activityFactor = 1.55;
       else if (formData.activityLevel === 'Active') activityFactor = 1.725;
       
       const calculatedTDEE = Math.round(calculatedBMR * activityFactor);
       calculatedBMR = Math.round(calculatedBMR);
 
-      // Calorie Target Logic
       let targetCalories = calculatedTDEE;
-      if (formData.identity === 'Lean & Fit') {
-        targetCalories -= 400; // Fat loss
-      } else if (formData.identity === 'Muscular') {
-        targetCalories += 300; // Muscle gain
-      } // Maintenance for others
+      if (formData.identity === 'Lean & Fit') targetCalories -= 300;
+      else if (formData.identity === 'Muscular') targetCalories += 300; 
 
       const payload = {
         id: userId,
@@ -134,6 +124,7 @@ export default function Onboarding() {
         workout_type: formData.workoutType === 'Custom' ? (formData.customWorkout || 'Not specified') : formData.workoutType,
         activity_level: formData.activityLevel || 'Moderate',
         current_score: finalScore,
+        onboarding_score: finalScore, // Base score locked in for daily resets
         bmr: calculatedBMR,
         tdee: calculatedTDEE,
         target_calories: targetCalories,
@@ -350,7 +341,6 @@ export default function Onboarding() {
             </motion.div>
           )}
 
-          {/* NEW STEP 4: WORKOUT TYPE */}
           {step === 4 && (
             <motion.div key="step4" variants={slideVariants} initial="initial" animate="animate" exit="exit" className="space-y-8">
               <div>
