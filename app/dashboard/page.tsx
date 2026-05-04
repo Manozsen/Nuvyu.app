@@ -244,26 +244,10 @@ export default function Dashboard() {
     fetchDashboardData();
   }, [supabase.auth, router]);
 
-  const handleLogout = async () => {
+    const handleLogout = async () => {
     setIsLoggingOut(true);
     await supabase.auth.signOut();
     window.location.href = '/login';
-  };
-
-  const getSmartNudge = () => {
-    const hour = new Date().getHours();
-    
-    if (metrics.water < 1000 && hour >= 15) {
-      return "Paani pee le bhai. Target hit kar.";
-    }
-    if (metrics.steps < 2000 && hour >= 14) {
-      return "Move kar. 10 min walk kar.";
-    }
-    
-    if (metrics.score >= 80) return "Beast mode ON! Kya solid score hai aaj.";
-    if (metrics.logsCount === 0) return "Din shuru ho chuka hai. Pehla log enter kar!";
-    
-    return "Good progress. Keep going.";
   };
 
   if (isCheckingAuth) {
@@ -371,8 +355,8 @@ export default function Dashboard() {
               <Zap size={16} className="text-[#00FFA3]" fill="#00FFA3" />
               <span className="text-xs font-bold text-[#00FFA3] uppercase tracking-wider">Coach Nudge</span>
             </div>
-            <p className="text-sm font-medium text-white/90 leading-relaxed">
-              &quot;{getSmartNudge()}&quot;
+                        <p className="text-sm font-medium text-white/90 leading-relaxed">
+              &quot;{coachMessage}&quot;
             </p>
           </div>
         </motion.section>
