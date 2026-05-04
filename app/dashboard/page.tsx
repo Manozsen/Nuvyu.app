@@ -466,9 +466,11 @@ export default function Dashboard() {
 
       </main>
 
-      <div className="fixed bottom-6 left-6 right-6 flex justify-center z-40">
+            <div className="fixed bottom-6 left-6 right-6 flex justify-center z-40">
         <nav className="bg-[#0A0A0A]/80 backdrop-blur-xl border border-white/10 rounded-full px-6 py-4 flex items-center gap-12 shadow-[0_10px_40px_rgba(0,0,0,0.8)]">
-          <LayoutDashboard size={24} className="text-[#00FFA3]" strokeWidth={2.5} />
+          <Link href="/reports">
+            <LayoutDashboard size={24} className="text-[#00FFA3]" strokeWidth={2.5} />
+          </Link>
           
           <Link href="/log">
             <motion.div 
