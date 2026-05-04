@@ -270,12 +270,9 @@ export default function Dashboard() {
         .eq('date', todayDateStr)
         .single();
 
-      // 3. Strict Profile Update Sync
+            // 3. Strict Profile Update Sync
       if (calculatedScore !== profile.current_score) {
         await supabase.from('profiles').update({ current_score: calculatedScore }).eq('id', user.id);
-      }
-          
-        if (dashUpdateError) console.error("Dashboard Score Sync Failed:", dashUpdateError);
       }
 
       // INTEGRATION CHECK: Connect to 3-day history for accurate context
@@ -294,7 +291,8 @@ export default function Dashboard() {
       const finalNudge = await generateCoachNudge(coachContext);
       setCoachMessage(finalNudge);
 
-            setMetrics({
+      // Safe state update (Fixed Syntax Error)
+      setMetrics({
         score: calculatedScore,
         steps: totalSteps,
         water: totalWater,
@@ -306,7 +304,7 @@ export default function Dashboard() {
 
       setMounted(true);
       setIsCheckingAuth(false);
-    };
+    }; // <-- THIS CLOSES THE ASYNC FUNCTION (Fixes 'await' error)
 
     fetchDashboardData();
   }, [supabase.auth, router]);
