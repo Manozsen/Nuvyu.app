@@ -14,7 +14,7 @@ export default function Dashboard() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
   
-  const [metrics, setMetrics] = useState({ 
+    const [metrics, setMetrics] = useState({ 
     score: 0, 
     steps: 0, 
     water: 0, 
@@ -22,13 +22,84 @@ export default function Dashboard() {
     energy_burned: 0,
     energy_intake: 0
   });
+  
+  // State for Hybrid Coach Engine
+  const [coachMessage, setCoachMessage] = useState("Analyzing your progress...");
 
-  const supabase = createBrowserClient(
+    const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
+  // 1. BEHAVIOR DETECTION ENGINE
+  const detectUserState = (context: any) => {
+    if (context.hoursSinceLastLog >= 4) return "inactive";
+    if (context.water_today < 1000 && new Date().getHours() >= 14) return "low_hydration";
+    if (context.steps_today < 3000 && new Date().getHours() >= 14) return "low_activity";
+    if (context.steps_today > context.avg_steps_last_3_days + 1000) return "improving";
+    if (context.steps_today > 0) return "consistent";
+    return "idle";
+  };
+
+  // 2. HYBRID COACH ENGINE + RATE LIMITING + PERSONALIZATION
+  const generateCoachNudge = async (context: any, profile: any) => {
+    const state = detectUserState(context);
+    
+    // Monetization Ready Structure
+    const limit = profile.plan_type === 'pro' ? 50 : 5;
+    const todayDate = new Date().toISOString().split('T')[0];
+    
+    let currentCount = profile.daily_ai_calls_count || 0;
+    let lastReset = profile.last_reset_date;
+
+    if (lastReset !== todayDate) {
+      currentCount = 0;
+      lastReset = todayDate;
+    }
+
+    // Personalization Engine (Instant Fallback)
+    const fallbackNudge = () => {
+      const isFatLoss = profile.desired_identity === 'Lean & Fit';
+      if (state === "inactive") return `Time is ticking. Get moving, no excuses!`;
+      if (state === "low_hydration") return `Hydration is critical. Drink water now.`;
+      if (state === "low_activity") return isFatLoss ? `Calorie burn is low today. Step it up!` : `Activity dropping. Move a bit!`;
+      if (state === "improving") return `Great momentum today. Keep this up!`;
+      return `Good progress. Stay consistent.`;
+    };
+
+    // Rate Limiting Engine
+    if (currentCount < limit) {
+      try {
+        // AI Context Builder
+        const prompt = `You are a ${profile.coach_tone || 'strict'} coach helping a ${profile.age}yo ${profile.gender || 'person'} achieve ${profile.desired_identity}. Problem: ${profile.primary_problem}. State: ${state}. Write a short 2-line motivational nudge.`;
+        
+        // Safe Execution Layer (AI Hook)
+        const res = await fetch('/api/ai/coach', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt, userId: profile.id })
+        });
+        
+        if (!res.ok) throw new Error("AI unavailable");
+        const data = await res.json();
+        
+        // Update limits securely
+        await supabase.from('profiles').update({
+          daily_ai_calls_count: currentCount + 1,
+          last_reset_date: todayDate
+        }).eq('id', profile.id);
+
+        return data.nudge || fallbackNudge();
+      } catch (error) {
+        return fallbackNudge(); // Instant zero-freeze fallback
+      }
+    }
+    
+    return fallbackNudge(); // Limit exceeded fallback
+  };
+
   useEffect(() => {
+
     const fetchDashboardData = async () => {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       
