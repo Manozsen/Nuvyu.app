@@ -146,25 +146,44 @@ export default function LogActivity() {
           if (logTime > lastLogTime) lastLogTime = logTime;
         });
 
-        // PREVENT SCORE ABUSE: Cap effective steps
+                // PREVENT SCORE ABUSE: Cap effective steps
         const effectiveSteps = Math.min(totalSteps, 12000);
-
         let newScore = profile.onboarding_score || 50; 
         
-        if (effectiveSteps >= 6000) newScore += 20;
-        else if (effectiveSteps >= 3000) newScore += 10;
+        let steps_points = 0;
+        let water_points = 0;
+        let log_bonus = 0;
+        let inactivity_penalty = 0;
+        
+        if (effectiveSteps >= 6000) steps_points = 20;
+        else if (effectiveSteps >= 3000) steps_points = 10;
+        newScore += steps_points;
 
-        if (totalWater >= 2000) newScore += 15;
-        else if (totalWater >= 1000) newScore += 8;
+        if (totalWater >= 2000) water_points = 15;
+        else if (totalWater >= 1000) water_points = 8;
+        newScore += water_points;
 
-        if (logs.length >= 2) newScore += 5;
-        if (workoutLogsCount > 0) newScore += (workoutLogsCount * 5);
+        if (logs.length >= 2) log_bonus += 5;
+        if (workoutLogsCount > 0) log_bonus += (workoutLogsCount * 5);
+        newScore += log_bonus;
 
         const hoursSinceLast = (Date.now() - lastLogTime) / (1000 * 60 * 60);
-        if (hoursSinceLast >= 6) newScore -= 10;
-        else if (hoursSinceLast >= 4) newScore -= 5;
+        if (hoursSinceLast >= 6) inactivity_penalty = -10;
+        else if (hoursSinceLast >= 4) inactivity_penalty = -5;
+        newScore += inactivity_penalty;
 
         newScore = Math.max(0, Math.min(100, Math.floor(newScore)));
+
+        const scoreBreakdown = { steps_points, water_points, log_bonus, inactivity_penalty };
+        const todayDateStr = startOfDay.toISOString().split('T')[0];
+
+        // Safe Upsert Explanation (Synced with Dashboard)
+        await supabase.from('score_explanations').upsert({
+          user_id: userId,
+          date: todayDateStr,
+          breakdown: scoreBreakdown,
+          final_score: newScore
+        }, { onConflict: 'user_id, date' });
 
         // DEBUG LOGS (Check console to verify math)
         console.log("=== SCORE ENGINE DEBUG ===");
