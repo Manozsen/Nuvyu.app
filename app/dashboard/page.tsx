@@ -31,21 +31,38 @@ export default function Dashboard() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  // 1. BEHAVIOR DETECTION ENGINE
-  const detectUserState = (context: any) => {
-    if (context.hoursSinceLastLog >= 4) return "inactive";
-    if (context.water_today < 1000 && new Date().getHours() >= 14) return "low_hydration";
-    if (context.steps_today < 3000 && new Date().getHours() >= 14) return "low_activity";
-    if (context.steps_today > context.avg_steps_last_3_days + 1000) return "improving";
-    if (context.steps_today > 0) return "consistent";
-    return "idle";
+    // 1. BEHAVIOR DETECTION ENGINE
+  const detectUserState = (logs: any, profile: any, context: any) => {
+    return {
+      isInactive: context.hoursSinceLastLog >= 4,
+      lowWater: context.water_today < 1000,
+      lowSteps: context.steps_today < 3000,
+      improving: context.steps_today > context.avg_steps_last_3_days,
+      consistent: context.avg_steps_last_3_days > 3000 && context.avg_water_last_3_days > 1500
+    };
   };
 
-  // 2. HYBRID COACH ENGINE + RATE LIMITING + PERSONALIZATION
-  const generateCoachNudge = async (context: any, profile: any) => {
-    const state = detectUserState(context);
+  // 2. HYBRID AI SYSTEM (Rule-Based + AI Fallback)
+  const generateCoachNudge = async (context: any) => {
+    const { profile } = context;
+    const state = detectUserState(null, profile, context);
     
-    // Monetization Ready Structure
+    // Smart Rule-Based Coach (Personalized, Hinglish, Max 2 lines)
+    const ruleBasedFallback = () => {
+      const isFatLoss = profile.goal === 'Lean & Fit';
+      const isMuscle = profile.goal === 'Muscular';
+      const isOlder = (profile.age || 25) >= 40;
+
+      if (state.lowWater) return `Hydration critical hai. Ek glass paani abhi piyo!`;
+      if (state.isInactive) return isOlder ? `Kafi time rest ho gaya. Thoda light walk kar lo.` : `Time is ticking bhai. Get moving, no excuses!`;
+      if (state.lowSteps) return isFatLoss ? `Calorie burn low hai aaj. Thoda step it up karo!` : `Activity drop ho rahi hai. Move a bit!`;
+      if (state.improving) return `Great momentum today! Aise hi push karte raho.`;
+      if (state.consistent) return isMuscle ? `Solid consistency. Recovery aur protein pe focus rakhna.` : `On track! Yeh discipline maintain karna hai.`;
+      
+      return `Good progress. Keep going!`;
+    };
+
+    // Rate Limiting Engine (Monetization ready)
     const limit = profile.plan_type === 'pro' ? 50 : 5;
     const todayDate = new Date().toISOString().split('T')[0];
     
@@ -57,23 +74,11 @@ export default function Dashboard() {
       lastReset = todayDate;
     }
 
-    // Personalization Engine (Instant Fallback)
-    const fallbackNudge = () => {
-      const isFatLoss = profile.desired_identity === 'Lean & Fit';
-      if (state === "inactive") return `Time is ticking. Get moving, no excuses!`;
-      if (state === "low_hydration") return `Hydration is critical. Drink water now.`;
-      if (state === "low_activity") return isFatLoss ? `Calorie burn is low today. Step it up!` : `Activity dropping. Move a bit!`;
-      if (state === "improving") return `Great momentum today. Keep this up!`;
-      return `Good progress. Stay consistent.`;
-    };
-
-    // Rate Limiting Engine
+    // AI Check & Execution
     if (currentCount < limit) {
       try {
-        // AI Context Builder
-        const prompt = `You are a ${profile.coach_tone || 'strict'} coach helping a ${profile.age}yo ${profile.gender || 'person'} achieve ${profile.desired_identity}. Problem: ${profile.primary_problem}. State: ${state}. Write a short 2-line motivational nudge.`;
+        const prompt = `Coach tone: ${profile.coach_tone || 'strict'}. User: ${profile.age}yo ${profile.gender}, Goal: ${profile.goal}. State: ${JSON.stringify(state)}. Context: ${JSON.stringify(context)}. Give a 2-line Hinglish motivational nudge.`;
         
-        // Safe Execution Layer (AI Hook)
         const res = await fetch('/api/ai/coach', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -83,19 +88,19 @@ export default function Dashboard() {
         if (!res.ok) throw new Error("AI unavailable");
         const data = await res.json();
         
-        // Update limits securely
+        // Strict Scoped Limit Update
         await supabase.from('profiles').update({
           daily_ai_calls_count: currentCount + 1,
           last_reset_date: todayDate
         }).eq('id', profile.id);
 
-        return data.nudge || fallbackNudge();
+        return data.nudge || ruleBasedFallback();
       } catch (error) {
-        return fallbackNudge(); // Instant zero-freeze fallback
+        return ruleBasedFallback(); // Instant 0-delay fallback on failure
       }
     }
     
-    return fallbackNudge(); // Limit exceeded fallback
+    return ruleBasedFallback(); // Instant fallback if rate limit hit
   };
 
   useEffect(() => {
@@ -197,10 +202,11 @@ export default function Dashboard() {
         if (dashUpdateError) console.error("Dashboard Score Sync Failed:", dashUpdateError);
       }
 
-      // 3. AI CONTEXT BUILDER (Data Gathering)
+            // 3. CONTEXT BUILDER (Data Gathering)
       const threeDaysAgo = new Date();
       threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
       
+      // Strict scoped 3-day history query
       const { data: pastLogs } = await supabase
         .from('daily_logs')
         .select('log_type, data')
@@ -209,22 +215,33 @@ export default function Dashboard() {
         .lt('created_at', startOfDay.toISOString());
 
       let pastSteps = 0;
+      let pastWater = 0;
       if (pastLogs) {
         pastLogs.forEach(log => {
-          if (log.log_type === 'steps') pastSteps += (Number(log.data?.amount) || 0);
+          const val = Number(log.data?.amount) || 0;
+          if (log.log_type === 'steps') pastSteps += val;
+          if (log.log_type === 'water') pastWater += val;
         });
       }
 
-      const context = {
+      const buildCoachContext = {
+        profile: profile,
+        age: profile.age,
+        gender: profile.gender,
+        goal: profile.desired_identity,
+        activity_level: profile.activity_level,
+        workout_type: profile.workout_type,
         steps_today: totalSteps,
         water_today: totalWater,
         avg_steps_last_3_days: Math.round(pastSteps / 3),
-        hoursSinceLastLog: logsCount === 0 ? 24 : (Date.now() - lastLogTime) / (1000 * 60 * 60),
+        avg_water_last_3_days: Math.round(pastWater / 3),
         current_score: calculatedScore,
+        hoursSinceLastLog: logsCount === 0 ? 24 : (Date.now() - lastLogTime) / (1000 * 60 * 60),
+        consistency_level: (pastSteps / 3 > 3000 && pastWater / 3 > 1500) ? 'high' : 'low'
       };
 
-      // Generate & set Hybrid Nudge
-      const nudge = await generateCoachNudge(context, profile);
+      // Generate & set Hybrid Nudge using strict context
+      const nudge = await generateCoachNudge(buildCoachContext);
       setCoachMessage(nudge);
 
       setMetrics({
