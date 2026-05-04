@@ -294,13 +294,14 @@ export default function Dashboard() {
       const finalNudge = await generateCoachNudge(coachContext);
       setCoachMessage(finalNudge);
 
-      setMetrics({
+            setMetrics({
         score: calculatedScore,
         steps: totalSteps,
         water: totalWater,
         logsCount: logsCount,
         energy_burned: energyBurned,
-        energy_intake: energyIntake
+        energy_intake: safeEnergyIntake,
+        score_summary: getScoreSummary(explData?.breakdown || scoreBreakdown)
       });
 
       setMounted(true);
