@@ -188,7 +188,7 @@ export default function Dashboard() {
       console.log("Calculated Score:", calculatedScore);
       console.log("DB Current Score:", profile.current_score);
 
-      if (calculatedScore !== profile.current_score) {
+            if (calculatedScore !== profile.current_score) {
         const { error: dashUpdateError } = await supabase
           .from('profiles')
           .update({ current_score: calculatedScore })
@@ -196,8 +196,40 @@ export default function Dashboard() {
           
         if (dashUpdateError) console.error("Dashboard Score Sync Failed:", dashUpdateError);
       }
+
+      // 3. AI CONTEXT BUILDER (Data Gathering)
+      const threeDaysAgo = new Date();
+      threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+      
+      const { data: pastLogs } = await supabase
+        .from('daily_logs')
+        .select('log_type, data')
+        .eq('user_id', user.id)
+        .gte('created_at', threeDaysAgo.toISOString())
+        .lt('created_at', startOfDay.toISOString());
+
+      let pastSteps = 0;
+      if (pastLogs) {
+        pastLogs.forEach(log => {
+          if (log.log_type === 'steps') pastSteps += (Number(log.data?.amount) || 0);
+        });
+      }
+
+      const context = {
+        steps_today: totalSteps,
+        water_today: totalWater,
+        avg_steps_last_3_days: Math.round(pastSteps / 3),
+        hoursSinceLastLog: logsCount === 0 ? 24 : (Date.now() - lastLogTime) / (1000 * 60 * 60),
+        current_score: calculatedScore,
+      };
+
+      // Generate & set Hybrid Nudge
+      const nudge = await generateCoachNudge(context, profile);
+      setCoachMessage(nudge);
+
       setMetrics({
         score: calculatedScore,
+
         steps: totalSteps,
         water: totalWater,
         logsCount: logsCount,
