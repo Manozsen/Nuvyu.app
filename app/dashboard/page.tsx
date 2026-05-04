@@ -14,17 +14,28 @@ export default function Dashboard() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
   
-      const [metrics, setMetrics] = useState({ 
+        const [metrics, setMetrics] = useState({ 
     score: 0, 
     steps: 0, 
     water: 0, 
     logsCount: 0,
     energy_burned: 0,
-    energy_intake: 0
+    energy_intake: 0,
+    score_summary: ""
   });
 
   // Intelligence System State
   const [coachMessage, setCoachMessage] = useState("Analyzing your progress...");
+
+  const getScoreSummary = (breakdown: any) => {
+    if (!breakdown) return "";
+    const parts = [];
+    if (breakdown.steps_points) parts.push(`+${breakdown.steps_points} steps`);
+    if (breakdown.water_points) parts.push(`+${breakdown.water_points} hydration`);
+    if (breakdown.log_bonus) parts.push(`+${breakdown.log_bonus} logs`);
+    if (breakdown.inactivity_penalty) parts.push(`${breakdown.inactivity_penalty} inactivity`);
+    return parts.length > 0 ? parts.join(", ") : "No changes yet";
+  };
 
     const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -206,42 +217,63 @@ export default function Dashboard() {
       const energyBurned = Math.round(totalSteps * 0.04);
       const safeEnergyIntake = energyIntake || 0;
 
-      // 2. Exact Score Engine Calculation (Matches Log Page perfectly)
+            // 2. Exact Score Engine Calculation with Breakdown
       const effectiveSteps = Math.min(totalSteps, 12000);
       let calculatedScore = profile.onboarding_score || 50; 
       
-      if (effectiveSteps >= 6000) calculatedScore += 20;
-      else if (effectiveSteps >= 3000) calculatedScore += 10;
+      let steps_points = 0;
+      let water_points = 0;
+      let log_bonus = 0;
+      let inactivity_penalty = 0;
 
-      if (totalWater >= 2000) calculatedScore += 15;
-      else if (totalWater >= 1000) calculatedScore += 8;
+      if (effectiveSteps >= 6000) steps_points = 20;
+      else if (effectiveSteps >= 3000) steps_points = 10;
+      calculatedScore += steps_points;
 
-      if (logsCount >= 2) calculatedScore += 5;
-      if (workoutLogsCount > 0) calculatedScore += (workoutLogsCount * 5);
+      if (totalWater >= 2000) water_points = 15;
+      else if (totalWater >= 1000) water_points = 8;
+      calculatedScore += water_points;
+
+      if (logsCount >= 2) log_bonus += 5;
+      if (workoutLogsCount > 0) log_bonus += (workoutLogsCount * 5);
+      calculatedScore += log_bonus;
 
       const currentHour = new Date().getHours();
       if (logsCount === 0) {
-        if (currentHour >= 14) calculatedScore -= 10;
-        else if (currentHour >= 10) calculatedScore -= 5;
+        if (currentHour >= 14) inactivity_penalty = -10;
+        else if (currentHour >= 10) inactivity_penalty = -5;
       } else {
         const hoursSinceLast = (Date.now() - lastLogTime) / (1000 * 60 * 60);
-        if (hoursSinceLast >= 6) calculatedScore -= 10;
-        else if (hoursSinceLast >= 4) calculatedScore -= 5;
+        if (hoursSinceLast >= 6) inactivity_penalty = -10;
+        else if (hoursSinceLast >= 4) inactivity_penalty = -5;
       }
+      calculatedScore += inactivity_penalty;
 
       calculatedScore = Math.max(0, Math.min(100, Math.floor(calculatedScore)));
 
-      // DEBUG LOGS
-      console.log("=== DASHBOARD LOAD DEBUG ===");
-      console.log("Fetched Logs Count:", logsCount);
-      console.log("Calculated Score:", calculatedScore);
-      console.log("DB Current Score:", profile.current_score);
+      const scoreBreakdown = { steps_points, water_points, log_bonus, inactivity_penalty };
+      const todayDateStr = startOfDay.toISOString().split('T')[0];
 
-             if (calculatedScore !== profile.current_score) {
-        const { error: dashUpdateError } = await supabase
-          .from('profiles')
-          .update({ current_score: calculatedScore })
-          .eq('id', user.id);
+      // Safe Upsert Explanation (Avoids duplicate writes)
+      await supabase.from('score_explanations').upsert({
+        user_id: user.id,
+        date: todayDateStr,
+        breakdown: scoreBreakdown,
+        final_score: calculatedScore
+      }, { onConflict: 'user_id, date' });
+
+      // Fetch today's explanation safely for state injection
+      const { data: explData } = await supabase
+        .from('score_explanations')
+        .select('breakdown')
+        .eq('user_id', user.id)
+        .eq('date', todayDateStr)
+        .single();
+
+      // 3. Strict Profile Update Sync
+      if (calculatedScore !== profile.current_score) {
+        await supabase.from('profiles').update({ current_score: calculatedScore }).eq('id', user.id);
+      }
           
         if (dashUpdateError) console.error("Dashboard Score Sync Failed:", dashUpdateError);
       }
