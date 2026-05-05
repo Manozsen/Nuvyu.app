@@ -205,14 +205,31 @@ export default function LogActivity() {
           
         if (updateError) console.error("Score Update Failed:", updateError);
 
-      } else {
+            } else {
         const fallbackScore = profile.onboarding_score || 50;
         await supabase.from('profiles').update({ current_score: fallbackScore }).eq('id', userId);
       }
       
-      // CRITICAL FIX: Invalidate Next.js cache so dashboard actually re-fetches
-      router.refresh(); 
-      router.push('/dashboard');
+      // SMART FEEDBACK LOGIC
+      let pointsAdded = 0;
+      const amountNum = parseFloat(amount) || 0;
+      if (logType === 'water') {
+        if (amountNum >= 2000) pointsAdded = 15;
+        else if (amountNum >= 1000) pointsAdded = 8;
+      } else if (logType === 'steps') {
+        if (amountNum >= 6000) pointsAdded = 20;
+        else if (amountNum >= 3000) pointsAdded = 10;
+      } else if (logType === 'workout') {
+        pointsAdded = 5;
+      }
+      
+      setSaveFeedback(pointsAdded > 0 ? `+${pointsAdded} ${logType} score added!` : "Log saved successfully!");
+      
+      // Delay push slightly to allow user to read success feedback
+      setTimeout(() => {
+        router.refresh(); 
+        router.push('/dashboard');
+      }, 1200);
       
     } catch (error: any) {
       console.error("Error saving log:", error);
@@ -335,13 +352,33 @@ export default function LogActivity() {
                         className="w-full bg-black/40 border border-white/10 rounded-2xl p-6 text-2xl font-black text-center text-white placeholder:text-sm placeholder:font-medium placeholder:text-white/20 focus:border-[#00FFA3] focus:ring-1 focus:ring-[#00FFA3] focus:outline-none transition-all shadow-inner" 
                         autoFocus
                       />
-                      <span className="absolute right-6 top-1/2 -translate-y-1/2 text-white/20 text-sm font-bold tracking-widest">
+                                            <span className="absolute right-6 top-1/2 -translate-y-1/2 text-white/20 text-sm font-bold tracking-widest">
                         {logType === 'water' ? 'ML' : 'STEPS'}
                       </span>
                     </div>
+                    {/* SMART HINTS BINDING */}
+                    {logType === 'water' && parseFloat(amount) > 0 && parseFloat(amount) < 1000 && (
+                      <p className="text-orange-400/80 text-xs font-bold mt-3 text-center">Target ke liye aur paani zaroori hai</p>
+                    )}
+                    {logType === 'steps' && parseFloat(amount) > 0 && parseFloat(amount) < 3000 && (
+                      <p className="text-orange-400/80 text-xs font-bold mt-3 text-center">Bonus ke liye thoda aur walk karo</p>
+                    )}
                   </div>
                 </motion.div>
               )}
+
+              {/* ... [Food/Workout inputs remain identical] ... */}
+
+          {/* ... [Alerts remain identical] ... */}
+
+          <motion.button 
+            whileTap={!isFormValid() || loading ? {} : { scale: 0.98 }}
+            onClick={handleInitialSave} 
+            disabled={!isFormValid() || loading || !!saveFeedback} 
+            className="w-full bg-[#00FFA3] text-black font-black text-lg py-5 rounded-2xl flex justify-center items-center gap-3 disabled:opacity-30 disabled:grayscale transition-all hover:shadow-[0_0_25px_rgba(0,255,163,0.4)]"
+          >
+            {loading ? <Loader2 className="animate-spin" size={24}/> : saveFeedback ? <><CheckCircle2 size={22} strokeWidth={3} /> {saveFeedback}</> : <><CheckCircle2 size={22} strokeWidth={3} /> Save Progress</>}
+          </motion.button>
 
               {(logType === 'food' || logType === 'workout') && (
                 <motion.div key="text-input" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
@@ -388,17 +425,6 @@ export default function LogActivity() {
               </motion.div>
             )}
           </AnimatePresence>
-
-          <motion.button 
-            whileTap={!isFormValid() || loading ? {} : { scale: 0.98 }}
-            onClick={handleInitialSave} 
-            disabled={!isFormValid() || loading} 
-            className="w-full bg-[#00FFA3] text-black font-black text-lg py-5 rounded-2xl flex justify-center items-center gap-3 disabled:opacity-30 disabled:grayscale transition-all hover:shadow-[0_0_25px_rgba(0,255,163,0.4)]"
-          >
-            {loading ? <Loader2 className="animate-spin" size={24}/> : <><CheckCircle2 size={22} strokeWidth={3} /> Save Progress</>}
-          </motion.button>
-        </motion.div>
-      </main>
 
       <AnimatePresence>
         {showConfirm && (
