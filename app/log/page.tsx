@@ -13,14 +13,14 @@ export default function LogActivity() {
   const [amount, setAmount] = useState('');
   const [textInput, setTextInput] = useState('');
   
-    const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [successFeedback, setSuccessFeedback] = useState<string | null>(null);
 
-  // 🧠 PART 4: FUTURE PREP (Logic Only)
+  // FUTURE PREP (Logic Only)
   const steps_auto_tracking = false;
   const device_sync_ready = true;
 
@@ -54,14 +54,12 @@ export default function LogActivity() {
     setLoading(true);
     setSubmitError(null);
     
-    // A) HARD LIMIT REJECTION
     if (logType === 'steps' && parseFloat(amount) > 30000) {
       setSubmitError("Entry rejected: Step count exceeds realistic limits.");
       setLoading(false);
       return;
     }
 
-    // C) ANTI-SPAM (Detect rapid multiple logs in 5 minutes)
     if (userId) {
       const fiveMinsAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
       const { count } = await supabase
@@ -77,7 +75,6 @@ export default function LogActivity() {
       }
     }
 
-    // B) SMART ANTI-CHEAT VALIDATION (Soft Confirmation)
     if (logType === 'water' && parseFloat(amount) > 700) {
       setShowConfirm(true);
       setLoading(false);
@@ -89,7 +86,6 @@ export default function LogActivity() {
       return;
     }
     
-    // Execute save will handle its own loading/error state continuation
     executeSave();
   };
 
@@ -100,7 +96,6 @@ export default function LogActivity() {
     setSubmitError(null);
 
     try {
-      // 1. Fetch Profile First for Onboarding Base Score
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
@@ -113,7 +108,6 @@ export default function LogActivity() {
         ? { amount: parseFloat(amount) } 
         : { text: textInput.trim() };
 
-      // 2. Insert Log
       const { error: insertError } = await supabase.from('daily_logs').insert({
         user_id: userId,
         log_type: logType,
@@ -122,11 +116,9 @@ export default function LogActivity() {
 
       if (insertError) throw insertError;
 
-      // 3. Recalculate Score with Reset Logic Base 
       const startOfDay = new Date();
-      startOfDay.setHours(0, 0, 0, 0); // Strictly use local user midnight
+      startOfDay.setHours(0, 0, 0, 0); 
 
-      // Optimized query: selecting only needed columns
       const { data: logs } = await supabase
         .from('daily_logs')
         .select('log_type, data, created_at')
@@ -140,9 +132,7 @@ export default function LogActivity() {
         let lastLogTime = 0;
 
         logs.forEach(log => {
-          // SAFE PARSING: Ensure we only extract numbers, fallback to 0 for text logs
           const val = Number(log.data?.amount) || 0;
-          
           if (log.log_type === 'steps') totalSteps += val;
           if (log.log_type === 'water') totalWater += val;
           if (log.log_type === 'workout') workoutLogsCount += 1;
@@ -151,7 +141,6 @@ export default function LogActivity() {
           if (logTime > lastLogTime) lastLogTime = logTime;
         });
 
-                // PREVENT SCORE ABUSE: Cap effective steps
         const effectiveSteps = Math.min(totalSteps, 12000);
         let newScore = profile.onboarding_score || 50; 
         
@@ -180,9 +169,12 @@ export default function LogActivity() {
         newScore = Math.max(0, Math.min(100, Math.floor(newScore)));
 
         const scoreBreakdown = { steps_points, water_points, log_bonus, inactivity_penalty };
-        const todayDateStr = startOfDay.toISOString().split('T')[0];
+        
+        const year = startOfDay.getFullYear();
+        const month = String(startOfDay.getMonth() + 1).padStart(2, '0');
+        const day = String(startOfDay.getDate()).padStart(2, '0');
+        const todayDateStr = `${year}-${month}-${day}`;
 
-        // Safe Upsert Explanation (Synced with Dashboard)
         await supabase.from('score_explanations').upsert({
           user_id: userId,
           date: todayDateStr,
@@ -190,14 +182,6 @@ export default function LogActivity() {
           final_score: newScore
         }, { onConflict: 'user_id, date' });
 
-        // DEBUG LOGS (Check console to verify math)
-        console.log("=== SCORE ENGINE DEBUG ===");
-        console.log("Total Steps:", totalSteps);
-        console.log("Total Water:", totalWater);
-        console.log("Logs Length:", logs.length);
-        console.log("Calculated New Score:", newScore);
-
-        // Explicit error checking on update
         const { error: updateError } = await supabase
           .from('profiles')
           .update({ current_score: newScore })
@@ -205,12 +189,11 @@ export default function LogActivity() {
           
         if (updateError) console.error("Score Update Failed:", updateError);
 
-            } else {
+      } else {
         const fallbackScore = profile.onboarding_score || 50;
         await supabase.from('profiles').update({ current_score: fallbackScore }).eq('id', userId);
       }
       
-      // SMART FEEDBACK LOGIC
       let pointsAdded = 0;
       const amountNum = parseFloat(amount) || 0;
       if (logType === 'water') {
@@ -223,9 +206,8 @@ export default function LogActivity() {
         pointsAdded = 5;
       }
       
-      setSaveFeedback(pointsAdded > 0 ? `+${pointsAdded} ${logType} score added!` : "Log saved successfully!");
+      setSuccessFeedback(pointsAdded > 0 ? `+${pointsAdded} ${logType} score added!` : "Log saved successfully!");
       
-      // Delay push slightly to allow user to read success feedback
       setTimeout(() => {
         router.refresh(); 
         router.push('/dashboard');
@@ -352,7 +334,7 @@ export default function LogActivity() {
                         className="w-full bg-black/40 border border-white/10 rounded-2xl p-6 text-2xl font-black text-center text-white placeholder:text-sm placeholder:font-medium placeholder:text-white/20 focus:border-[#00FFA3] focus:ring-1 focus:ring-[#00FFA3] focus:outline-none transition-all shadow-inner" 
                         autoFocus
                       />
-                                            <span className="absolute right-6 top-1/2 -translate-y-1/2 text-white/20 text-sm font-bold tracking-widest">
+                      <span className="absolute right-6 top-1/2 -translate-y-1/2 text-white/20 text-sm font-bold tracking-widest">
                         {logType === 'water' ? 'ML' : 'STEPS'}
                       </span>
                     </div>
@@ -366,19 +348,6 @@ export default function LogActivity() {
                   </div>
                 </motion.div>
               )}
-
-              {/* ... [Food/Workout inputs remain identical] ... */}
-
-          {/* ... [Alerts remain identical] ... */}
-
-          <motion.button 
-            whileTap={!isFormValid() || loading ? {} : { scale: 0.98 }}
-            onClick={handleInitialSave} 
-            disabled={!isFormValid() || loading || !!saveFeedback} 
-            className="w-full bg-[#00FFA3] text-black font-black text-lg py-5 rounded-2xl flex justify-center items-center gap-3 disabled:opacity-30 disabled:grayscale transition-all hover:shadow-[0_0_25px_rgba(0,255,163,0.4)]"
-          >
-            {loading ? <Loader2 className="animate-spin" size={24}/> : saveFeedback ? <><CheckCircle2 size={22} strokeWidth={3} /> {saveFeedback}</> : <><CheckCircle2 size={22} strokeWidth={3} /> Save Progress</>}
-          </motion.button>
 
               {(logType === 'food' || logType === 'workout') && (
                 <motion.div key="text-input" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
@@ -425,7 +394,17 @@ export default function LogActivity() {
               </motion.div>
             )}
           </AnimatePresence>
-           </div>
+
+          <motion.button 
+            whileTap={!isFormValid() || loading ? {} : { scale: 0.98 }}
+            onClick={handleInitialSave} 
+            disabled={!isFormValid() || loading || !!successFeedback} 
+            className="w-full bg-[#00FFA3] text-black font-black text-lg py-5 rounded-2xl flex justify-center items-center gap-3 disabled:opacity-30 disabled:grayscale transition-all hover:shadow-[0_0_25px_rgba(0,255,163,0.4)]"
+          >
+            {loading ? <Loader2 className="animate-spin" size={24}/> : successFeedback ? <><CheckCircle2 size={22} strokeWidth={3} /> {successFeedback}</> : <><CheckCircle2 size={22} strokeWidth={3} /> Save Progress</>}
+          </motion.button>
+        </motion.div>
+      </main>
 
       <AnimatePresence>
         {showConfirm && (
