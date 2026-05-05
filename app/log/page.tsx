@@ -13,11 +13,16 @@ export default function LogActivity() {
   const [amount, setAmount] = useState('');
   const [textInput, setTextInput] = useState('');
   
-  const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [successFeedback, setSuccessFeedback] = useState<string | null>(null);
+
+  // 🧠 PART 4: FUTURE PREP (Logic Only)
+  const steps_auto_tracking = false;
+  const device_sync_ready = true;
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
