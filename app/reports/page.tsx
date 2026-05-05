@@ -2,10 +2,11 @@
 
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Loader2, Brain, Activity, TrendingUp, TrendingDown, Calendar, Zap, LayoutDashboard, Settings, Plus, BarChart2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Brain, Activity, TrendingUp, TrendingDown, Calendar, Zap, LayoutDashboard, Settings, Plus, BarChart2, AlertTriangle, Flame } from 'lucide-react';
 import { createBrowserClient } from '@supabase/ssr';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { LineChart, Line, XAxis, Tooltip, ResponsiveContainer, YAxis } from 'recharts';
 
 export default function InsightsPage() {
   const router = useRouter();
@@ -53,6 +54,12 @@ export default function InsightsPage() {
         return;
       }
 
+      // Format Data for Graph
+      const chartData = data.map(d => ({
+        date: new Date(d.date).toLocaleDateString('en-US', { weekday: 'short' }),
+        score: d.final_score
+      }));
+
       // 🧠 PART 2: TREND ENGINE
       const scores = data.map(d => d.final_score);
       const avg_score = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
@@ -60,7 +67,6 @@ export default function InsightsPage() {
       const lowest_score = Math.min(...scores);
       const score_change = scores.length > 1 ? scores[scores.length - 1] - scores[0] : 0;
       
-      // Consistency based on standard deviation
       const variance = scores.reduce((a, b) => a + Math.pow(b - avg_score, 2), 0) / scores.length;
       const consistency_score = Math.max(0, Math.round(100 - Math.sqrt(variance) * 2));
 
@@ -99,7 +105,7 @@ export default function InsightsPage() {
         else if (last3[2] === last3[1] && last3[1] === last3[0]) plateau = true;
       }
 
-      // 🧠 PART 5: RULE-BASED SUMMARY (Hinglish tone)
+      // 🧠 PART 5: RULE-BASED SUMMARY
       let summary = "";
       if (streak_days > 0 || score_change > 10) {
         summary = "Is week tumne strong comeback kiya hai! Effort dikh raha hai, aise hi momentum maintain karo.";
@@ -111,25 +117,13 @@ export default function InsightsPage() {
         summary = "Progress stable hai. Consistency is key, daily goals hit karte raho.";
       }
 
-      // 🧠 PART 6: AI CONTEXT BUILDER (Prepared for Future Gemini Inject)
-      const aiContextReady = {
-        avg_score,
-        score_change,
-        consistency_score,
-        best_day: highest_score,
-        worst_day: lowest_score,
-        dominant_behavior,
-        main_issue: biggest_negative_factor,
-        main_strength: biggest_positive_factor,
-        pattern_type: drop_pattern ? 'declining' : plateau ? 'plateau' : 'improving'
-      };
-
       setInsights({
         trend: { avg_score, highest_score, lowest_score, score_change, consistency_score },
         breakdown: { biggest_positive_factor, biggest_negative_factor, dominant_behavior },
         summary,
-        aiContext: aiContextReady,
-        dataPoints: data.slice(-7) // Show max 7 nodes in UI for simplicity
+        patterns: { streak_days, drop_pattern, plateau },
+        latest_breakdown: data[data.length - 1]?.breakdown || {},
+        chartData
       });
 
       setLoading(false);
@@ -141,10 +135,22 @@ export default function InsightsPage() {
 
   if (!mounted) return null;
 
+  // Custom Recharts Tooltip styled for Cyber-Zen
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-[#0A0A0A]/90 backdrop-blur-md border border-white/10 rounded-xl p-3 shadow-xl">
+          <p className="text-white/50 text-[10px] uppercase font-bold tracking-widest mb-1">{label}</p>
+          <p className="text-[#00FFA3] font-black text-lg">{payload[0].value} pts</p>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <div className="relative min-h-screen bg-black text-white pb-28 overflow-hidden selection:bg-[#00FFA3]/30">
       
-      {/* Background Glows (NUVYU Design System) */}
       <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-[#00FFA3]/10 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[10%] right-[-10%] w-72 h-72 bg-blue-600/10 rounded-full blur-[100px] pointer-events-none" />
 
@@ -165,7 +171,6 @@ export default function InsightsPage() {
 
       <main className="px-6 space-y-6 z-10 relative">
         
-        {/* RANGE SELECTOR */}
         <div className="flex bg-white/5 p-1 rounded-2xl border border-white/10 backdrop-blur-md">
           <button 
             onClick={() => setRange('7d')}
@@ -198,7 +203,27 @@ export default function InsightsPage() {
               key={range} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
               className="space-y-6"
             >
-              {/* SUMMARY CARD (Rule-based Intelligence) */}
+              
+              {/* PATTERN DISPLAY BADGE */}
+              <div className="flex justify-start">
+                {insights.patterns.streak_days > 0 && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-500/10 border border-orange-500/20 text-orange-400 text-[10px] font-bold uppercase tracking-widest rounded-full">
+                    <Flame size={12} /> {insights.patterns.streak_days}-Day Streak
+                  </span>
+                )}
+                {insights.patterns.drop_pattern && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-500/10 border border-red-500/20 text-red-400 text-[10px] font-bold uppercase tracking-widest rounded-full">
+                    <AlertTriangle size={12} /> Score Drop Detected
+                  </span>
+                )}
+                {insights.patterns.plateau && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-bold uppercase tracking-widest rounded-full">
+                    <Activity size={12} /> Plateau Detected
+                  </span>
+                )}
+              </div>
+
+              {/* SUMMARY CARD */}
               <div className="bg-gradient-to-br from-[#0A0A0A] to-[#0D0D0D] border border-[#00FFA3]/30 rounded-[2rem] p-6 shadow-[0_10px_30px_rgba(0,255,163,0.1)] relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-[#00FFA3]/5 rounded-full blur-[40px] pointer-events-none" />
                 <div className="flex items-center gap-2 mb-3">
@@ -210,47 +235,46 @@ export default function InsightsPage() {
                 </p>
               </div>
 
-              {/* TREND METRICS GRID */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-[#0A0A0A]/90 backdrop-blur-2xl border border-white/10 rounded-[1.5rem] p-5 shadow-xl">
-                  <div className="flex items-center gap-2 mb-2">
-                    <BarChart2 size={16} className="text-[#00FFA3]" />
-                    <span className="text-white/50 text-[10px] font-bold uppercase tracking-widest">Avg Score</span>
-                  </div>
-                  <div className="text-3xl font-black">{insights.trend.avg_score}</div>
-                </div>
-
-                <div className="bg-[#0A0A0A]/90 backdrop-blur-2xl border border-white/10 rounded-[1.5rem] p-5 shadow-xl">
-                  <div className="flex items-center gap-2 mb-2">
-                    {insights.trend.score_change >= 0 ? <TrendingUp size={16} className="text-blue-400" /> : <TrendingDown size={16} className="text-red-400" />}
-                    <span className="text-white/50 text-[10px] font-bold uppercase tracking-widest">Momentum</span>
-                  </div>
-                  <div className="text-3xl font-black flex items-baseline gap-1">
-                    {insights.trend.score_change > 0 ? '+' : ''}{insights.trend.score_change}
-                    <span className="text-[10px] text-white/30 uppercase tracking-widest">pts</span>
-                  </div>
-                </div>
+              {/* SCORE TREND GRAPH */}
+              <div className="bg-[#0A0A0A]/90 backdrop-blur-2xl border border-white/10 rounded-[1.5rem] p-5 shadow-xl">
+                 <div className="flex items-center gap-2 mb-6">
+                    <TrendingUp size={16} className="text-[#00FFA3]" />
+                    <span className="text-white/50 text-[10px] font-bold uppercase tracking-widest">Score Trend</span>
+                 </div>
+                 <div className="h-40 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={insights.chartData}>
+                        <XAxis dataKey="date" stroke="rgba(255,255,255,0.2)" fontSize={10} tickLine={false} axisLine={false} />
+                        <YAxis domain={['dataMin - 10', 100]} hide />
+                        <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(0,255,163,0.2)', strokeWidth: 2 }} />
+                        <Line type="monotone" dataKey="score" stroke="#00FFA3" strokeWidth={3} dot={{ fill: '#000', stroke: '#00FFA3', strokeWidth: 2, r: 4 }} activeDot={{ r: 6, fill: '#00FFA3' }} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                 </div>
               </div>
 
-              {/* BEHAVIOR BREAKDOWN */}
+              {/* LATEST SCORE BREAKDOWN */}
               <div className="bg-[#0A0A0A]/90 backdrop-blur-2xl border border-white/10 rounded-[1.5rem] p-6 shadow-xl space-y-4">
-                 <h3 className="text-white/60 font-bold uppercase tracking-widest text-[10px] mb-4">Behavior Breakdown</h3>
+                 <h3 className="text-white/60 font-bold uppercase tracking-widest text-[10px] mb-4">Latest Score Breakdown</h3>
                  
                  <div className="flex justify-between items-center border-b border-white/5 pb-3">
-                    <span className="text-white/50 text-sm font-medium">Strongest Habit</span>
-                    <span className="font-bold text-[#00FFA3] flex items-center gap-1">
-                      {insights.breakdown.biggest_positive_factor} <TrendingUp size={14} />
-                    </span>
+                    <span className="text-white/80 text-sm font-medium">Steps Contribution</span>
+                    <span className="font-bold text-[#00FFA3]">+{insights.latest_breakdown.steps_points || 0}</span>
                  </div>
                  
                  <div className="flex justify-between items-center border-b border-white/5 pb-3">
-                    <span className="text-white/50 text-sm font-medium">Consistency Rating</span>
-                    <span className="font-bold text-white">{insights.trend.consistency_score} / 100</span>
+                    <span className="text-white/80 text-sm font-medium">Water Contribution</span>
+                    <span className="font-bold text-[#00FFA3]">+{insights.latest_breakdown.water_points || 0}</span>
+                 </div>
+
+                 <div className="flex justify-between items-center border-b border-white/5 pb-3">
+                    <span className="text-white/80 text-sm font-medium">Activity Bonus</span>
+                    <span className="font-bold text-[#00FFA3]">+{insights.latest_breakdown.log_bonus || 0}</span>
                  </div>
                  
                  <div className="flex justify-between items-center pb-1">
-                    <span className="text-white/50 text-sm font-medium">Risk Area</span>
-                    <span className="font-bold text-orange-400">{insights.breakdown.biggest_negative_factor}</span>
+                    <span className="text-white/80 text-sm font-medium">Inactivity Penalty</span>
+                    <span className="font-bold text-red-400">{insights.latest_breakdown.inactivity_penalty || 0}</span>
                  </div>
               </div>
 
