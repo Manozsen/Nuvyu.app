@@ -247,12 +247,17 @@ export default function Dashboard() {
         if (hoursSinceLast >= 6) inactivity_penalty = -10;
         else if (hoursSinceLast >= 4) inactivity_penalty = -5;
       }
-      calculatedScore += inactivity_penalty;
+            calculatedScore += inactivity_penalty;
 
       calculatedScore = Math.max(0, Math.min(100, Math.floor(calculatedScore)));
 
       const scoreBreakdown = { steps_points, water_points, log_bonus, inactivity_penalty };
-      const todayDateStr = startOfDay.toISOString().split('T')[0];
+      
+      // FIX: Generate safe local date string to prevent UTC timezone shift from overwriting yesterday's data
+      const year = startOfDay.getFullYear();
+      const month = String(startOfDay.getMonth() + 1).padStart(2, '0');
+      const day = String(startOfDay.getDate()).padStart(2, '0');
+      const todayDateStr = `${year}-${month}-${day}`;
 
       // Safe Upsert Explanation (Avoids duplicate writes)
       await supabase.from('score_explanations').upsert({
@@ -270,9 +275,20 @@ export default function Dashboard() {
         .eq('date', todayDateStr)
         .single();
 
-            // 3. Strict Profile Update Sync
+      // RESTORED: Debug logs to verify calculations
+      console.log("=== DASHBOARD LOAD DEBUG ===");
+      console.log("Fetched Logs Count:", logsCount);
+      console.log("Calculated Score:", calculatedScore);
+      console.log("DB Current Score:", profile.current_score);
+
+      // 3. Strict Profile Update Sync (with restored error handling)
       if (calculatedScore !== profile.current_score) {
-        await supabase.from('profiles').update({ current_score: calculatedScore }).eq('id', user.id);
+        const { error: dashUpdateError } = await supabase
+          .from('profiles')
+          .update({ current_score: calculatedScore })
+          .eq('id', user.id);
+          
+        if (dashUpdateError) console.error("Dashboard Score Sync Failed:", dashUpdateError);
       }
 
       // INTEGRATION CHECK: Connect to 3-day history for accurate context
