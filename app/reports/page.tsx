@@ -117,12 +117,45 @@ export default function InsightsPage() {
         summary = "Progress stable hai. Consistency is key, daily goals hit karte raho.";
       }
 
+            // ACTIONABLE INSIGHTS ENGINE
+      const generateWhyExplanation = (latestBreakdown: any) => {
+        if (!latestBreakdown) return "Data is still syncing.";
+        let exp = [];
+        if ((latestBreakdown.steps_points || 0) < 20) exp.push("Full step bonus was not applied.");
+        if ((latestBreakdown.water_points || 0) < 15) exp.push("Optimal hydration score not reached.");
+        if ((latestBreakdown.inactivity_penalty || 0) < 0) exp.push("Inactivity penalty reduced your score.");
+        return exp.length > 0 ? exp.join(" ") : "Perfect score! All daily targets achieved.";
+      };
+
+      const generateNextActions = (latestBreakdown: any) => {
+        if (!latestBreakdown) return ["Log activity to generate actions."];
+        let actions = [];
+        if ((latestBreakdown.steps_points || 0) < 20) actions.push("Walk more to maximize step bonus (+10 to +20 pts).");
+        if ((latestBreakdown.water_points || 0) < 15) actions.push("Drink water to reach the 2000ml target (+8 to +15 pts).");
+        if (actions.length === 0) actions.push("Maintain current activity momentum.");
+        return actions;
+      };
+
+      const detectMissedOpportunities = (latestBreakdown: any) => {
+        if (!latestBreakdown) return null;
+        if (latestBreakdown.steps_points === 10) return "You were close to the 6000 steps maximum bonus!";
+        if (latestBreakdown.water_points === 8) return "You almost hit optimal hydration (2000ml)!";
+        return null;
+      };
+
+      const latest_bd = data[data.length - 1]?.breakdown || {};
+
       setInsights({
         trend: { avg_score, highest_score, lowest_score, score_change, consistency_score },
         breakdown: { biggest_positive_factor, biggest_negative_factor, dominant_behavior },
         summary,
         patterns: { streak_days, drop_pattern, plateau },
-        latest_breakdown: data[data.length - 1]?.breakdown || {},
+        latest_breakdown: latest_bd,
+        actionable: {
+          why: generateWhyExplanation(latest_bd),
+          actions: generateNextActions(latest_bd),
+          missed: detectMissedOpportunities(latest_bd)
+        },
         chartData
       });
 
@@ -275,6 +308,32 @@ export default function InsightsPage() {
                  <div className="flex justify-between items-center pb-1">
                     <span className="text-white/80 text-sm font-medium">Inactivity Penalty</span>
                     <span className="font-bold text-red-400">{insights.latest_breakdown.inactivity_penalty || 0}</span>
+                 </div>
+              </div>
+
+              {/* ACTIONABLE INSIGHTS (NEW LOGIC BINDING) */}
+              <div className="bg-[#0A0A0A]/90 backdrop-blur-2xl border border-white/10 rounded-[1.5rem] p-6 shadow-xl space-y-4">
+                 <h3 className="text-white/60 font-bold uppercase tracking-widest text-[10px] mb-4">Actionable Next Steps</h3>
+                 
+                 <div className="border-b border-white/5 pb-3">
+                    <span className="text-white/80 text-sm font-medium block mb-1">Why Score Changed</span>
+                    <span className="font-bold text-[#00FFA3] text-sm">{insights.actionable.why}</span>
+                 </div>
+                 
+                 {insights.actionable.missed && (
+                 <div className="border-b border-white/5 pb-3">
+                    <span className="text-white/80 text-sm font-medium block mb-1">Missed Opportunity</span>
+                    <span className="font-bold text-orange-400 text-sm">{insights.actionable.missed}</span>
+                 </div>
+                 )}
+                 
+                 <div className="pb-1">
+                    <span className="text-white/80 text-sm font-medium block mb-1">Micro Goals</span>
+                    <ul className="list-disc pl-4 text-sm font-bold text-white/90 space-y-1">
+                      {insights.actionable.actions.map((act: string, i: number) => (
+                        <li key={i}>{act}</li>
+                      ))}
+                    </ul>
                  </div>
               </div>
 
