@@ -425,6 +425,7 @@ export default function LogActivity() {
               </motion.div>
             )}
           </AnimatePresence>
+           </div>
 
       <AnimatePresence>
         {showConfirm && (
