@@ -6,6 +6,7 @@ import { Flame, Footprints, Droplets, Camera, Zap, LayoutDashboard, Settings, Be
 import { createBrowserClient } from '@supabase/ssr';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { getRecentMemory, saveCoachMemory, detectUserPattern, calculateConsistency } from '@/lib/coach/memory';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -99,11 +100,16 @@ export default function Dashboard() {
     return "consistent";
   };
 
-  // 3. RULE-BASED FALLBACK
-  const generateRuleNudge = (metrics: any, behavior: string) => {
+    // 3. RULE-BASED FALLBACK
+  const generateRuleNudge = (metrics: any, behavior: string, pattern: any) => {
     const isFatLoss = metrics.goal === 'Lean & Fit';
     const isMuscle = metrics.goal === 'Muscular';
     const isOlder = (metrics.age || 25) >= 40;
+
+    // Memory Pattern Logic
+    if (pattern?.repeating_low_steps) return "Pichhle kuch din se steps low hain, aaj improve karo.";
+    if (pattern?.hydration_issue) return "Hydration lagatar low hai, ispe focus karo.";
+    if (pattern?.improving_trend) return "Kal se better ho, momentum maintain rakho.";
 
     if (behavior === "low_hydration") return `Hydration critical hai. Ek glass paani abhi piyo!`;
     if (behavior === "inactive") return isOlder ? `Kafi time rest ho gaya. Thoda light walk kar lo.` : `Time is ticking bhai. Get moving, no excuses!`;
@@ -112,8 +118,8 @@ export default function Dashboard() {
     return isMuscle ? `Solid consistency. Recovery aur protein pe focus rakhna.` : `On track! Yeh discipline maintain karna hai.`;
   };
 
-  // 4. AI CONTEXT BUILDER
-  const buildAIContext = (metrics: any, behavior: string) => {
+    // 4. AI CONTEXT BUILDER
+  const buildAIContext = (metrics: any, behavior: string, pattern: any, last_3_messages: string[], consistency: string) => {
     return {
       goal: metrics.goal,
       activity_level: metrics.activity_level,
@@ -124,7 +130,10 @@ export default function Dashboard() {
       behavior_type: behavior,
       score: metrics.current_score,
       age: metrics.age,
-      gender: metrics.gender
+      gender: metrics.gender,
+      recent_behavior_pattern: pattern,
+      last_3_messages: last_3_messages,
+      consistency_level: consistency
     };
   };
 
@@ -145,12 +154,19 @@ export default function Dashboard() {
     }
   };
 
-  // 6. CORE HYBRID ENGINE
+    // 6. CORE HYBRID ENGINE
   const generateCoachNudge = async (userId: string, profile: any, todayLogs: any[], pastLogs: any[], currentScore: number) => {
     const metrics = getCoachMetrics(userId, profile, todayLogs, pastLogs, currentScore);
     const behavior = detectBehavior(metrics);
-    const ruleNudge = generateRuleNudge(metrics, behavior);
-    const aiContext = buildAIContext(metrics, behavior);
+
+    // AI Memory + Pattern Engine Execution
+    const memory = await getRecentMemory(supabase, userId);
+    const pattern = detectUserPattern(memory);
+    const consistency = calculateConsistency(memory);
+    const last_3_messages = memory.slice(0, 3).map((m: any) => m.message);
+
+    const ruleNudge = generateRuleNudge(metrics, behavior, pattern);
+    const aiContext = buildAIContext(metrics, behavior, pattern, last_3_messages, consistency);
 
     // Rate Limiting System (Monetization Check)
     const limit = metrics.plan_type === 'pro' ? 100 : 20;
@@ -165,6 +181,7 @@ export default function Dashboard() {
     }
 
     if (currentCount >= limit) {
+      saveCoachMemory(supabase, userId, metrics, behavior, ruleNudge, "rule");
       return { 
         message: ruleNudge, 
         type: "rule", 
@@ -173,18 +190,25 @@ export default function Dashboard() {
     }
 
     // Execute AI Coach safely
-    const aiNudge = await generateAINudge(aiContext, metrics.coach_tone || 'strict', userId);
+    let aiNudge = await generateAINudge(aiContext, metrics.coach_tone || 'strict', userId);
     
     if (aiNudge) {
+      // Anti-Repetition Filter
+      if (last_3_messages.includes(aiNudge)) {
+        aiNudge = aiNudge + " Thoda aur focus karte hain aaj!"; 
+      }
+
       // Increment AI usage securely scoped to user
       await supabase.from('profiles').update({
         daily_ai_calls_count: currentCount + 1,
         last_reset_date: todayDate
       }).eq('id', userId);
 
+      saveCoachMemory(supabase, userId, metrics, behavior, aiNudge, "ai");
       return { message: aiNudge, type: "ai" };
     }
 
+    saveCoachMemory(supabase, userId, metrics, behavior, ruleNudge, "rule");
     return { message: ruleNudge, type: "rule" };
   };
 
