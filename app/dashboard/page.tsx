@@ -27,7 +27,9 @@ export default function Dashboard() {
     score_summary: "",
     streak_count: 0,
     best_streak: 0,
-    reward_message: ""
+    reward_message: "",
+    xp: 0,
+    level: 1
   });
 
     // Intelligence System State
@@ -378,7 +380,7 @@ export default function Dashboard() {
         current_score: calculatedScore
       }, logsCount > 0);
 
-      // Safe state update (Fixed Syntax Error)
+            // Safe state update (Fixed Syntax Error)
       setMetrics({
         score: calculatedScore,
         steps: totalSteps,
@@ -389,7 +391,9 @@ export default function Dashboard() {
         score_summary: getScoreSummary(explData?.breakdown || scoreBreakdown),
         streak_count: habitData.streak_count,
         best_streak: habitData.best_streak,
-        reward_message: habitData.reward_message
+        reward_message: habitData.reward_message,
+        xp: profile.xp || 0,
+        level: profile.level || 1
       });
       
       setMounted(true);
