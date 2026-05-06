@@ -7,6 +7,7 @@ import { createBrowserClient } from '@supabase/ssr';
 import { useRouter } from 'next/navigation';
 // Using relative path to bypass Next.js alias resolution errors
 import { updateHabit } from '../../lib/habit/engine';
+import { calculateDailyScore } from '../../lib/score/engine';
 import { calculateXP, calculateLevel, didLevelUp } from '../../lib/xp/engine';
 
 export default function LogActivity() {
@@ -144,34 +145,9 @@ export default function LogActivity() {
           if (logTime > lastLogTime) lastLogTime = logTime;
         });
 
-        const effectiveSteps = Math.min(totalSteps, 12000);
-        let newScore = profile.onboarding_score || 50; 
-        
-        let steps_points = 0;
-        let water_points = 0;
-        let log_bonus = 0;
-        let inactivity_penalty = 0;
-        
-        if (effectiveSteps >= 6000) steps_points = 20;
-        else if (effectiveSteps >= 3000) steps_points = 10;
-        newScore += steps_points;
-
-        if (totalWater >= 2000) water_points = 15;
-        else if (totalWater >= 1000) water_points = 8;
-        newScore += water_points;
-
-        if (logs.length >= 2) log_bonus += 5;
-        if (workoutLogsCount > 0) log_bonus += (workoutLogsCount * 5);
-        newScore += log_bonus;
-
-        const hoursSinceLast = (Date.now() - lastLogTime) / (1000 * 60 * 60);
-        if (hoursSinceLast >= 6) inactivity_penalty = -10;
-        else if (hoursSinceLast >= 4) inactivity_penalty = -5;
-        newScore += inactivity_penalty;
-
-        newScore = Math.max(0, Math.min(100, Math.floor(newScore)));
-
-        const scoreBreakdown = { steps_points, water_points, log_bonus, inactivity_penalty };
+                // Central Source of Truth Score Calculation
+        const baseScore = profile.onboarding_score || 50;
+        const { finalScore: newScore, breakdown: scoreBreakdown } = calculateDailyScore(logs || [], baseScore);
         
         const year = startOfDay.getFullYear();
         const month = String(startOfDay.getMonth() + 1).padStart(2, '0');
