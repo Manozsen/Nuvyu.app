@@ -70,23 +70,27 @@ export default function InsightsPage() {
       const variance = scores.reduce((a, b) => a + Math.pow(b - avg_score, 2), 0) / scores.length;
       const consistency_score = Math.max(0, Math.round(100 - Math.sqrt(variance) * 2));
 
-      // 🧠 PART 3: BREAKDOWN INTELLIGENCE
+            // 🧠 PART 3: BREAKDOWN INTELLIGENCE
       let total_steps_points = 0;
       let total_water_points = 0;
       let total_penalties = 0;
       let total_log_bonus = 0;
+      let total_workout_bonus = 0;
 
       data.forEach(d => {
         total_steps_points += d.breakdown?.steps_points || 0;
         total_water_points += d.breakdown?.water_points || 0;
         total_penalties += d.breakdown?.inactivity_penalty || 0;
         total_log_bonus += d.breakdown?.log_bonus || 0;
+        total_workout_bonus += d.breakdown?.workout_bonus || 0;
       });
 
+      // Synchronize with Central Score Engine breakdown structure
       const factors: Record<string, number> = { 
         Steps: total_steps_points, 
         Water: total_water_points, 
-        Consistency: total_log_bonus 
+        Consistency: total_log_bonus,
+        Workouts: total_workout_bonus
       };
       
       const biggest_positive_factor = Object.keys(factors).reduce((a, b) => factors[a] > factors[b] ? a : b);
