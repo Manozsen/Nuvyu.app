@@ -358,7 +358,7 @@ export default function LogActivity() {
 
           <div className="space-y-6 mb-8">
             
-          <AnimatePresence mode="wait">
+                      <AnimatePresence mode="wait">
               {(logType === 'water' || logType === 'steps') && (
                 <motion.div key="numeric-input" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                   
