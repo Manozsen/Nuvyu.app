@@ -8,7 +8,7 @@ export const getRecentMemory = async (supabase: any, userId: string) => {
       .limit(5);
     return data || [];
   } catch (error) {
-    return []; // Silently fail to protect core flow
+    return []; 
   }
 };
 
@@ -24,14 +24,13 @@ export const saveCoachMemory = async (supabase: any, userId: string, metrics: an
       user_id: userId,
       date: todayStr,
       behavior_type: behavior,
-      steps: metrics.today_steps,
-      water: metrics.today_water,
-      score: metrics.current_score,
+      steps: metrics.steps_today || 0,
+      water: metrics.water_today || 0,
+      score: metrics.current_score || 0,
       message: message,
       source: source
     }, { onConflict: 'user_id, date' });
   } catch (error) {
-    // Fail silently. Memory writing should never block the user experience.
   }
 };
 
@@ -45,7 +44,6 @@ export const detectUserPattern = (memory: any[]) => {
   for (let i = 0; i < memory.length; i++) {
     if (memory[i].steps < 3000) lowStepsCount++;
     if (memory[i].water < 1000) lowWaterCount++;
-    // Check if score is improving compared to the previous day (i+1 since ordered by date DESC)
     if (i < memory.length - 1 && memory[i].score > memory[i+1].score) improvingCount++;
   }
 
