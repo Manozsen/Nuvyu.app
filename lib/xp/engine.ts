@@ -15,6 +15,9 @@ export function calculateXP(totalSteps: number, totalWater: number, logsCount: n
   
   // Rule: workout log → +10 XP
   xp += workoutLogsCount * 10;
+
+    // Rule: sleep log → +5 XP (Reward sleep consistency lightly)
+  xp += sleepLogsCount * 5;
   
   // Anti-Abuse: maxXPPerDay = 50
   return Math.min(xp, 50);
