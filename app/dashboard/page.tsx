@@ -7,6 +7,7 @@ import { createBrowserClient } from '@supabase/ssr';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { getRecentMemory, saveCoachMemory, detectUserPattern, calculateConsistency } from '@/lib/coach/memory';
+import { updateHabit } from '@/lib/habit/engine';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -15,14 +16,17 @@ export default function Dashboard() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
   
-        const [metrics, setMetrics] = useState({ 
+          const [metrics, setMetrics] = useState({ 
     score: 0, 
     steps: 0, 
     water: 0, 
     logsCount: 0,
     energy_burned: 0,
     energy_intake: 0,
-    score_summary: ""
+    score_summary: "",
+    streak_count: 0,
+    best_streak: 0,
+    reward_message: ""
   });
 
     // Intelligence System State
@@ -360,10 +364,17 @@ export default function Dashboard() {
       setCoachMessage(nudgeResponse.message);
       setCoachType(nudgeResponse.type);
       
-      if (nudgeResponse.meta?.ai_limit_hit) {
+            if (nudgeResponse.meta?.ai_limit_hit) {
         setAiLimitHit(true);
         console.log("AI limit reached, basic coaching active"); // Metadata flag processed but UI stays untouched
       }
+
+      // --- HABIT ENGINE: Sync streak on dashboard load ---
+      const habitData = await updateHabit(supabase, user.id, {
+        steps_today: totalSteps,
+        water_today: totalWater,
+        current_score: calculatedScore
+      }, logsCount > 0);
 
       // Safe state update (Fixed Syntax Error)
       setMetrics({
@@ -373,9 +384,12 @@ export default function Dashboard() {
         logsCount: logsCount,
         energy_burned: energyBurned,
         energy_intake: safeEnergyIntake,
-        score_summary: getScoreSummary(explData?.breakdown || scoreBreakdown)
+        score_summary: getScoreSummary(explData?.breakdown || scoreBreakdown),
+        streak_count: habitData.streak_count,
+        best_streak: habitData.best_streak,
+        reward_message: habitData.reward_message
       });
-
+      
       setMounted(true);
       setIsCheckingAuth(false);
     }; // <-- THIS CLOSES THE ASYNC FUNCTION (Fixes 'await' error)
