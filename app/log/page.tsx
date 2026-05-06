@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Loader2, Droplets, Footprints, Utensils, Dumbbell, CheckCircle2, AlertCircle, AlertTriangle, Camera, Sparkles } from 'lucide-react';
 import { createBrowserClient } from '@supabase/ssr';
 import { useRouter } from 'next/navigation';
-import { updateHabit } from '@/lib/habit/engine';
+// Using relative path to bypass Next.js alias resolution errors
+import { updateHabit } from '../../lib/habit/engine';
 
 export default function LogActivity() {
   const router = useRouter();
