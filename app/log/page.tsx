@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Loader2, Droplets, Footprints, Utensils, Dumbbell, CheckCircle2, AlertCircle, AlertTriangle, Camera, Sparkles } from 'lucide-react';
+import { ArrowLeft, Loader2, Droplets, Footprints, Utensils, Dumbbell, CheckCircle2, AlertCircle, AlertTriangle, Camera, Sparkles, Moon } from 'lucide-react';
 import { createBrowserClient } from '@supabase/ssr';
+import { calculateRecoveryScore } from '../../lib/recovery/engine';
 import { useRouter } from 'next/navigation';
 // Using relative path to bypass Next.js alias resolution errors
 import { updateHabit } from '../../lib/habit/engine';
@@ -12,9 +13,10 @@ import { calculateXP, calculateLevel, didLevelUp } from '../../lib/xp/engine';
 
 export default function LogActivity() {
   const router = useRouter();
-  const [logType, setLogType] = useState<'water' | 'steps' | 'food' | 'workout'>('water');
+    const [logType, setLogType] = useState<'water' | 'steps' | 'food' | 'workout' | 'sleep'>('water');
   
   const [amount, setAmount] = useState('');
+  const [sleepQuality, setSleepQuality] = useState('average');
   const [textInput, setTextInput] = useState('');
   
   const [loading, setLoading] = useState(false);
@@ -119,6 +121,17 @@ export default function LogActivity() {
       });
 
       if (insertError) throw insertError;
+
+            let sleepPointsAdded = 0;
+      if (logType === 'sleep') {
+        const hrs = parseFloat(amount) || 0;
+        const { recovery_score } = calculateRecoveryScore(hrs, sleepQuality);
+        const { error: sleepErr } = await supabase.from('sleep_logs').insert({
+          user_id: userId, sleep_hours: hrs, sleep_quality: sleepQuality, recovery_score
+        });
+        if (sleepErr) console.error("Sleep Log Error:", sleepErr);
+        sleepPointsAdded = 5; // Light XP bonus
+      }
 
       const startOfDay = new Date();
       startOfDay.setHours(0, 0, 0, 0); 
@@ -326,12 +339,21 @@ export default function LogActivity() {
               <Utensils size={16} /> Food
             </button>
             <button 
+            <button 
               onClick={() => { setLogType('workout'); setAmount(''); setTextInput(''); setSubmitError(null); }}
               className={`py-3.5 rounded-xl flex items-center justify-center gap-2 font-bold transition-all text-sm ${
                 logType === 'workout' ? 'bg-purple-500/20 text-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.2)] border border-purple-500/30' : 'text-white/40 hover:text-white/80'
               }`}
             >
               <Dumbbell size={16} /> Workout
+            </button>
+            <button 
+              onClick={() => { setLogType('sleep'); setAmount(''); setTextInput(''); setSubmitError(null); }}
+              className={`py-3.5 rounded-xl flex items-center justify-center gap-2 font-bold transition-all text-sm col-span-2 md:col-span-1 ${
+                logType === 'sleep' ? 'bg-indigo-500/20 text-indigo-400 shadow-[0_0_15px_rgba(99,102,241,0.2)] border border-indigo-500/30' : 'text-white/40 hover:text-white/80'
+              }`}
+            >
+              <Moon size={16} /> Sleep
             </button>
           </div>
 
@@ -388,6 +410,29 @@ export default function LogActivity() {
               )}
 
               {(logType === 'food' || logType === 'workout') && (
+                        {logType === 'sleep' && (
+                <motion.div key="sleep-input" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                  <div className="mb-6">
+                    <p className="text-white/50 text-[10px] font-bold uppercase tracking-widest mb-3">Sleep Duration (Hours)</p>
+                    <input 
+                      type="number" step="0.5" value={amount} onChange={e => setAmount(e.target.value)} 
+                      placeholder="e.g. 7.5" 
+                      className="w-full bg-black/40 border border-white/10 rounded-2xl p-6 text-2xl font-black text-center text-white placeholder:text-white/20 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-all shadow-inner" 
+                    />
+                  </div>
+                  <div>
+                    <p className="text-white/50 text-[10px] font-bold uppercase tracking-widest mb-3">Sleep Quality</p>
+                    <div className="flex gap-3">
+                      {['poor', 'average', 'good'].map(q => (
+                        <button key={q} onClick={() => setSleepQuality(q)} className={`flex-1 py-3.5 rounded-xl font-bold transition-all text-sm capitalize ${sleepQuality === q ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/50' : 'bg-white/[0.03] border border-white/10 text-white/50'}`}>
+                          {q}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+          
                 <motion.div key="text-input" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                   <p className="text-white/50 text-[10px] font-bold uppercase tracking-widest mb-3 flex items-center justify-between">
                     <span>{logType === 'food' ? 'Describe Meal' : 'Describe Workout'}</span>
