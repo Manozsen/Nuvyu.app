@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Loader2, Droplets, Footprints, Utensils, Dumbbell, CheckCircle2, AlertCircle, AlertTriangle, Camera, Sparkles } from 'lucide-react';
 import { createBrowserClient } from '@supabase/ssr';
 import { useRouter } from 'next/navigation';
+import { updateHabit } from '@/lib/habit/engine';
 
 export default function LogActivity() {
   const router = useRouter();
@@ -182,16 +183,30 @@ export default function LogActivity() {
           final_score: newScore
         }, { onConflict: 'user_id, date' });
 
-        const { error: updateError } = await supabase
+                const { error: updateError } = await supabase
           .from('profiles')
           .update({ current_score: newScore })
           .eq('id', userId);
           
         if (updateError) console.error("Score Update Failed:", updateError);
 
+        // --- HABIT ENGINE: Sync Log ---
+        await updateHabit(supabase, userId, {
+          steps_today: totalSteps,
+          water_today: totalWater,
+          current_score: newScore
+        }, true);
+
       } else {
         const fallbackScore = profile.onboarding_score || 50;
         await supabase.from('profiles').update({ current_score: fallbackScore }).eq('id', userId);
+
+        // --- HABIT ENGINE: Sync First Log ---
+        await updateHabit(supabase, userId, {
+          steps_today: logType === 'steps' ? parseFloat(amount) : 0,
+          water_today: logType === 'water' ? parseFloat(amount) : 0,
+          current_score: fallbackScore
+        }, true);
       }
       
       let pointsAdded = 0;
