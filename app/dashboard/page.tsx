@@ -36,6 +36,9 @@ export default function Dashboard() {
   const [coachMessage, setCoachMessage] = useState("Analyzing your progress...");
   const [coachType, setCoachType] = useState<"ai" | "rule">("rule");
   const [aiLimitHit, setAiLimitHit] = useState(false);
+  
+  // Retention Engine State
+  const [retention, setRetention] = useState({ xp: 0, level: 1, todayXP: 0 });
 
   const getScoreSummary = (breakdown: any) => {
     if (!breakdown) return "";
@@ -395,7 +398,26 @@ export default function Dashboard() {
         xp: profile.xp || 0,
         level: profile.level || 1
       });
-      
+
+            // 🧠 PART 3 & 8: CALCULATE TODAY XP (No extra DB calls, reusing existing data)
+      const todayXP = (() => {
+        let xp = Math.min(logsCount, 3) * 5;
+        const cappedSteps = Math.min(totalSteps, 12000);
+        if (cappedSteps >= 6000) xp += 20;
+        else if (cappedSteps >= 3000) xp += 10;
+        if (totalWater >= 2000) xp += 15;
+        else if (totalWater >= 1000) xp += 8;
+        xp += workoutLogsCount * 10;
+        return Math.min(xp, 50);
+      })();
+
+      // Safely bind retention metrics with fallbacks
+      setRetention({
+        xp: profile.xp || 0,
+        level: profile.level || 1,
+        todayXP
+      });
+
       setMounted(true);
       setIsCheckingAuth(false);
     }; // <-- THIS CLOSES THE ASYNC FUNCTION (Fixes 'await' error)
@@ -514,10 +536,41 @@ export default function Dashboard() {
               <Zap size={16} className="text-[#00FFA3]" fill="#00FFA3" />
               <span className="text-xs font-bold text-[#00FFA3] uppercase tracking-wider">Coach Nudge</span>
             </div>
-                        <p className="text-sm font-medium text-white/90 leading-relaxed">
+                                    <p className="text-sm font-medium text-white/90 leading-relaxed">
               &quot;{coachMessage}&quot;
             </p>
           </div>
+
+          {/* 🧠 RETENTION STRIP (Level, Streak, XP) */}
+          <div className="w-full mt-5 flex items-center justify-between border-t border-white/5 pt-4">
+            <div className="flex items-center gap-2.5 text-[10px] font-bold uppercase tracking-widest text-white/70">
+              
+              <span className="text-[#00FFA3] bg-[#00FFA3]/10 px-2 py-1 rounded-md border border-[#00FFA3]/20">
+                Level {retention.level}
+              </span>
+              
+              {((metrics as any).streak_count > 0) && (
+                <>
+                  <span className="w-1 h-1 rounded-full bg-white/20"></span>
+                  <span className="flex items-center gap-1 text-orange-400">
+                    <Flame size={12} /> {(metrics as any).streak_count} Day Streak
+                  </span>
+                </>
+              )}
+              
+              <span className="w-1 h-1 rounded-full bg-white/20"></span>
+              <span>+{retention.todayXP} XP Today</span>
+              
+            </div>
+            
+            {/* MICRO DOPAMINE EFFECT */}
+            {retention.todayXP > 0 && (
+              <span className="text-[9px] font-bold text-white/40 uppercase tracking-widest text-right">
+                Momentum building 🔥
+              </span>
+            )}
+          </div>
+
         </motion.section>
 
         <div className="flex justify-between items-end">
