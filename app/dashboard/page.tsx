@@ -6,8 +6,9 @@ import { Flame, Footprints, Droplets, Camera, Zap, LayoutDashboard, Settings, Be
 import { createBrowserClient } from '@supabase/ssr';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { getRecentMemory, saveCoachMemory, detectUserPattern, calculateConsistency } from '@/lib/coach/memory';
-import { updateHabit } from '@/lib/habit/engine';
+// Using relative paths to bypass Next.js alias resolution errors
+import { getRecentMemory, saveCoachMemory, detectUserPattern, calculateConsistency } from '../../lib/coach/memory';
+import { updateHabit } from '../../lib/habit/engine';
 
 export default function Dashboard() {
   const router = useRouter();
