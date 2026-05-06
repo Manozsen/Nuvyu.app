@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 // Using relative paths to bypass Next.js alias resolution errors
 import { getRecentMemory, saveCoachMemory, detectUserPattern, calculateConsistency } from '../../lib/coach/memory';
 import { calculateDailyScore } from '../../lib/score/engine';
+import { calculateRecoveryScore } from '../../lib/recovery/engine';
 import { updateHabit } from '../../lib/habit/engine';
 
 export default function Dashboard() {
@@ -61,8 +62,8 @@ export default function Dashboard() {
   const chat_limit_window = 6; // hours
   const chat_usage_count = 0;
 
-  // 1. DATA COLLECTION
-  const getCoachMetrics = (userId: string, profile: any, todayLogs: any[], pastLogs: any[], currentScore: number) => {
+    // 1. DATA COLLECTION
+  const getCoachMetrics = (userId: string, profile: any, todayLogs: any[], pastLogs: any[], currentScore: number, recoveryData: any = null) => {
     let today_steps = 0;
     let today_water = 0;
     let lastLogTime = 0;
