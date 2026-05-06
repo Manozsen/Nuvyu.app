@@ -1,4 +1,4 @@
-export function calculateXP(totalSteps: number, totalWater: number, logsCount: number, workoutLogsCount: number): number {
+export function calculateXP(totalSteps: number, totalWater: number, logsCount: number, workoutLogsCount: number, sleepLogsCount: number = 0): number {
   let xp = 0;
   
   // Rule: log entry → +5 XP (max 3 logs counted)
