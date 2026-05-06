@@ -358,7 +358,7 @@ export default function LogActivity() {
 
           <div className="space-y-6 mb-8">
             
-            <AnimatePresence mode="wait">
+          <AnimatePresence mode="wait">
               {(logType === 'water' || logType === 'steps') && (
                 <motion.div key="numeric-input" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                   
@@ -408,8 +408,7 @@ export default function LogActivity() {
                 </motion.div>
               )}
 
-              {(logType === 'food' || logType === 'workout') && (
-                        {logType === 'sleep' && (
+              {logType === 'sleep' && (
                 <motion.div key="sleep-input" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                   <div className="mb-6">
                     <p className="text-white/50 text-[10px] font-bold uppercase tracking-widest mb-3">Sleep Duration (Hours)</p>
@@ -431,7 +430,8 @@ export default function LogActivity() {
                   </div>
                 </motion.div>
               )}
-          
+
+              {(logType === 'food' || logType === 'workout') && (
                 <motion.div key="text-input" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                   <p className="text-white/50 text-[10px] font-bold uppercase tracking-widest mb-3 flex items-center justify-between">
                     <span>{logType === 'food' ? 'Describe Meal' : 'Describe Workout'}</span>
