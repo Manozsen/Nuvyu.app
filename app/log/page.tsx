@@ -7,6 +7,7 @@ import { createBrowserClient } from '@supabase/ssr';
 import { useRouter } from 'next/navigation';
 // Using relative path to bypass Next.js alias resolution errors
 import { updateHabit } from '../../lib/habit/engine';
+import { calculateXP, calculateLevel, didLevelUp } from '../../lib/xp/engine';
 
 export default function LogActivity() {
   const router = useRouter();
@@ -197,6 +198,31 @@ export default function LogActivity() {
           water_today: totalWater,
           current_score: newScore
         }, true);
+        
+        // --- XP & LEVEL ENGINE ---
+        try {
+          const val = Number(amount) || 0;
+          const prevSteps = logType === 'steps' ? Math.max(0, totalSteps - val) : totalSteps;
+          const prevWater = logType === 'water' ? Math.max(0, totalWater - val) : totalWater;
+          const prevWorkouts = logType === 'workout' ? Math.max(0, workoutLogsCount - 1) : workoutLogsCount;
+          const prevLogsCount = Math.max(0, logs.length - 1);
+          
+          const oldDailyXP = calculateXP(prevSteps, prevWater, prevLogsCount, prevWorkouts);
+          const newDailyXP = calculateXP(totalSteps, totalWater, logs.length, workoutLogsCount);
+          const xpEarned = Math.max(0, newDailyXP - oldDailyXP);
+
+          if (xpEarned > 0) {
+            const currentXP = profile.xp || 0;
+            const newXP = currentXP + xpEarned;
+            const oldLevel = profile.level || 1;
+            const newLevel = calculateLevel(newXP);
+
+            await supabase.from('profiles').update({ xp: newXP, level: newLevel }).eq('id', userId);
+            if (didLevelUp(oldLevel, newLevel)) console.log(`Level Up! ${oldLevel} -> ${newLevel}`);
+          }
+        } catch (error) {
+          // Ignore safely - never crash the system
+        }
 
       } else {
         const fallbackScore = profile.onboarding_score || 50;
@@ -209,6 +235,26 @@ export default function LogActivity() {
           current_score: fallbackScore
         }, true);
       }
+
+              // --- XP & LEVEL ENGINE (First Log) ---
+        try {
+          const tSteps = logType === 'steps' ? (Number(amount) || 0) : 0;
+          const tWater = logType === 'water' ? (Number(amount) || 0) : 0;
+          const tWorkout = logType === 'workout' ? 1 : 0;
+          const xpEarned = calculateXP(tSteps, tWater, 1, tWorkout);
+          
+          if (xpEarned > 0) {
+            const currentXP = profile.xp || 0;
+            const newXP = currentXP + xpEarned;
+            const oldLevel = profile.level || 1;
+            const newLevel = calculateLevel(newXP);
+
+            await supabase.from('profiles').update({ xp: newXP, level: newLevel }).eq('id', userId);
+            if (didLevelUp(oldLevel, newLevel)) console.log(`Level Up! ${oldLevel} -> ${newLevel}`);
+          }
+        } catch (error) {
+          // Ignore safely
+        }
       
       let pointsAdded = 0;
       const amountNum = parseFloat(amount) || 0;
