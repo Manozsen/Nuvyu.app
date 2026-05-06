@@ -360,12 +360,13 @@ export default function Dashboard() {
         .gte('created_at', threeDaysAgo.toISOString())
         .lt('created_at', startOfDay.toISOString());
 
-            // EXECUTE FULL ENGINE FLOW
+                  // EXECUTE FULL ENGINE FLOW
       const nudgeResponse = await generateCoachNudge(user.id, profile, logs || [], pastLogs || [], calculatedScore);
       setCoachMessage(nudgeResponse.message);
-      setCoachType(nudgeResponse.type);
+      // FIX: Added 'as "ai" | "rule"' to satisfy TypeScript's strict type checking
+      setCoachType(nudgeResponse.type as "ai" | "rule");
       
-            if (nudgeResponse.meta?.ai_limit_hit) {
+      if (nudgeResponse.meta?.ai_limit_hit) {
         setAiLimitHit(true);
         console.log("AI limit reached, basic coaching active"); // Metadata flag processed but UI stays untouched
       }
