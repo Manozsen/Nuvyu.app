@@ -32,18 +32,25 @@ export function calculateDailyScore(logs: any[], onboardingScore: number = 50) {
     if (totalWater >= 2000) water_points = 15;
     else if (totalWater >= 1000) water_points = 8;
 
-    // Fix: Only apply log bonus if 2 or more valid logs exist
-    if (logsCount >= 2) log_bonus = 5;
+        // Fix 1: Anti-spam Log Bonus (Count UNIQUE log types only)
+    const uniqueLogTypes = new Set(logs.map(log => log.log_type));
+    if (uniqueLogTypes.size >= 2) log_bonus = 5;
     
-    // Fix: Dynamic workout bonus accurately isolated
-    if (workoutLogsCount > 0) workout_bonus = workoutLogsCount * 5;
+    // Fix 2: Anti-spam Workout Bonus (Capped at 10 max)
+    if (workoutLogsCount > 0) workout_bonus = Math.min(workoutLogsCount * 5, 10);
 
-    // 3. Penalty Engine
+    // 3. Penalty Engine (Fix 3: Fair Timing)
     const currentHour = new Date().getHours();
-    if (logsCount === 0) {
-      if (currentHour >= 14) inactivity_penalty = -10;
-      else if (currentHour >= 10) inactivity_penalty = -5;
+    
+    // Do not punish users too early in the day
+    if (currentHour < 14) {
+      inactivity_penalty = 0;
+    } else if (logsCount === 0) {
+      // Time-aware penalty: Less aggressive timing for 0 logs
+      if (currentHour >= 18) inactivity_penalty = -10;
+      else if (currentHour >= 14) inactivity_penalty = -5;
     } else {
+      // Existing decay penalty applies, but only activates after 2 PM
       const hoursSinceLast = (Date.now() - lastLogTime) / (1000 * 60 * 60);
       if (hoursSinceLast >= 6) inactivity_penalty = -10;
       else if (hoursSinceLast >= 4) inactivity_penalty = -5;
