@@ -40,9 +40,17 @@ export default function InsightsPage() {
       const boundaryDate = startDate.toISOString().split('T')[0];
 
       // Strict User Isolation
-      const { data, error } = await supabase
+            const { data, error } = await supabase
         .from('score_explanations')
         .select('date, final_score, breakdown')
+        .eq('user_id', user.id)
+        .gte('date', boundaryDate)
+        .order('date', { ascending: true });
+
+      // Fetch Sleep Trends (Background Data for AI context)
+      const { data: sleepData } = await supabase
+        .from('sleep_logs')
+        .select('date, sleep_hours, recovery_score')
         .eq('user_id', user.id)
         .gte('date', boundaryDate)
         .order('date', { ascending: true });
@@ -160,7 +168,8 @@ export default function InsightsPage() {
           actions: generateNextActions(latest_bd),
           missed: detectMissedOpportunities(latest_bd)
         },
-        chartData
+        chartData,
+        sleepTrends: sleepData || []
       });
 
       setLoading(false);
