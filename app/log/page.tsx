@@ -339,7 +339,6 @@ export default function LogActivity() {
               <Utensils size={16} /> Food
             </button>
             <button 
-            <button 
               onClick={() => { setLogType('workout'); setAmount(''); setTextInput(''); setSubmitError(null); }}
               className={`py-3.5 rounded-xl flex items-center justify-center gap-2 font-bold transition-all text-sm ${
                 logType === 'workout' ? 'bg-purple-500/20 text-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.2)] border border-purple-500/30' : 'text-white/40 hover:text-white/80'
