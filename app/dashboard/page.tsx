@@ -99,12 +99,18 @@ export default function Dashboard() {
       daily_ai_calls_count: profile.daily_ai_calls_count || 0,
       last_reset_date: profile.last_reset_date,
       coach_tone: profile.coach_tone,
-      hoursSinceLastLog: todayLogs.length === 0 ? 24 : (Date.now() - lastLogTime) / (1000 * 60 * 60)
+      hoursSinceLastLog: todayLogs.length === 0 ? 24 : (Date.now() - lastLogTime) / (1000 * 60 * 60),
+      recovery_state: recoveryData?.recovery_state || "unknown",
+      fatigue_risk: recoveryData?.fatigue_risk || "unknown",
+      sleep_average: recoveryData?.sleep_hours || 0
     };
   };
 
-  // 2. BEHAVIOR DETECTION
+    // 2. BEHAVIOR DETECTION
   const detectBehavior = (metrics: any) => {
+    if (metrics.fatigue_risk === "high") return "fatigue_risk_high";
+    if (metrics.recovery_state === "poor") return "sleep_deprived";
+    if (metrics.recovery_state === "excellent") return "recovering_well";
     if (metrics.hoursSinceLastLog >= 4) return "inactive";
     if (metrics.today_water < 1000) return "low_hydration";
     if (metrics.today_steps < 3000) return "low_activity";
@@ -131,7 +137,9 @@ export default function Dashboard() {
   };
 
     // 4. AI CONTEXT BUILDER
-  const buildAIContext = (metrics: any, behavior: string, pattern: any, last_3_messages: string[], consistency: string) => {
+  const buildAIContext = (metrics: any, behavior: string, pattern: any, last_3_messages: string[], consistency: string) => {recovery_state: metrics.recovery_state,
+      fatigue_risk: metrics.fatigue_risk,
+      sleep_average: metrics.sleep_average,
     return {
       goal: metrics.goal,
       activity_level: metrics.activity_level,
@@ -166,9 +174,9 @@ export default function Dashboard() {
     }
   };
 
-    // 6. CORE HYBRID ENGINE
-  const generateCoachNudge = async (userId: string, profile: any, todayLogs: any[], pastLogs: any[], currentScore: number) => {
-    const metrics = getCoachMetrics(userId, profile, todayLogs, pastLogs, currentScore);
+      // 6. CORE HYBRID ENGINE
+    const generateCoachNudge = async (userId: string, profile: any, todayLogs: any[], pastLogs: any[], currentScore: number, recoveryData: any = null) => {
+    const metrics = getCoachMetrics(userId, profile, todayLogs, pastLogs, currentScore, recoveryData);
     const behavior = detectBehavior(metrics);
 
     // AI Memory + Pattern Engine Execution
@@ -282,7 +290,7 @@ export default function Dashboard() {
       const energyBurned = Math.round(totalSteps * 0.04);
       const safeEnergyIntake = energyIntake || 0;
 
-              // 2. Central Source of Truth Score Calculation
+      // 2. Central Source of Truth Score Calculation
       const baseScore = profile.onboarding_score || 50;
       const { finalScore: calculatedScore, breakdown: scoreBreakdown } = calculateDailyScore(logs || [], baseScore);
       
@@ -335,8 +343,13 @@ export default function Dashboard() {
         .gte('created_at', threeDaysAgo.toISOString())
         .lt('created_at', startOfDay.toISOString());
 
-                  // EXECUTE FULL ENGINE FLOW
-      const nudgeResponse = await generateCoachNudge(user.id, profile, logs || [], pastLogs || [], calculatedScore);
+            // Fetch Recovery Data
+      const { data: latestSleep } = await supabase.from('sleep_logs').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1).single();
+      const recoveryData = latestSleep ? calculateRecoveryScore(latestSleep.sleep_hours, latestSleep.sleep_quality) : null;
+      if (latestSleep) recoveryData.sleep_hours = latestSleep.sleep_hours;
+
+      // EXECUTE FULL ENGINE FLOW
+      const nudgeResponse = await generateCoachNudge(user.id, profile, logs || [], pastLogs || [], calculatedScore, recoveryData);
       setCoachMessage(nudgeResponse.message);
       // FIX: Added 'as "ai" | "rule"' to satisfy TypeScript's strict type checking
       setCoachType(nudgeResponse.type as "ai" | "rule");
