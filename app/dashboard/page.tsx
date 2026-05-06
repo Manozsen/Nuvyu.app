@@ -344,10 +344,11 @@ export default function Dashboard() {
         .gte('created_at', threeDaysAgo.toISOString())
         .lt('created_at', startOfDay.toISOString());
 
-            // Fetch Recovery Data
+      // Fetch Recovery Data
       const { data: latestSleep } = await supabase.from('sleep_logs').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1).single();
-      const recoveryData = latestSleep ? calculateRecoveryScore(latestSleep.sleep_hours, latestSleep.sleep_quality) : null;
-      if (latestSleep) recoveryData.sleep_hours = latestSleep.sleep_hours;
+      const recoveryData = latestSleep 
+        ? { ...calculateRecoveryScore(latestSleep.sleep_hours, latestSleep.sleep_quality), sleep_hours: latestSleep.sleep_hours } 
+        : null;
 
       // EXECUTE FULL ENGINE FLOW
       const nudgeResponse = await generateCoachNudge(user.id, profile, logs || [], pastLogs || [], calculatedScore, recoveryData);
