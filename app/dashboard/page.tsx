@@ -136,10 +136,8 @@ export default function Dashboard() {
     return isMuscle ? `Solid consistency. Recovery aur protein pe focus rakhna.` : `On track! Yeh discipline maintain karna hai.`;
   };
 
-    // 4. AI CONTEXT BUILDER
-  const buildAIContext = (metrics: any, behavior: string, pattern: any, last_3_messages: string[], consistency: string) => {recovery_state: metrics.recovery_state,
-      fatigue_risk: metrics.fatigue_risk,
-      sleep_average: metrics.sleep_average,
+  // 4. AI CONTEXT BUILDER
+  const buildAIContext = (metrics: any, behavior: string, pattern: any, last_3_messages: string[], consistency: string) => {
     return {
       goal: metrics.goal,
       activity_level: metrics.activity_level,
@@ -153,7 +151,10 @@ export default function Dashboard() {
       gender: metrics.gender,
       recent_behavior_pattern: pattern,
       last_3_messages: last_3_messages,
-      consistency_level: consistency
+      consistency_level: consistency,
+      recovery_state: metrics.recovery_state,
+      fatigue_risk: metrics.fatigue_risk,
+      sleep_average: metrics.sleep_average
     };
   };
 
