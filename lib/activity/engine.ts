@@ -37,3 +37,52 @@ export function parseWorkoutString(workoutText: string) {
     detected_exercises: []
   };
 }
+
+// 🧠 CENTRALIZED DYNAMIC CALORIE ENGINE
+export function calculateDynamicBurn(profile: any, logs: any[]) {
+  const bmr = profile?.bmr || 1500;
+  let stepsBurn = 0;
+  let workoutBurn = 0;
+  let activityBurn = 0;
+
+  logs.forEach(log => {
+    if (log.log_type === 'steps') {
+      stepsBurn += (Number(log.data?.amount) || 0) * 0.04;
+    } else if (log.log_type === 'workout') {
+      const duration = Number(log.data?.duration) || 30; // default 30 mins
+      workoutBurn += duration * 5; // approx 5 kcal/min
+    } else if (log.log_type === 'activity') {
+      activityBurn += Number(log.data?.estimated_calories) || 0;
+    }
+  });
+
+  // Passive burn (Thermic effect of food / NEAT estimation) -> roughly 10% of BMR
+  const passiveBurn = bmr * 0.1;
+
+  const totalBurn = bmr + stepsBurn + workoutBurn + activityBurn + passiveBurn;
+  return Math.round(totalBurn);
+}
+
+// 🧠 AI + HYBRID WORKOUT SUGGESTION ENGINE
+export function generateWorkoutSuggestions(profile: any) {
+  const target = (profile?.primary_target || profile?.goal || '').toLowerCase();
+
+  if (target.includes('six_pack') || target.includes('abs')) {
+    return ["Crunches", "Plank", "Mountain Climbers", "Leg Raises", "Russian Twists"];
+  }
+  if (target.includes('fat_loss') || target.includes('lean')) {
+    return ["HIIT Sprint", "Jump Rope", "Burpees", "Cycling", "Jumping Jacks"];
+  }
+  if (target.includes('muscle') || target.includes('gain') || target.includes('athletic')) {
+    return ["Push-ups", "Pull-ups", "Squats", "Deadlifts", "Bench Press"];
+  }
+  if (target.includes('height') || target.includes('posture')) {
+    return ["Cobra Stretch", "Hanging", "Pelvic Shift", "Cat Cow", "Downward Dog"];
+  }
+  if (target.includes('stamina') || target.includes('30_days')) {
+    return ["Running", "Rowing", "Burpees", "Jump Rope", "Box Jumps"];
+  }
+  
+  // Fallback structural suggestions
+  return ["Push-ups", "Running", "Squats", "Plank", "Stretching"]; 
+}
