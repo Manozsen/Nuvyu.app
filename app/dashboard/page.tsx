@@ -11,6 +11,7 @@ import { getRecentMemory, saveCoachMemory, detectUserPattern, calculateConsisten
 import { calculateDailyScore } from '../../lib/score/engine';
 import { calculateRecoveryScore } from '../../lib/recovery/engine';
 import { updateHabit } from '../../lib/habit/engine';
+import { calculateDynamicBurn } from '../../lib/activity/engine';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -93,6 +94,8 @@ export default function Dashboard() {
       avg_water_3_days: Math.round(pastWater / 3),
       activity_level: profile.activity_level,
       goal: profile.desired_identity || profile.goal,
+      primary_target: profile.primary_target || profile.goal,
+      motivation_reason: profile.motivation_reason || 'health',
       age: profile.age,
       gender: profile.gender,
       plan_type: profile.plan_type || 'free',
@@ -120,9 +123,15 @@ export default function Dashboard() {
 
     // 3. RULE-BASED FALLBACK
   const generateRuleNudge = (metrics: any, behavior: string, pattern: any) => {
-    const isFatLoss = metrics.goal === 'Lean & Fit';
-    const isMuscle = metrics.goal === 'Muscular';
+    const isFatLoss = metrics.goal === 'Lean & Fit' || (metrics.primary_target || '').includes('fat');
+    const isMuscle = metrics.goal === 'Muscular' || (metrics.primary_target || '').includes('muscle');
     const isOlder = (metrics.age || 25) >= 40;
+    const target = (metrics.primary_target || '').toLowerCase();
+
+    // Target-Based Behavior Priorities
+    if (target.includes('six_pack') && behavior === "consistent") return "Abs kitchen mein bante hain! Nutrition aur hydration maintain karo.";
+    if (target.includes('fit_in_30_days') && behavior === "inactive") return "30 days challenge on hai! Time waste nahi karna, get up and move!";
+    if (target.includes('height') && behavior === "sleep_deprived") return "Height aur posture ke liye recovery crucial hai. Need better sleep tonight.";
 
     // Memory Pattern Logic
     if (pattern?.repeating_low_steps) return "Pichhle kuch din se steps low hain, aaj improve karo.";
@@ -287,8 +296,8 @@ export default function Dashboard() {
         });
       }
 
-      // 1. Energy Clarity Fix
-      const energyBurned = Math.round(totalSteps * 0.04);
+      // 1. Energy Clarity Fix & Centralized Dynamic Burn Integration
+      const energyBurned = calculateDynamicBurn(profile, logs || []);
       const safeEnergyIntake = energyIntake || 0;
 
       // 2. Central Source of Truth Score Calculation
