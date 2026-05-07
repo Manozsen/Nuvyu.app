@@ -93,6 +93,7 @@ export function generateWorkoutSuggestions(profile: any) {
   // Deduplicate and return top 6 optimal suggestions
   return Array.from(new Set(suggestions)).slice(0, 6);
 }
+
   // Fallback structural suggestions
   return ["Push-ups", "Running", "Squats", "Plank", "Stretching"]; 
 }
