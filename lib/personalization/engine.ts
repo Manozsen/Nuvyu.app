@@ -1,55 +1,46 @@
 // 🧠 BEHAVIOR PRIORITY ENGINE
-export function getBehaviorPriority(target: string) {
-  const t = (target || '').toLowerCase();
+export function getBehaviorPriority(target: string, timeline: string) {
+  const t = (target || 'healthy_lifestyle').toLowerCase();
+  const time = (timeline || 'sustainable_lifestyle').toLowerCase();
   
-  if (t.includes('six_pack') || t.includes('fat_loss')) {
-    return ['calorie_deficit', 'consistency', 'hydration', 'abs_core'];
+  let priorities = [];
+  let urgency = time === '30_days' ? 'High Urgency' : time === '90_days' ? 'Moderate Urgency' : 'Sustainable Pace';
+
+  if (t.includes('six_pack') || t.includes('fat_loss') || t.includes('lean') || t.includes('wedding')) {
+    priorities.push("Calorie Deficit", "High Protein", "Consistency");
+  } else if (t.includes('muscle') || t.includes('gain') || t.includes('athletic') || t.includes('strength')) {
+    priorities.push("Progressive Overload", "Calorie Surplus", "Recovery/Sleep");
+  } else if (t.includes('height') || t.includes('posture')) {
+    priorities.push("Mobility/Stretching", "Sleep Quality", "Spine Health");
+  } else if (t.includes('stamina')) {
+    priorities.push("Cardiovascular Health", "Hydration", "Daily Movement");
+  } else {
+    priorities.push("Daily Movement", "Balanced Diet", "Hydration");
   }
-  if (t.includes('height') || t.includes('posture')) {
-    return ['sleep_recovery', 'posture_correction', 'stretching', 'mobility'];
-  }
-  if (t.includes('30_days') || t.includes('wedding') || t.includes('comeback')) {
-    return ['urgency', 'streak_focus', 'strict_discipline', 'high_intensity'];
-  }
-  if (t.includes('muscle') || t.includes('athletic') || t.includes('strength')) {
-    return ['protein_focus', 'progressive_overload', 'deep_recovery'];
-  }
-  
-  return ['balance', 'sustainability', 'habit_building', 'mental_health'];
+
+  return { priorities, urgency };
 }
 
-// 🧠 TARGET-BASED CALORIE ENGINE
-export function calculateTransformationCalories(bmr: number, tdee: number, target: string, timeline: string) {
-  const t = (target || '').toLowerCase();
-  const time = (timeline || '').toLowerCase();
+// 🧠 ADVANCED CALORIE TARGET ENGINE
+export function calculateAdvancedCalories(bmr: number, tdee: number, primaryTarget: string, timeline: string, identity: string) {
   let targetCalories = tdee;
-  let pace = "maintenance";
+  
+  // Legacy Fallback
+  if (identity === 'Lean & Fit') targetCalories -= 300;
+  else if (identity === 'Muscular') targetCalories += 300;
+
+  const pt = (primaryTarget || '').toLowerCase();
+  const tl = (timeline || '').toLowerCase();
 
   // Transformation Pace Multipliers
-  let deficit = 0.85; // Default 15% deficit
-  let surplus = 1.1;  // Default 10% surplus
-
-  // Adjust urgency based on timeline
-  if (time.includes('30_days')) {
-    deficit = 0.75; // Aggressive 25% deficit
-    pace = "aggressive";
-  } else if (time.includes('6_months') || time.includes('1_year') || time.includes('sustainable')) {
-    deficit = 0.90; // Sustainable 10% deficit
-    pace = "sustainable";
+  if (pt.includes('fat_loss') || pt.includes('six_pack') || pt.includes('lean') || pt.includes('wedding')) {
+    if (tl === '30_days') targetCalories = tdee * 0.75; // Aggressive
+    else if (tl === '90_days') targetCalories = tdee * 0.85; // Moderate
+    else targetCalories = tdee * 0.90; // Sustainable
+  } else if (pt.includes('muscle') || pt.includes('gain') || pt.includes('strength') || pt.includes('athletic')) {
+    if (tl === '30_days' || tl === '90_days') targetCalories = tdee * 1.15; // Aggressive Bulk
+    else targetCalories = tdee * 1.10; // Lean Bulk
   }
 
-  // Adjust target based on goal
-  if (t.includes('fat') || t.includes('lean') || t.includes('six_pack') || t.includes('wedding')) {
-    targetCalories = tdee * deficit;
-    pace = pace === "aggressive" ? "aggressive_cut" : "steady_cut";
-  } else if (t.includes('muscle') || t.includes('gain') || t.includes('strength') || t.includes('athletic')) {
-    targetCalories = tdee * surplus;
-    pace = "steady_bulk";
-  }
-
-  return {
-    target_calories: Math.max(bmr, Math.round(targetCalories)), // Never recommend below BMR
-    transformation_pace: pace,
-    behavior_priorities: getBehaviorPriority(target)
-  };
+  return Math.round(targetCalories);
 }
