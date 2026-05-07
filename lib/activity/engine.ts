@@ -82,7 +82,17 @@ export function generateWorkoutSuggestions(profile: any) {
   if (target.includes('stamina') || target.includes('30_days')) {
     return ["Running", "Rowing", "Burpees", "Jump Rope", "Box Jumps"];
   }
-  
+
+   // Personality adjustments targeting
+  if (pStyle.includes('calm') || pStyle.includes('analytical')) {
+    suggestions.push("Yoga", "Mobility Drills");
+  } else if (pStyle.includes('aggressive') || pStyle.includes('competitive')) {
+    suggestions.push("Heavy Deadlifts", "Sprint Intervals");
+  }
+
+  // Deduplicate and return top 6 optimal suggestions
+  return Array.from(new Set(suggestions)).slice(0, 6);
+}
   // Fallback structural suggestions
   return ["Push-ups", "Running", "Squats", "Plank", "Stretching"]; 
 }
