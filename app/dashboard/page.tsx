@@ -85,7 +85,7 @@ export default function Dashboard() {
       if (log.log_type === 'water') pastWater += val;
     });
 
-    return {
+        return {
       userId,
       today_steps,
       today_water,
@@ -94,8 +94,6 @@ export default function Dashboard() {
       avg_water_3_days: Math.round(pastWater / 3),
       activity_level: profile.activity_level,
       goal: profile.desired_identity || profile.goal,
-      primary_target: profile.primary_target || profile.goal,
-      motivation_reason: profile.motivation_reason || 'health',
       age: profile.age,
       gender: profile.gender,
       plan_type: profile.plan_type || 'free',
@@ -113,7 +111,6 @@ export default function Dashboard() {
       consistency_type: profile.consistency_type || 'beginner',
       personality_style: profile.personality_style || 'calm'
     };
-   };
 
     // 2. BEHAVIOR DETECTION
   const detectBehavior = (metrics: any) => {
