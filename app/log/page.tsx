@@ -11,7 +11,7 @@ import { calculateDailyScore } from '../../lib/score/engine';
 import { calculateRecoveryScore } from '../../lib/recovery/engine';
 import { updateHabit } from '../../lib/habit/engine';
 import { calculateXP, calculateLevel, didLevelUp } from '../../lib/xp/engine';
-import { estimateActivityCalories } from '../../lib/activity/engine';
+import { estimateActivityCalories, generateWorkoutSuggestions } from '../../lib/activity/engine';
 
 export default function LogsPage() {
   const router = useRouter();
@@ -36,14 +36,14 @@ export default function LogsPage() {
   const [workoutData, setWorkoutData] = useState({ exercise: '', sets: '', reps: '', duration: '' });
   const [activityData, setActivityData] = useState({ type: '', duration: '', intensity: 'medium' });
   
-  const workoutSuggestions = ["Push-ups", "Pull-ups", "Squats", "Plank", "Running", "HIIT"];
+  const [workoutSuggestions, setWorkoutSuggestions] = useState(["Push-ups", "Pull-ups", "Squats", "Plank", "Running", "HIIT"]);
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  useEffect(() => {
+    useEffect(() => {
     const init = async () => {
       const { data: { user }, error } = await supabase.auth.getUser();
       if (error || !user) {
@@ -52,6 +52,12 @@ export default function LogsPage() {
       }
       setUserId(user.id);
       fetchFeed(user.id);
+      
+      // Personalize workout suggestions based on target/goal
+      const { data: profile } = await supabase.from('profiles').select('goal, primary_target').eq('id', user.id).single();
+      if (profile) {
+        setWorkoutSuggestions(generateWorkoutSuggestions(profile));
+      }
     };
     init();
   }, [supabase.auth, router]);
