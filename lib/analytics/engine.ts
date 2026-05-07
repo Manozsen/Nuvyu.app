@@ -45,22 +45,26 @@ const getLocalDateStr = (d: Date) => {
   return `${y}-${m}-${day}`;
 };
 
+import { calculateDynamicBurn } from '../activity/engine';
+
 export async function getAnalytics(supabase: any, userId: string, days: number) {
   try {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
     const boundaryDate = getLocalDateStr(startDate);
 
-    // Efficient Parallel Fetch Strategy
-    const [profileRes, habitsRes, sleepRes] = await Promise.all([
+    // Efficient Parallel Fetch Strategy: Added daily_logs for accurate calorie analytics
+    const [profileRes, habitsRes, sleepRes, logsRes] = await Promise.all([
       supabase.from('profiles').select('*').eq('id', userId).single(),
       supabase.from('user_habits').select('*').eq('user_id', userId).gte('date', boundaryDate).order('date', { ascending: true }),
-      supabase.from('sleep_logs').select('*').eq('user_id', userId).gte('date', boundaryDate).order('date', { ascending: true })
+      supabase.from('sleep_logs').select('*').eq('user_id', userId).gte('date', boundaryDate).order('date', { ascending: true }),
+      supabase.from('daily_logs').select('log_type, data, created_at').eq('user_id', userId).gte('created_at', startDate.toISOString())
     ]);
 
     const profile = profileRes.data;
     const habits = habitsRes.data;
     const sleep = sleepRes.data;
+    const allLogs = logsRes.data || [];
 
     const aggregated = [];
     for (let i = days - 1; i >= 0; i--) {
@@ -68,11 +72,27 @@ export async function getAnalytics(supabase: any, userId: string, days: number) 
       d.setDate(d.getDate() - i);
       const dateStr = getLocalDateStr(d);
 
+      // CRITICAL FIX: Safe sync mapping parsing sleep stats reliably
       const h = habits?.find((x: any) => x.date === dateStr) || {};
       const s = sleep?.find((x: any) => x.date === dateStr) || {};
+      
+      // Filter logs for this specific date (local time matching)
+      const dayLogs = allLogs.filter((l: any) => {
+         const logDate = new Date(l.created_at);
+         return getLocalDateStr(logDate) === dateStr;
+      });
 
-      // 0 used for workout logs currently; will map from daily_logs in future sync patch
-      const metabolic = calculateDynamicCalories(profile, h.steps || 0, 0); 
+      // Use centralized dynamic burn engine (BMR + Steps + Workout + Activity)
+      const dynamic_burn = calculateDynamicBurn(profile, dayLogs);
+      
+      // Calculate target
+      const bmr = profile?.bmr || 1500;
+      const base_tdee = profile?.tdee || bmr * 1.2;
+      let goal_adjusted_target = base_tdee;
+      const goal = profile?.primary_target || profile?.goal || '';
+      
+      if (goal.toLowerCase().includes('lean') || goal.toLowerCase().includes('fat')) goal_adjusted_target = base_tdee * 0.85;
+      else if (goal.toLowerCase().includes('muscle') || goal.toLowerCase().includes('gain')) goal_adjusted_target = base_tdee * 1.1;
 
       aggregated.push({
         date: d.toLocaleDateString('en-US', { weekday: 'short' }),
@@ -80,11 +100,11 @@ export async function getAnalytics(supabase: any, userId: string, days: number) 
         score: h.score || 0,
         steps: h.steps || 0,
         water: h.water || 0,
-        sleep_hours: s.sleep_hours || 0,
-        recovery_score: s.recovery_score || 0,
+        sleep_hours: parseFloat(s.sleep_hours) || 0,
+        recovery_score: parseInt(s.recovery_score) || 0,
         streak: h.streak_count || 0,
-        calorie_burn: metabolic.dynamic_burn,
-        calorie_target: metabolic.goal_adjusted_target
+        calorie_burn: dynamic_burn,
+        calorie_target: Math.round(goal_adjusted_target)
       });
     }
 
