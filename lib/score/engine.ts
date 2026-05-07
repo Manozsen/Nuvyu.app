@@ -32,7 +32,7 @@ export function calculateDailyScore(logs: any[], onboardingScore: number = 50) {
     if (totalWater >= 2000) water_points = 15;
     else if (totalWater >= 1000) water_points = 8;
 
-        // Fix 1: Anti-spam Log Bonus (Count UNIQUE log types only)
+    // Fix 1: Anti-spam Log Bonus (Count UNIQUE log types only)
     const uniqueLogTypes = new Set(logs.map(log => log.log_type));
     if (uniqueLogTypes.size >= 2) log_bonus = 5;
     
