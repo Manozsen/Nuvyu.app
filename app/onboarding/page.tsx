@@ -4,12 +4,42 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, ArrowLeft, Loader2, Target, Zap, Activity, User, Ruler, Weight as WeightIcon, Clock } from 'lucide-react';
 import { createBrowserClient } from '@supabase/ssr';
+import { calculateAdvancedCalories } from '../../lib/personalization/engine';
 
 const HOOK_TEXTS = [
   "Tum change hona chahte ho… ya bas soch rahe ho?",
   "Ek aur din waste karna hai, ya aaj se shuru karein?",
   "Fit hona tumhara sapna hai, NUVYU use sach karega.",
   "Bahut excuses ho gaye. Ab result ka time hai."
+];
+
+const TARGETS = [
+  {id: 'six_pack', label: 'Six Pack Abs'}, {id: 'fat_loss', label: 'Fat Loss'}, {id: 'lean_body', label: 'Lean Body'}, {id: 'muscle_gain', label: 'Muscle Gain'}, 
+  {id: 'athletic_body', label: 'Athletic Body'}, {id: 'fit_in_30_days', label: 'Fit in 30 Days'}, {id: 'improve_stamina', label: 'Improve Stamina'}, 
+  {id: 'increase_strength', label: 'Increase Strength'}, {id: 'increase_height', label: 'Increase Height'}, {id: 'better_posture', label: 'Better Posture'}, 
+  {id: 'healthy_lifestyle', label: 'Healthy Lifestyle'}, {id: 'confidence_boost', label: 'Confidence Boost'}, {id: 'wedding_transformation', label: 'Wedding Trans.'}, 
+  {id: 'comeback_transformation', label: 'Comeback Trans.'}
+];
+
+const MOTIVATIONS = [
+  {id: 'confidence', label: 'Confidence'}, {id: 'appearance', label: 'Appearance'}, {id: 'health', label: 'Health'}, 
+  {id: 'breakup', label: 'Breakup / Comeback'}, {id: 'discipline', label: 'Discipline'}, {id: 'sports', label: 'Sports / Athletics'}, 
+  {id: 'social_anxiety', label: 'Overcome Anxiety'}, {id: 'energy', label: 'More Energy'}, {id: 'self_improvement', label: 'Self Improvement'}
+];
+
+const TIMELINES = [
+  {id: '30_days', label: '30 Days'}, {id: '90_days', label: '90 Days'}, {id: '6_months', label: '6 Months'}, 
+  {id: '1_year', label: '1 Year'}, {id: 'sustainable_lifestyle', label: 'Sustainable Lifestyle'}
+];
+
+const CONSISTENCY_TYPES = [
+  {id: 'beginner', label: 'Beginner'}, {id: 'inconsistent', label: 'Inconsistent'}, {id: 'comeback_user', label: 'Comeback User'}, 
+  {id: 'disciplined', label: 'Disciplined'}, {id: 'athlete', label: 'Athlete'}
+];
+
+const PERSONALITIES = [
+  {id: 'competitive', label: 'Competitive'}, {id: 'calm', label: 'Calm'}, {id: 'aggressive', label: 'Aggressive'}, 
+  {id: 'analytical', label: 'Analytical'}, {id: 'emotional', label: 'Emotional'}, {id: 'motivational', label: 'Motivational'}
 ];
 
 export default function Onboarding() {
@@ -33,7 +63,13 @@ export default function Onboarding() {
     weight: '',
     height: '',
     gender: '',
-    activityLevel: 'Moderate'
+    activityLevel: 'Moderate',
+    // New Deep Personalization Fields
+    primaryTarget: '',
+    motivationReason: '',
+    targetTimeline: '',
+    consistencyType: '',
+    personalityStyle: ''
   });
 
   const supabase = createBrowserClient(
@@ -55,7 +91,7 @@ export default function Onboarding() {
   }, [supabase.auth]);
 
   useEffect(() => {
-    if (step === 6) { 
+    if (step === 9) { // Adjusted from 6 to 9
       let calculated = 50; 
 
       if (formData.activityLevel === 'Active') calculated += 10;
@@ -107,9 +143,14 @@ export default function Onboarding() {
       const calculatedTDEE = Math.round(calculatedBMR * activityFactor);
       calculatedBMR = Math.round(calculatedBMR);
 
-      let targetCalories = calculatedTDEE;
-      if (formData.identity === 'Lean & Fit') targetCalories -= 300;
-      else if (formData.identity === 'Muscular') targetCalories += 300; 
+      // Intelligent Calorie Target using new helper
+      const targetCalories = calculateAdvancedCalories(
+        calculatedBMR, 
+        calculatedTDEE, 
+        formData.primaryTarget, 
+        formData.targetTimeline, 
+        formData.identity
+      );
 
       const payload = {
         id: userId,
@@ -124,10 +165,16 @@ export default function Onboarding() {
         workout_type: formData.workoutType === 'Custom' ? (formData.customWorkout || 'Not specified') : formData.workoutType,
         activity_level: formData.activityLevel || 'Moderate',
         current_score: finalScore,
-        onboarding_score: finalScore, // Base score locked in for daily resets
+        onboarding_score: finalScore,
         bmr: calculatedBMR,
         tdee: calculatedTDEE,
         target_calories: targetCalories,
+        // Deep Profiling Append
+        primary_target: formData.primaryTarget || 'healthy_lifestyle',
+        motivation_reason: formData.motivationReason || 'health',
+        target_timeline: formData.targetTimeline || 'sustainable_lifestyle',
+        consistency_type: formData.consistencyType || 'beginner',
+        personality_style: formData.personalityStyle || 'calm',
         updated_at: new Date().toISOString()
       };
 
@@ -148,10 +195,13 @@ export default function Onboarding() {
 
   const isStepValid = () => {
     if (step === 1) return formData.problem && (formData.problem !== 'Other' || formData.customProblem.trim().length > 0);
-    if (step === 2) return formData.identity;
-    if (step === 3) return formData.coachTone;
-    if (step === 4) return formData.workoutType && (formData.workoutType !== 'Custom' || formData.customWorkout.trim().length > 0);
-    if (step === 5) return formData.name && formData.age && formData.weight && formData.height && formData.gender; 
+    if (step === 2) return formData.primaryTarget;
+    if (step === 3) return formData.identity;
+    if (step === 4) return formData.motivationReason && formData.targetTimeline;
+    if (step === 5) return formData.consistencyType && formData.personalityStyle;
+    if (step === 6) return formData.coachTone;
+    if (step === 7) return formData.workoutType && (formData.workoutType !== 'Custom' || formData.customWorkout.trim().length > 0);
+    if (step === 8) return formData.name && formData.age && formData.weight && formData.height && formData.gender; 
     return true;
   };
 
@@ -167,16 +217,16 @@ export default function Onboarding() {
       <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-[#00FFA3]/5 rounded-full blur-[150px] pointer-events-none" />
       <div className="absolute bottom-[-20%] right-[-10%] w-[400px] h-[400px] bg-blue-600/5 rounded-full blur-[120px] pointer-events-none" />
 
-      <div className="w-full max-w-md mx-auto z-10">
+      <div className="w-full max-w-md mx-auto z-10 py-12">
         
-        {step > 0 && step < 6 && (
+        {step > 0 && step < 9 && (
           <div className="mb-12">
             <div className="flex justify-between text-xs font-bold text-white/40 mb-3 tracking-widest uppercase">
               <span>Step {step}</span>
-              <span>5</span>
+              <span>8</span>
             </div>
             <div className="flex justify-between items-center gap-2">
-              {[1, 2, 3, 4, 5].map((i) => (
+              {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
                 <div key={i} className="h-1 flex-1 bg-white/5 rounded-full overflow-hidden">
                   <motion.div 
                     className="h-full bg-[#00FFA3] shadow-[0_0_10px_rgba(0,255,163,0.5)]"
@@ -263,6 +313,41 @@ export default function Onboarding() {
           {step === 2 && (
             <motion.div key="step2" variants={slideVariants} initial="initial" animate="animate" exit="exit" className="space-y-8">
               <div>
+                <h2 className="text-3xl font-black tracking-tighter mb-3">Primary Target</h2>
+                <p className="text-white/50 text-sm font-medium">Select your ultimate transformation goal.</p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {TARGETS.map((target) => (
+                  <button
+                    key={target.id}
+                    onClick={() => setFormData({ ...formData, primaryTarget: target.id })}
+                    className={`w-full p-4 rounded-2xl border text-center font-bold text-sm transition-all ${
+                      formData.primaryTarget === target.id 
+                        ? 'bg-[#00FFA3]/10 border-[#00FFA3] text-white shadow-[0_0_20px_rgba(0,255,163,0.15)] ring-1 ring-[#00FFA3]/50' 
+                        : 'bg-white/[0.03] border-white/5 text-white/60 hover:bg-white/[0.06] hover:text-white'
+                    }`}
+                  >
+                    {target.label}
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-4 pt-4">
+                <button onClick={handleBack} className="p-5 rounded-2xl bg-white/[0.03] border border-white/5 text-white/60 hover:bg-white/[0.08] hover:text-white transition-all">
+                   <ArrowLeft size={22} />
+                </button>
+                <button 
+                  onClick={handleNext} disabled={!isStepValid()}
+                  className="flex-1 bg-[#00FFA3] text-black font-bold py-5 rounded-2xl flex justify-center items-center gap-2 disabled:opacity-20 disabled:grayscale transition-all"
+                >
+                  Continue <ArrowRight size={20} />
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {step === 3 && (
+            <motion.div key="step3" variants={slideVariants} initial="initial" animate="animate" exit="exit" className="space-y-8">
+              <div>
                 <h2 className="text-3xl font-black tracking-tighter mb-3">Tum kya banna chahte ho?</h2>
                 <p className="text-white/50 text-sm font-medium">Define your future identity.</p>
               </div>
@@ -289,6 +374,63 @@ export default function Onboarding() {
               </div>
               <div className="flex gap-4 pt-4">
                 <button onClick={handleBack} className="p-5 rounded-2xl bg-white/[0.03] border border-white/5 text-white/60 hover:bg-white/[0.08] hover:text-white transition-all">
+                   <ArrowLeft size={22} />
+                </button>
+                <button 
+                  onClick={handleNext} disabled={!isStepValid()}
+                  className="flex-1 bg-[#00FFA3] text-black font-bold py-5 rounded-2xl flex justify-center items-center gap-2 disabled:opacity-20 disabled:grayscale transition-all"
+                >
+                  Continue <ArrowRight size={20} />
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {step === 4 && (
+            <motion.div key="step4" variants={slideVariants} initial="initial" animate="animate" exit="exit" className="space-y-8">
+              <div>
+                <h2 className="text-3xl font-black tracking-tighter mb-3">Motivation & Timeline</h2>
+                <p className="text-white/50 text-sm font-medium">Why are you doing this and when do you want it?</p>
+              </div>
+              
+              <div className="space-y-4">
+                <p className="text-white/50 text-xs font-bold uppercase tracking-widest mt-1">Deep Reason</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {MOTIVATIONS.map((mot) => (
+                    <button
+                      key={mot.id}
+                      onClick={() => setFormData({ ...formData, motivationReason: mot.id })}
+                      className={`p-3 rounded-xl border text-center text-xs font-bold transition-all ${
+                        formData.motivationReason === mot.id 
+                          ? 'bg-[#00FFA3]/10 border-[#00FFA3] text-white ring-1 ring-[#00FFA3]/50' 
+                          : 'bg-white/[0.03] border-white/5 text-white/60 hover:bg-white/[0.06]'
+                      }`}
+                    >
+                      {mot.label}
+                    </button>
+                  ))}
+                </div>
+
+                <p className="text-white/50 text-xs font-bold uppercase tracking-widest mt-4">Target Timeline</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {TIMELINES.map((time) => (
+                    <button
+                      key={time.id}
+                      onClick={() => setFormData({ ...formData, targetTimeline: time.id })}
+                      className={`p-3 rounded-xl border text-center text-xs font-bold transition-all ${
+                        formData.targetTimeline === time.id 
+                          ? 'bg-[#00FFA3]/10 border-[#00FFA3] text-white ring-1 ring-[#00FFA3]/50' 
+                          : 'bg-white/[0.03] border-white/5 text-white/60 hover:bg-white/[0.06]'
+                      }`}
+                    >
+                      {time.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex gap-4 pt-4">
+                <button onClick={handleBack} className="p-5 rounded-2xl bg-white/[0.03] border border-white/5 text-white/60 hover:bg-white/[0.08] hover:text-white transition-all">
                   <ArrowLeft size={22} />
                 </button>
                 <button 
@@ -301,8 +443,65 @@ export default function Onboarding() {
             </motion.div>
           )}
 
-          {step === 3 && (
-            <motion.div key="step3" variants={slideVariants} initial="initial" animate="animate" exit="exit" className="space-y-8">
+          {step === 5 && (
+            <motion.div key="step5" variants={slideVariants} initial="initial" animate="animate" exit="exit" className="space-y-8">
+              <div>
+                <h2 className="text-3xl font-black tracking-tighter mb-3">Consistency & Personality</h2>
+                <p className="text-white/50 text-sm font-medium">To adapt your AI's coaching style.</p>
+              </div>
+              
+              <div className="space-y-4">
+                <p className="text-white/50 text-xs font-bold uppercase tracking-widest mt-1">Past Consistency</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {CONSISTENCY_TYPES.map((cons) => (
+                    <button
+                      key={cons.id}
+                      onClick={() => setFormData({ ...formData, consistencyType: cons.id })}
+                      className={`p-3 rounded-xl border text-center text-xs font-bold transition-all ${
+                        formData.consistencyType === cons.id 
+                          ? 'bg-[#00FFA3]/10 border-[#00FFA3] text-white ring-1 ring-[#00FFA3]/50' 
+                          : 'bg-white/[0.03] border-white/5 text-white/60 hover:bg-white/[0.06]'
+                      }`}
+                    >
+                      {cons.label}
+                    </button>
+                  ))}
+                </div>
+
+                <p className="text-white/50 text-xs font-bold uppercase tracking-widest mt-4">Your Personality Style</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {PERSONALITIES.map((pers) => (
+                    <button
+                      key={pers.id}
+                      onClick={() => setFormData({ ...formData, personalityStyle: pers.id })}
+                      className={`p-3 rounded-xl border text-center text-xs font-bold transition-all ${
+                        formData.personalityStyle === pers.id 
+                          ? 'bg-[#00FFA3]/10 border-[#00FFA3] text-white ring-1 ring-[#00FFA3]/50' 
+                          : 'bg-white/[0.03] border-white/5 text-white/60 hover:bg-white/[0.06]'
+                      }`}
+                    >
+                      {pers.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex gap-4 pt-4">
+                <button onClick={handleBack} className="p-5 rounded-2xl bg-white/[0.03] border border-white/5 text-white/60 hover:bg-white/[0.08] hover:text-white transition-all">
+                  <ArrowLeft size={22} />
+                </button>
+                <button 
+                  onClick={handleNext} disabled={!isStepValid()}
+                  className="flex-1 bg-[#00FFA3] text-black font-bold py-5 rounded-2xl flex justify-center items-center gap-2 disabled:opacity-20 disabled:grayscale transition-all"
+                >
+                  Continue <ArrowRight size={20} />
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {step === 6 && (
+            <motion.div key="step6" variants={slideVariants} initial="initial" animate="animate" exit="exit" className="space-y-8">
               <div>
                 <h2 className="text-3xl font-black tracking-tighter mb-3">Kaise coach chahiye?</h2>
                 <p className="text-white/50 text-sm font-medium">Your AI adapts to your preferred communication style.</p>
@@ -341,8 +540,8 @@ export default function Onboarding() {
             </motion.div>
           )}
 
-          {step === 4 && (
-            <motion.div key="step4" variants={slideVariants} initial="initial" animate="animate" exit="exit" className="space-y-8">
+          {step === 7 && (
+            <motion.div key="step7" variants={slideVariants} initial="initial" animate="animate" exit="exit" className="space-y-8">
               <div>
                 <h2 className="text-3xl font-black tracking-tighter mb-3">Where do you train?</h2>
                 <p className="text-white/50 text-sm font-medium">Select your primary workout location.</p>
@@ -388,8 +587,8 @@ export default function Onboarding() {
             </motion.div>
           )}
 
-          {step === 5 && (
-            <motion.div key="step5" variants={slideVariants} initial="initial" animate="animate" exit="exit" className="space-y-8">
+          {step === 8 && (
+            <motion.div key="step8" variants={slideVariants} initial="initial" animate="animate" exit="exit" className="space-y-8">
               <div>
                 <h2 className="text-3xl font-black tracking-tighter mb-3">Final Details</h2>
                 <p className="text-white/50 text-sm font-medium">To calibrate your baseline metrics.</p>
@@ -442,7 +641,7 @@ export default function Onboarding() {
                 </div>
 
                 <div className="relative group">
-                  <Ruler className="absolute left-5 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-[#00FFA3] transition-colors" size={20} />
+                   <Ruler className="absolute left-5 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-[#00FFA3] transition-colors" size={20} />
                   <input 
                     type="number" placeholder="Height (cm) (e.g., 175)"
                     value={formData.height} onChange={(e) => setFormData({...formData, height: e.target.value})}
@@ -482,9 +681,9 @@ export default function Onboarding() {
             </motion.div>
           )}
 
-          {step === 6 && (
+          {step === 9 && (
             <motion.div 
-              key="step6" variants={slideVariants} initial="initial" animate="animate"
+              key="step9" variants={slideVariants} initial="initial" animate="animate"
               className="flex flex-col items-center justify-center min-h-[70vh] text-center"
             >
               <motion.div 
