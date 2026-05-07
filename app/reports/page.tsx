@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Loader2, Brain, Activity, TrendingUp, TrendingDown, Calendar, Zap, LayoutDashboard, Settings, Plus, BarChart2, AlertTriangle, Flame } from 'lucide-react';
+import { ArrowLeft, Loader2, Brain, Activity, TrendingUp, TrendingDown, Calendar, Zap, LayoutDashboard, Settings, Plus, BarChart2, AlertTriangle, Flame, Footprints, Droplets } from 'lucide-react';
 import { createBrowserClient } from '@supabase/ssr';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -313,44 +313,132 @@ export default function InsightsPage() {
                       <Flame size={16} className="text-orange-500" />
                       <span className="text-white/50 text-[10px] font-bold uppercase tracking-widest">Energy Balance</span>
                     </div>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-white/30">{insights.advancedAnalytics?.stats?.calorieBurnTrend}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-white/30">{insights.advancedAnalytics?.stats?.calorieBurnTrend || 'stable'}</span>
                  </div>
                  <div className="h-40 w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={insights.advancedAnalytics?.dailyData || []}>
-                        <defs>
-                          <linearGradient id="colorBurn" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#f97316" stopOpacity={0.3}/>
-                            <stop offset="95%" stopColor="#f97316" stopOpacity={0}/>
-                          </linearGradient>
-                        </defs>
-                        <XAxis dataKey="date" stroke="rgba(255,255,255,0.2)" fontSize={10} tickLine={false} axisLine={false} />
-                        <YAxis domain={['dataMin - 200', 'dataMax + 200']} hide />
-                        <Tooltip contentStyle={{ backgroundColor: '#0A0A0A', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }} itemStyle={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
-                        <Area type="monotone" dataKey="calorie_burn" stroke="#f97316" fillOpacity={1} fill="url(#colorBurn)" strokeWidth={2} name="Burned" />
-                        <Area type="step" dataKey="calorie_target" stroke="rgba(255,255,255,0.2)" fill="transparent" strokeDasharray="4 4" strokeWidth={2} name="Target" />
-                      </AreaChart>
-                    </ResponsiveContainer>
+                    {insights.advancedAnalytics?.dailyData?.filter((d:any) => d.calorie_burn > 0).length > 0 ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={insights.advancedAnalytics.dailyData}>
+                          <defs>
+                            <linearGradient id="colorBurn" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#f97316" stopOpacity={0.3}/>
+                              <stop offset="95%" stopColor="#f97316" stopOpacity={0}/>
+                            </linearGradient>
+                          </defs>
+                          <XAxis dataKey="date" stroke="rgba(255,255,255,0.2)" fontSize={10} tickLine={false} axisLine={false} />
+                          <YAxis domain={['dataMin - 200', 'dataMax + 200']} hide />
+                          <Tooltip contentStyle={{ backgroundColor: '#0A0A0A', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }} itemStyle={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
+                          <Legend wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }} verticalAlign="bottom" height={36} />
+                          <Area type="monotone" dataKey="calorie_burn" stroke="#f97316" fillOpacity={1} fill="url(#colorBurn)" strokeWidth={2} name="Burned (kcal)" />
+                          <Area type="step" dataKey="calorie_target" stroke="rgba(255,255,255,0.2)" fill="transparent" strokeDasharray="4 4" strokeWidth={2} name="Target (kcal)" />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-white/30 text-xs font-medium">Energy tracking initializing...</div>
+                    )}
                  </div>
               </div>
 
-              {/* RECOVERY & HABIT ACTIVITY */}
+             {/* RECOVERY & HABIT ACTIVITY */}
               <div className="bg-[#0A0A0A]/90 backdrop-blur-2xl border border-white/10 rounded-[1.5rem] p-5 shadow-xl">
                  <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-2">
                       <Activity size={16} className="text-indigo-400" />
                       <span className="text-white/50 text-[10px] font-bold uppercase tracking-widest">Recovery & Sleep</span>
                     </div>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-white/30">{insights.advancedAnalytics?.stats?.recoveryTrend}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-white/30">{insights.advancedAnalytics?.stats?.recoveryTrend || 'stable'}</span>
                  </div>
                  <div className="h-40 w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={insights.advancedAnalytics?.dailyData || []}>
-                        <XAxis dataKey="date" stroke="rgba(255,255,255,0.2)" fontSize={10} tickLine={false} axisLine={false} />
-                        <Tooltip contentStyle={{ backgroundColor: '#0A0A0A', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }} itemStyle={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
-                        <Bar dataKey="recovery_score" fill="#6366f1" radius={[4, 4, 0, 0]} name="Recovery" maxBarSize={40} />
-                      </BarChart>
-                    </ResponsiveContainer>
+                    {insights.advancedAnalytics?.dailyData?.filter((d:any) => d.recovery_score > 0 || d.sleep_hours > 0).length > 0 ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={insights.advancedAnalytics.dailyData}>
+                          <XAxis dataKey="date" stroke="rgba(255,255,255,0.2)" fontSize={10} tickLine={false} axisLine={false} />
+                          <Tooltip contentStyle={{ backgroundColor: '#0A0A0A', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }} itemStyle={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
+                          <Legend wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }} />
+                          <Bar dataKey="recovery_score" fill="#6366f1" radius={[4, 4, 0, 0]} name="Recovery Score" maxBarSize={20} />
+                          <Bar dataKey="sleep_hours" fill="#818cf8" radius={[4, 4, 0, 0]} name="Sleep (hrs)" maxBarSize={20} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-white/30 text-xs font-medium">No sleep data yet. Log sleep to see trends.</div>
+                    )}
+                 </div>
+              </div>
+
+              {/* STEPS & MOVEMENT TREND */}
+              <div className="bg-[#0A0A0A]/90 backdrop-blur-2xl border border-white/10 rounded-[1.5rem] p-5 shadow-xl">
+                 <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-2">
+                      <Footprints size={16} className="text-[#00FFA3]" />
+                      <span className="text-white/50 text-[10px] font-bold uppercase tracking-widest">Movement Pattern</span>
+                    </div>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-white/30">{insights.advancedAnalytics?.stats?.stepsTrend || 'stable'}</span>
+                 </div>
+                 <div className="h-40 w-full">
+                    {insights.advancedAnalytics?.dailyData?.filter((d:any) => d.steps > 0).length > 0 ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={insights.advancedAnalytics.dailyData}>
+                          <XAxis dataKey="date" stroke="rgba(255,255,255,0.2)" fontSize={10} tickLine={false} axisLine={false} />
+                          <Tooltip contentStyle={{ backgroundColor: '#0A0A0A', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }} itemStyle={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
+                          <Bar dataKey="steps" fill="#00FFA3" radius={[4, 4, 0, 0]} name="Steps" maxBarSize={40} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-white/30 text-xs font-medium">Start walking to build movement trends.</div>
+                    )}
+                 </div>
+              </div>
+
+              {/* HYDRATION TREND */}
+              <div className="bg-[#0A0A0A]/90 backdrop-blur-2xl border border-white/10 rounded-[1.5rem] p-5 shadow-xl">
+                 <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-2">
+                      <Droplets size={16} className="text-blue-400" />
+                      <span className="text-white/50 text-[10px] font-bold uppercase tracking-widest">Hydration Consistency</span>
+                    </div>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-white/30">{insights.advancedAnalytics?.stats?.waterTrend || 'stable'}</span>
+                 </div>
+                 <div className="h-40 w-full">
+                    {insights.advancedAnalytics?.dailyData?.filter((d:any) => d.water > 0).length > 0 ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={insights.advancedAnalytics.dailyData}>
+                          <defs>
+                            <linearGradient id="colorWater" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#60a5fa" stopOpacity={0.3}/>
+                              <stop offset="95%" stopColor="#60a5fa" stopOpacity={0}/>
+                            </linearGradient>
+                          </defs>
+                          <XAxis dataKey="date" stroke="rgba(255,255,255,0.2)" fontSize={10} tickLine={false} axisLine={false} />
+                          <Tooltip contentStyle={{ backgroundColor: '#0A0A0A', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }} itemStyle={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
+                          <Area type="monotone" dataKey="water" stroke="#60a5fa" fillOpacity={1} fill="url(#colorWater)" strokeWidth={2} name="Water (ml)" />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-white/30 text-xs font-medium">Log water to see your hydration pattern.</div>
+                    )}
+                 </div>
+              </div>
+
+              {/* STREAK & CONSISTENCY TREND */}
+              <div className="bg-[#0A0A0A]/90 backdrop-blur-2xl border border-white/10 rounded-[1.5rem] p-5 shadow-xl">
+                 <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-2">
+                      <Zap size={16} className="text-yellow-400" />
+                      <span className="text-white/50 text-[10px] font-bold uppercase tracking-widest">Streak & Consistency</span>
+                    </div>
+                 </div>
+                 <div className="h-40 w-full">
+                    {insights.advancedAnalytics?.dailyData?.filter((d:any) => d.streak > 0).length > 0 ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={insights.advancedAnalytics.dailyData}>
+                          <XAxis dataKey="date" stroke="rgba(255,255,255,0.2)" fontSize={10} tickLine={false} axisLine={false} />
+                          <Tooltip contentStyle={{ backgroundColor: '#0A0A0A', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }} itemStyle={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }} cursor={{ stroke: 'rgba(255,255,255,0.05)', strokeWidth: 2 }} />
+                          <Line type="step" dataKey="streak" stroke="#eab308" strokeWidth={3} dot={{ fill: '#000', stroke: '#eab308', strokeWidth: 2, r: 4 }} activeDot={{ r: 6, fill: '#eab308' }} name="Streak Days" />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-white/30 text-xs font-medium">Log daily to build your streak.</div>
+                    )}
                  </div>
               </div>
 
