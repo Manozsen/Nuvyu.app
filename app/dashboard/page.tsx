@@ -105,9 +105,14 @@ export default function Dashboard() {
       hoursSinceLastLog: todayLogs.length === 0 ? 24 : (Date.now() - lastLogTime) / (1000 * 60 * 60),
       recovery_state: recoveryData?.recovery_state || "unknown",
       fatigue_risk: recoveryData?.fatigue_risk || "unknown",
-      sleep_average: recoveryData?.sleep_hours || 0
+      sleep_average: recoveryData?.sleep_hours || 0,
+      // Deep Personalization Fields
+      primary_target: profile.primary_target || profile.goal,
+      motivation_reason: profile.motivation_reason || 'health',
+      target_timeline: profile.target_timeline || 'sustainable_lifestyle',
+      consistency_type: profile.consistency_type || 'beginner',
+      personality_style: profile.personality_style || 'calm'
     };
-  };
 
     // 2. BEHAVIOR DETECTION
   const detectBehavior = (metrics: any) => {
@@ -163,9 +168,14 @@ export default function Dashboard() {
       consistency_level: consistency,
       recovery_state: metrics.recovery_state,
       fatigue_risk: metrics.fatigue_risk,
-      sleep_average: metrics.sleep_average
+      sleep_average: metrics.sleep_average,
+      // Advanced AI Psychological Profiling
+      target: metrics.primary_target,
+      motivation: metrics.motivation_reason,
+      timeline: metrics.target_timeline,
+      user_consistency_type: metrics.consistency_type,
+      personality_style: metrics.personality_style
     };
-  };
 
   // 5. AI COACH (PRIMARY EXPERIENCE)
   const generateAINudge = async (context: any, tone: string, userId: string) => {
