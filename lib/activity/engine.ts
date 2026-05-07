@@ -38,14 +38,14 @@ export function parseWorkoutString(workoutText: string) {
   };
 }
 
-// 🧠 CENTRALIZED DYNAMIC CALORIE ENGINE
+// 🧠 CENTRALIZED DYNAMIC CALORIE ENGINE (FULL AGGREGATION)
 export function calculateDynamicBurn(profile: any, logs: any[]) {
   const bmr = profile?.bmr || 1500;
   let stepsBurn = 0;
   let workoutBurn = 0;
   let activityBurn = 0;
 
-  logs.forEach(log => {
+  (logs || []).forEach(log => {
     if (log.log_type === 'steps') {
       stepsBurn += (Number(log.data?.amount) || 0) * 0.04;
     } else if (log.log_type === 'workout') {
@@ -56,34 +56,37 @@ export function calculateDynamicBurn(profile: any, logs: any[]) {
     }
   });
 
-  // Passive burn (Thermic effect of food / NEAT estimation) -> roughly 10% of BMR
+  // Passive burn (NEAT estimation) -> 10% of BMR
   const passiveBurn = bmr * 0.1;
+  
+  // Future-ready auto-detected & recovery adjustments structure
+  const autoDetectedBurn = 0; 
+  const recoveryAdjustment = 0;
 
-  const totalBurn = bmr + stepsBurn + workoutBurn + activityBurn + passiveBurn;
+  const totalBurn = bmr + stepsBurn + workoutBurn + activityBurn + passiveBurn + autoDetectedBurn + recoveryAdjustment;
   return Math.round(totalBurn);
 }
 
-// 🧠 AI + HYBRID WORKOUT SUGGESTION ENGINE
+// 🧠 AI + HYBRID WORKOUT SUGGESTION ENGINE (PERSONALIZATION SYNCED)
 export function generateWorkoutSuggestions(profile: any) {
+  if (!profile) return ["Push-ups", "Running", "Squats", "Plank", "Stretching"];
+
   const target = (profile?.primary_target || profile?.goal || '').toLowerCase();
+  const pStyle = (profile?.personality_style || '').toLowerCase();
 
-  if (target.includes('six_pack') || target.includes('abs')) {
-    return ["Crunches", "Plank", "Mountain Climbers", "Leg Raises", "Russian Twists"];
-  }
-  if (target.includes('fat_loss') || target.includes('lean')) {
-    return ["HIIT Sprint", "Jump Rope", "Burpees", "Cycling", "Jumping Jacks"];
-  }
-  if (target.includes('muscle') || target.includes('gain') || target.includes('athletic')) {
-    return ["Push-ups", "Pull-ups", "Squats", "Deadlifts", "Bench Press"];
-  }
-  if (target.includes('height') || target.includes('posture')) {
-    return ["Cobra Stretch", "Hanging", "Pelvic Shift", "Cat Cow", "Downward Dog"];
-  }
-  if (target.includes('stamina') || target.includes('30_days')) {
-    return ["Running", "Rowing", "Burpees", "Jump Rope", "Box Jumps"];
+  let suggestions = ["Push-ups", "Running", "Squats", "Plank", "Stretching"]; // Defaults
+
+  if (target.includes('six_pack') || target.includes('abs') || target.includes('fat_loss')) {
+    suggestions = ["Crunches", "Plank", "Mountain Climbers", "Leg Raises", "Russian Twists"];
+  } else if (target.includes('muscle') || target.includes('gain') || target.includes('strength')) {
+    suggestions = ["Push-ups", "Pull-ups", "Squats", "Deadlifts", "Bench Press"];
+  } else if (target.includes('height') || target.includes('posture')) {
+    suggestions = ["Cobra Stretch", "Hanging", "Pelvic Shift", "Cat Cow", "Downward Dog"];
+  } else if (target.includes('stamina') || target.includes('30_days') || target.includes('athletic')) {
+    suggestions = ["Running", "HIIT Sprint", "Burpees", "Jump Rope", "Box Jumps"];
   }
 
-   // Personality adjustments targeting
+  // Personality adjustments targeting
   if (pStyle.includes('calm') || pStyle.includes('analytical')) {
     suggestions.push("Yoga", "Mobility Drills");
   } else if (pStyle.includes('aggressive') || pStyle.includes('competitive')) {
@@ -92,8 +95,4 @@ export function generateWorkoutSuggestions(profile: any) {
 
   // Deduplicate and return top 6 optimal suggestions
   return Array.from(new Set(suggestions)).slice(0, 6);
-}
-
-  // Fallback structural suggestions
-  return ["Push-ups", "Running", "Squats", "Plank", "Stretching"]; 
 }
