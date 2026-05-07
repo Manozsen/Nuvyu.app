@@ -72,9 +72,9 @@ export async function getAnalytics(supabase: any, userId: string, days: number) 
       d.setDate(d.getDate() - i);
       const dateStr = getLocalDateStr(d);
 
-      // CRITICAL FIX: Safe sync mapping parsing sleep stats reliably
-      const h = habits?.find((x: any) => x.date === dateStr) || {};
-      const s = sleep?.find((x: any) => x.date === dateStr) || {};
+     // CRITICAL FIX: Safe sync mapping parsing sleep stats reliably across timezones
+      const h = habits?.find((x: any) => x.date === dateStr || (x.created_at && x.created_at.startsWith(dateStr))) || {};
+      const s = sleep?.find((x: any) => x.date === dateStr || (x.created_at && x.created_at.startsWith(dateStr))) || {};
       
       // Filter logs for this specific date (local time matching)
       const dayLogs = allLogs.filter((l: any) => {
