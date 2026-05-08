@@ -45,7 +45,7 @@ const getLocalDateStr = (d: Date) => {
   return `${y}-${m}-${day}`;
 };
 
-import { calculateDynamicBurn } from '../activity/engine';
+import { calculateEnergyBalance } from '../metabolism/energy-engine';
 
 export async function getAnalytics(supabase: any, userId: string, days: number) {
   try {
@@ -82,17 +82,8 @@ export async function getAnalytics(supabase: any, userId: string, days: number) 
          return getLocalDateStr(logDate) === dateStr;
       });
 
-      // Use centralized dynamic burn engine (BMR + Steps + Workout + Activity)
-      const dynamic_burn = calculateDynamicBurn(profile, dayLogs);
-      
-      // Calculate target
-      const bmr = profile?.bmr || 1500;
-      const base_tdee = profile?.tdee || bmr * 1.2;
-      let goal_adjusted_target = base_tdee;
-      const goal = profile?.primary_target || profile?.goal || '';
-      
-      if (goal.toLowerCase().includes('lean') || goal.toLowerCase().includes('fat')) goal_adjusted_target = base_tdee * 0.85;
-      else if (goal.toLowerCase().includes('muscle') || goal.toLowerCase().includes('gain')) goal_adjusted_target = base_tdee * 1.1;
+            // 🧠 Use REAL BODY ENERGY INTELLIGENCE SYSTEM
+      const energyData = calculateEnergyBalance(profile, dayLogs);
 
       aggregated.push({
         date: d.toLocaleDateString('en-US', { weekday: 'short' }),
@@ -103,8 +94,13 @@ export async function getAnalytics(supabase: any, userId: string, days: number) 
         sleep_hours: parseFloat(s.sleep_hours) || 0,
         recovery_score: parseInt(s.recovery_score) || 0,
         streak: h.streak_count || 0,
-        calorie_burn: dynamic_burn,
-        calorie_target: Math.round(goal_adjusted_target)
+        calorie_burn: energyData.burned.total_burn,
+        calorie_target: energyData.target,
+        calorie_intake: energyData.consumed.total_intake,
+        meal_timeline: energyData.consumed.meal_timeline,
+        activity_breakdown: energyData.burned.activity_breakdown,
+        bmr_burn: energyData.burned.bmr_burn,
+        energy_status: energyData.status
       });
     }
 
