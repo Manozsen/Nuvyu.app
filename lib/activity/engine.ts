@@ -63,8 +63,14 @@ export function calculateDynamicBurn(profile: any, logs: any[]) {
   const autoDetectedBurn = 0; 
   const recoveryAdjustment = 0;
 
-  const totalBurn = bmr + stepsBurn + workoutBurn + activityBurn + passiveBurn + autoDetectedBurn + recoveryAdjustment;
-  return Math.round(totalBurn);
+  const activeBurn = stepsBurn + workoutBurn + activityBurn;
+  const totalBurn = bmr + activeBurn + passiveBurn + autoDetectedBurn + recoveryAdjustment;
+  
+  return {
+    bmr: Math.round(bmr),
+    active_burn: Math.round(activeBurn),
+    total_burn: Math.round(totalBurn)
+  };
 }
 
 // 🧠 AI + HYBRID WORKOUT SUGGESTION ENGINE (PERSONALIZATION SYNCED)
