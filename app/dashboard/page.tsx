@@ -175,7 +175,8 @@ export default function Dashboard() {
       user_consistency_type: metrics.consistency_type,
       personality_style: metrics.personality_style
     };
-
+  };
+  
   // 5. AI COACH (PRIMARY EXPERIENCE)
   const generateAINudge = async (context: any, tone: string, userId: string) => {
     try {
