@@ -288,30 +288,22 @@ export default function Dashboard() {
       // Safely attach the user email for avatar fallback logic
       setUserProfile({ ...profile, email: user.email });
 
-      // Timezone Normalized Data Sync
+            // Timezone Safe Fetch (Fixes Timeline Sync Bug)
       const now = new Date();
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
-      const todayDateStr = `${year}-${month}-${day}`;
+      const todayDateStr = getLocalDateString(now);
 
       const twoDaysAgo = new Date();
       twoDaysAgo.setDate(now.getDate() - 2);
 
-      // Fetch broadly, filter locally to prevent UTC timeline desync (Fixes XP & Dashboard Activity bugs)
+      // Fetch broadly, filter locally to prevent UTC timeline desync
       const { data: rawLogs } = await supabase
         .from('daily_logs')
         .select('*')
         .eq('user_id', user.id)
         .gte('created_at', twoDaysAgo.toISOString());
 
-      const logs = (rawLogs || []).filter(log => {
-        const logDate = new Date(log.created_at);
-        const lYear = logDate.getFullYear();
-        const lMonth = String(logDate.getMonth() + 1).padStart(2, '0');
-        const lDay = String(logDate.getDate()).padStart(2, '0');
-        return `${lYear}-${lMonth}-${lDay}` === todayDateStr;
-      });
+      // Only process logs that match local user timezone date
+      const logs = (rawLogs || []).filter(log => getLocalDateString(new Date(log.created_at)) === todayDateStr);
 
       let totalSteps = 0;
       let totalWater = 0;
@@ -335,10 +327,10 @@ export default function Dashboard() {
         });
       }
 
-            // 1. Central Energy & Recovery Intelligence Integration
-      const energyData = calculateEnergyBalance(profile, logs || []);
-      const energyBurned = energyData.burned.total_burn;
-      const safeEnergyIntake = energyData.consumed.total_intake;
+            // 1. REAL BODY ENERGY INTELLIGENCE SYSTEM
+      const energyStats = calculateEnergyBalance(profile, logs || []);
+      const energyBurned = energyStats.totalBurn;
+      const safeEnergyIntake = energyStats.intakeCalories;
 
       // 2. Central Source of Truth Score Calculation
       const baseScore = profile.onboarding_score || 50;
@@ -392,11 +384,11 @@ export default function Dashboard() {
         .gte('created_at', threeDaysAgo.toISOString())
         .lt('created_at', startOfDay.toISOString());
 
-      // Fetch Recovery Data (Centralized Sync)
+            // Fetch Recovery Data (Synced to local date)
       const { data: latestSleep } = await supabase.from('sleep_logs')
         .select('*').eq('user_id', user.id)
         .order('date', { ascending: false }).limit(1).single();
-        
+            
       const recoveryData = latestSleep 
         ? { ...calculateRecoveryScore(latestSleep.sleep_hours, latestSleep.sleep_quality), sleep_hours: latestSleep.sleep_hours } 
         : null;
@@ -419,15 +411,15 @@ export default function Dashboard() {
         current_score: calculatedScore
       }, logsCount > 0);
 
-            // Safe state update (Fixed Syntax Error)
-            setMetrics({
+      // Safe state update (Fixed Syntax Error)
+      setMetrics({
         score: calculatedScore,
         steps: totalSteps,
         water: totalWater,
         logsCount: logsCount,
         energy_burned: energyBurned,
         energy_intake: safeEnergyIntake,
-        energy_balance: energyData,
+        energy_stats: energyStats,
         sleep_hours: recoveryData?.sleep_hours || 0,
         recovery_score: recoveryData?.recovery_score || 0,
         score_summary: getScoreSummary(explData?.breakdown || scoreBreakdown),
@@ -637,24 +629,23 @@ export default function Dashboard() {
             <div className="flex justify-between items-end">
               <div>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-black">{metrics.energy_balance?.burned?.total_burn || 0}</span>
+                  <span className="text-4xl font-black">{metrics.energy_stats?.totalBurn || 0}</span>
                   <span className="text-white/40 text-[10px] font-medium uppercase tracking-widest">Kcal Out</span>
                 </div>
                 <div className="text-[#00FFA3] text-[10px] font-bold uppercase tracking-widest mt-1">
-                  {metrics.energy_balance?.burned?.active_burn || 0} active • {metrics.energy_balance?.burned?.bmr_burn || 0} bmr
+                  {metrics.energy_stats?.activityBurn || 0} active • {metrics.energy_stats?.bmrBurn || 0} bmr
                 </div>
               </div>
               <div className="text-right">
                 <div className="flex items-baseline gap-1 justify-end">
-                  <span className="text-2xl font-bold text-orange-400">{metrics.energy_balance?.consumed?.total_intake || 0}</span>
-                  <span className="text-white/40 text-[10px] font-medium uppercase tracking-widest">/ {metrics.energy_balance?.target || targetCalories} In</span>
+                  <span className="text-2xl font-bold text-orange-400">{metrics.energy_stats?.intakeCalories || 0}</span>
+                  <span className="text-white/40 text-[10px] font-medium uppercase tracking-widest">/ {metrics.energy_stats?.targetCalories || targetCalories} In</span>
                 </div>
                 <div className="text-white/40 text-[10px] font-bold uppercase tracking-widest mt-1">
-                  {metrics.energy_balance?.status || 'maintenance'}
+                  {metrics.energy_stats?.deficit > 0 ? 'deficit' : metrics.energy_stats?.surplus > 0 ? 'surplus' : 'maintenance'}
                 </div>
               </div>
             </div>
-          </motion.div>
           
           <BentoCard icon={Droplets} label="Water" value={metrics.water} target="/ 3000 ml" color="text-blue-400" delay={0.4} />
 
