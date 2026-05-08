@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Loader2, Brain, Activity, TrendingUp, TrendingDown, Calendar, Zap, LayoutDashboard, Settings, Plus, BarChart2, AlertTriangle, Flame, Footprints, Droplets } from 'lucide-react';
+import { ArrowLeft, Loader2, Brain, Activity, TrendingUp, TrendingDown, Calendar, Zap, LayoutDashboard, Settings, Plus, BarChart2, AlertTriangle, Flame, Footprints, Droplets, Utensils } from 'lucide-react';
 import { createBrowserClient } from '@supabase/ssr';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -439,6 +439,46 @@ export default function InsightsPage() {
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-white/30 text-xs font-medium">Log daily to build your streak.</div>
                     )}
+                 </div>
+              </div>
+              
+              {/* FOOD TIMELINE SECTION */}
+              <div className="bg-[#0A0A0A]/90 backdrop-blur-2xl border border-white/10 rounded-[1.5rem] p-6 shadow-xl space-y-4">
+                 <h3 className="text-white/60 font-bold uppercase tracking-widest text-[10px] mb-4 flex items-center gap-2"><Utensils size={14} className="text-orange-400"/> Food & Intake Timeline</h3>
+                 {(insights.advancedAnalytics?.dailyData?.[insights.advancedAnalytics.dailyData.length - 1]?.meal_timeline?.length > 0) ? (
+                   insights.advancedAnalytics.dailyData[insights.advancedAnalytics.dailyData.length - 1].meal_timeline.map((meal: any, i: number) => (
+                     <div key={i} className="flex justify-between items-center border-b border-white/5 pb-3">
+                        <div>
+                          <span className="text-white/40 text-[10px] font-bold uppercase tracking-widest block">{meal.time}</span>
+                          <span className="text-white/90 text-sm font-medium">{meal.food}</span>
+                        </div>
+                        <span className="font-bold text-orange-400">{meal.calories} kcal</span>
+                     </div>
+                   ))
+                 ) : (
+                   <div className="text-center text-white/30 text-xs font-medium py-2">No meals logged today.</div>
+                 )}
+              </div>
+
+              {/* ENERGY BREAKDOWN SECTION */}
+              <div className="bg-[#0A0A0A]/90 backdrop-blur-2xl border border-white/10 rounded-[1.5rem] p-6 shadow-xl space-y-4">
+                 <h3 className="text-white/60 font-bold uppercase tracking-widest text-[10px] mb-4 flex items-center gap-2"><Flame size={14} className="text-[#00FFA3]"/> Burn Breakdown</h3>
+                 
+                 <div className="flex justify-between items-center border-b border-white/5 pb-3">
+                    <span className="text-white/80 text-sm font-medium">BMR (Progressive)</span>
+                    <span className="font-bold text-[#00FFA3]">{insights.advancedAnalytics?.dailyData?.[insights.advancedAnalytics.dailyData.length - 1]?.bmr_burn || 0} kcal</span>
+                 </div>
+
+                 {(insights.advancedAnalytics?.dailyData?.[insights.advancedAnalytics.dailyData.length - 1]?.activity_breakdown || []).map((act: any, i: number) => (
+                   <div key={i} className="flex justify-between items-center border-b border-white/5 pb-3">
+                      <span className="text-white/80 text-sm font-medium capitalize">{act.name}</span>
+                      <span className="font-bold text-[#00FFA3]">{act.burn} kcal</span>
+                   </div>
+                 ))}
+                 
+                 <div className="flex justify-between items-center pt-1">
+                    <span className="text-white/50 text-[10px] font-bold uppercase tracking-widest">Net Balance Status</span>
+                    <span className="font-bold text-white/80 text-xs uppercase tracking-widest">{insights.advancedAnalytics?.dailyData?.[insights.advancedAnalytics.dailyData.length - 1]?.energy_status || 'Maintenance'}</span>
                  </div>
               </div>
 
