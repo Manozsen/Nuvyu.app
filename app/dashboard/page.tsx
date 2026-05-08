@@ -140,7 +140,6 @@ export default function Dashboard() {
     if (pattern?.repeating_low_steps) return "Pichhle kuch din se steps low hain, aaj improve karo.";
     if (pattern?.hydration_issue) return "Hydration lagatar low hai, ispe focus karo.";
     if (pattern?.improving_trend) return "Kal se better ho, momentum maintain rakho.";
-
     if (behavior === "low_hydration") return `Hydration critical hai. Ek glass paani abhi piyo!`;
     if (behavior === "inactive") return isOlder ? `Kafi time rest ho gaya. Thoda light walk kar lo.` : `Time is ticking bhai. Get moving, no excuses!`;
     if (behavior === "low_activity") return isFatLoss ? `Calorie burn low hai aaj. Thoda step it up karo!` : `Activity drop ho rahi hai. Move a bit!`;
