@@ -84,18 +84,31 @@ export async function getAnalytics(supabase: any, userId: string, days: number) 
          return getLocalDateStr(logDate) === dateStr;
       });
 
-                  // 🧠 Strictly Typed Energy Mapping
+      // 🧠 Strictly Typed Energy Mapping
       const energyData = calculateEnergyBalance(profile, dayLogs);
+
+      // 🛠️ BUG FIX: Sleep Data Pipeline Stabilization
+      // Extract sleep from dedicated sleep_logs OR fallback to daily_logs timeline entries
+      const dailySleepLog = dayLogs.find((l: any) => l.log_type === 'sleep');
+      let finalSleepHours = safeNumber(s?.sleep_hours);
+      if (finalSleepHours === 0 && dailySleepLog) {
+          finalSleepHours = safeNumber(dailySleepLog.data?.sleep_hours || dailySleepLog.data?.amount || dailySleepLog.data?.duration);
+      }
+      
+      let finalRecoveryScore = safeNumber(s?.recovery_score);
+      if (finalRecoveryScore === 0 && finalSleepHours > 0) {
+          finalRecoveryScore = Math.min(100, Math.round((finalSleepHours / 8) * 100)); // Auto-calculate if DB is 0
+      }
 
       const dayData: AnalyticsDailyData = {
         date: d.toLocaleDateString('en-US', { weekday: 'short' }),
         fullDate: dateStr,
-        score: safeNumber(h.score),
-        steps: safeNumber(h.steps),
-        water: safeNumber(h.water),
-        sleep_hours: safeNumber(parseFloat(s.sleep_hours)),
-        recovery_score: safeNumber(parseInt(s.recovery_score)),
-        streak: safeNumber(h.streak_count),
+        score: safeNumber(h?.score),
+        steps: safeNumber(h?.steps),
+        water: safeNumber(h?.water),
+        sleep_hours: finalSleepHours,
+        recovery_score: finalRecoveryScore,
+        streak: safeNumber(h?.streak_count),
         calorie_burn: safeNumber(energyData?.totalBurn),
         calorie_target: safeNumber(energyData?.targetCalories),
         calorie_intake: safeNumber(energyData?.intakeCalories),
