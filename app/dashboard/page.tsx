@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Flame, Footprints, Droplets, Camera, Zap, LayoutDashboard, Settings, Bell, ChevronRight, LogOut, Loader2, Plus, Activity } from 'lucide-react';
+import { Flame, Footprints, Droplets, Camera, Zap, LayoutDashboard, Settings, Bell, ChevronRight, LogOut, Loader2, Plus, Activity, Moon } from 'lucide-react';
 import { createBrowserClient } from '@supabase/ssr';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -11,7 +11,7 @@ import { getRecentMemory, saveCoachMemory, detectUserPattern, calculateConsisten
 import { calculateDailyScore } from '../../lib/score/engine';
 import { calculateRecoveryScore } from '../../lib/recovery/engine';
 import { updateHabit } from '../../lib/habit/engine';
-import { calculateDynamicBurn } from '../../lib/activity/engine';
+import { calculateEnergyBalance } from '../../lib/metabolism/energy-engine';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -20,13 +20,16 @@ export default function Dashboard() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
   
-          const [metrics, setMetrics] = useState({ 
+            const [metrics, setMetrics] = useState({ 
     score: 0, 
     steps: 0, 
     water: 0, 
     logsCount: 0,
     energy_burned: 0,
     energy_intake: 0,
+    energy_balance: null as any,
+    sleep_hours: 0,
+    recovery_score: 0,
     score_summary: "",
     streak_count: 0,
     best_streak: 0,
@@ -330,10 +333,10 @@ export default function Dashboard() {
         });
       }
 
-      // 1. Energy Clarity Fix & Centralized Dynamic Burn Integration
-      const burnMetrics: any = calculateDynamicBurn(profile, logs || []);
-      const energyBurned = burnMetrics.total_burn || burnMetrics; // Fallback ensures stability if cache lags
-      const safeEnergyIntake = energyIntake || 0;
+            // 1. Central Energy & Recovery Intelligence Integration
+      const energyData = calculateEnergyBalance(profile, logs || []);
+      const energyBurned = energyData.burned.total_burn;
+      const safeEnergyIntake = energyData.consumed.total_intake;
 
       // 2. Central Source of Truth Score Calculation
       const baseScore = profile.onboarding_score || 50;
@@ -415,13 +418,16 @@ export default function Dashboard() {
       }, logsCount > 0);
 
             // Safe state update (Fixed Syntax Error)
-      setMetrics({
+            setMetrics({
         score: calculatedScore,
         steps: totalSteps,
         water: totalWater,
         logsCount: logsCount,
         energy_burned: energyBurned,
         energy_intake: safeEnergyIntake,
+        energy_balance: energyData,
+        sleep_hours: recoveryData?.sleep_hours || 0,
+        recovery_score: recoveryData?.recovery_score || 0,
         score_summary: getScoreSummary(explData?.breakdown || scoreBreakdown),
         streak_count: habitData.streak_count,
         best_streak: habitData.best_streak,
@@ -614,32 +620,45 @@ export default function Dashboard() {
            </Link>
         </div>
 
-        <section className="grid grid-cols-2 gap-4">
-          {/* Target injected: / 6000 steps */}
+                <section className="grid grid-cols-2 gap-4">
           <BentoCard icon={Footprints} label="Steps" value={metrics.steps} target="/ 6000" color="text-[#00FFA3]" delay={0.2} />
           
-          {/* Target injected: intake / target calories */}
-          <BentoCard icon={Flame} label="Burned" value={metrics.energy_burned} target={`(In: ${metrics.energy_intake} / ${targetCalories})`} color={energyColorClass} delay={0.3} />
-          
-          {/* Target injected: / 3000 ml */}
-          <BentoCard icon={Droplets} label="Water" value={metrics.water} target="/ 3000 ml" color="text-blue-400" delay={0.4} />
-          
+          {/* REAL BODY ENERGY INTELLIGENCE CARD */}
           <motion.div 
-            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
-            className="bg-[#0A0A0A] border border-white/10 rounded-[1.5rem] p-5 flex flex-col justify-between shadow-xl"
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+            className="bg-[#0A0A0A] border border-white/10 rounded-[1.5rem] p-5 flex flex-col justify-between shadow-xl col-span-2"
           >
-            <div className="flex justify-between items-center">
-              <span className="text-white/50 text-[10px] font-bold uppercase tracking-widest">Base Met.</span>
-              <Activity size={16} className="text-white/30" />
+            <div className="flex items-center gap-2 mb-4">
+              <Flame size={16} className={energyColorClass} />
+              <span className="text-white/50 text-[10px] font-bold uppercase tracking-widest">Energy Balance Engine</span>
             </div>
-            <div className="mt-2">
-              <div className="flex items-baseline gap-1 mb-1">
-                <span className="text-2xl font-bold">{userProfile.bmr || 0}</span>
-                <span className="text-white/40 text-[10px] font-medium">kcal/day</span>
+            <div className="flex justify-between items-end">
+              <div>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-4xl font-black">{metrics.energy_balance?.burned?.total_burn || 0}</span>
+                  <span className="text-white/40 text-[10px] font-medium uppercase tracking-widest">Kcal Out</span>
+                </div>
+                <div className="text-[#00FFA3] text-[10px] font-bold uppercase tracking-widest mt-1">
+                  {metrics.energy_balance?.burned?.active_burn || 0} active • {metrics.energy_balance?.burned?.bmr_burn || 0} bmr
+                </div>
               </div>
-              <div className="text-[#00FFA3] text-[10px] font-bold uppercase tracking-widest">BMR</div>
+              <div className="text-right">
+                <div className="flex items-baseline gap-1 justify-end">
+                  <span className="text-2xl font-bold text-orange-400">{metrics.energy_balance?.consumed?.total_intake || 0}</span>
+                  <span className="text-white/40 text-[10px] font-medium uppercase tracking-widest">/ {metrics.energy_balance?.target || targetCalories} In</span>
+                </div>
+                <div className="text-white/40 text-[10px] font-bold uppercase tracking-widest mt-1">
+                  {metrics.energy_balance?.status || 'maintenance'}
+                </div>
+              </div>
             </div>
           </motion.div>
+          
+          <BentoCard icon={Droplets} label="Water" value={metrics.water} target="/ 3000 ml" color="text-blue-400" delay={0.4} />
+
+          {/* Recovery & Sleep Integrations */}
+          <BentoCard icon={Moon} label="Sleep" value={metrics.sleep_hours || 0} target="hrs" color="text-indigo-400" delay={0.45} />
+          <BentoCard icon={Activity} label="Recovery" value={`${metrics.recovery_score || 0}%`} target="score" color="text-purple-400" delay={0.5} />
         </section>
 
       </main>
