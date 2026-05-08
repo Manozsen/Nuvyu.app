@@ -146,8 +146,8 @@ export default function Dashboard() {
     if (behavior === "low_activity") return isFatLoss ? `Calorie burn low hai aaj. Thoda step it up karo!` : `Activity drop ho rahi hai. Move a bit!`;
     if (behavior === "improving") return `Great momentum today! Aise hi push karte raho.`;
     return isMuscle ? `Solid consistency. Recovery aur protein pe focus rakhna.` : `On track! Yeh discipline maintain karna hai.`;
+   }
   };
-};
 
   // 4. AI CONTEXT BUILDER
   const buildAIContext = (metrics: any, behavior: string, pattern: any, last_3_messages: string[], consistency: string) => {
