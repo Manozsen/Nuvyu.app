@@ -159,7 +159,7 @@ export default function Dashboard() {
   };
 
   // 4. AI CONTEXT BUILDER
-  const buildAIContext = (metrics: any, behavior: string, pattern: any, last_3_messages: string[], consistency: string) => {
+    const buildAIContext = (metrics: any, behavior: string, pattern: any, last_3_messages: string[], consistency: string) => {
     return {
       goal: metrics.goal,
       activity_level: metrics.activity_level,
@@ -174,10 +174,8 @@ export default function Dashboard() {
       recent_behavior_pattern: pattern,
       last_3_messages: last_3_messages,
       consistency_level: consistency,
-      recovery_state: metrics.recovery_state,
-      fatigue_risk: metrics.fatigue_risk,
       sleep_average: metrics.sleep_average,
-            // Advanced AI Psychological Profiling
+      // Advanced AI Psychological & Recovery Profiling
       target: metrics.primary_target,
       recovery_state: metrics.recovery_state,
       fatigue_risk: metrics.fatigue_risk,
