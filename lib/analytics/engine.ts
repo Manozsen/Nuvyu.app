@@ -46,6 +46,8 @@ const getLocalDateStr = (d: Date) => {
 };
 
 import { calculateEnergyBalance, getLocalDateString } from '../calories/energyEngine';
+import { AnalyticsDailyData } from '../types/analytics';
+import { safeNumber, safeArray } from '../utils/safe';
 
 export async function getAnalytics(supabase: any, userId: string, days: number) {
   try {
@@ -82,27 +84,28 @@ export async function getAnalytics(supabase: any, userId: string, days: number) 
          return getLocalDateStr(logDate) === dateStr;
       });
 
-            // 🧠 Use REAL BODY ENERGY INTELLIGENCE SYSTEM
+                  // 🧠 Strictly Typed Energy Mapping
       const energyData = calculateEnergyBalance(profile, dayLogs);
 
-      aggregated.push({
+      const dayData: AnalyticsDailyData = {
         date: d.toLocaleDateString('en-US', { weekday: 'short' }),
         fullDate: dateStr,
-        score: h.score || 0,
-        steps: h.steps || 0,
-        water: h.water || 0,
-        sleep_hours: parseFloat(s.sleep_hours) || 0,
-        recovery_score: parseInt(s.recovery_score) || 0,
-        streak: h.streak_count || 0,
-        calorie_burn: energyData?.totalBurn || 0,
-        calorie_target: energyData?.targetCalories || 0,
-        calorie_intake: energyData?.intakeCalories || 0,
-        meal_timeline: energyData?.intakeTimeline || [],
-        // Safely map the new burnTimeline to the old UI expectations to prevent Reports page UI crashes
-        activity_breakdown: (energyData?.burnTimeline || []).map((b: any) => ({ name: b.source, burn: b.calories })),
-        bmr_burn: energyData?.bmrBurn || 0,
+        score: safeNumber(h.score),
+        steps: safeNumber(h.steps),
+        water: safeNumber(h.water),
+        sleep_hours: safeNumber(parseFloat(s.sleep_hours)),
+        recovery_score: safeNumber(parseInt(s.recovery_score)),
+        streak: safeNumber(h.streak_count),
+        calorie_burn: safeNumber(energyData?.totalBurn),
+        calorie_target: safeNumber(energyData?.targetCalories),
+        calorie_intake: safeNumber(energyData?.intakeCalories),
+        meal_timeline: safeArray(energyData?.intakeTimeline),
+        activity_breakdown: safeArray(energyData?.burnTimeline).map((b: any) => ({ name: b.source, burn: b.calories })),
+        bmr_burn: safeNumber(energyData?.bmrBurn),
         energy_status: (energyData?.deficit && energyData.deficit > 0) ? 'deficit' : (energyData?.surplus && energyData.surplus > 0) ? 'surplus' : 'maintenance'
-      });
+      };
+
+      aggregated.push(dayData);
     } // <-- CRITICAL FIX: Properly closes the for (let i = days - 1...) loop
 
     const stats = {
