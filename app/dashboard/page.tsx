@@ -614,7 +614,7 @@ export default function Dashboard() {
            </Link>
         </div>
 
-                <section className="grid grid-cols-2 gap-4">
+            <section className="grid grid-cols-2 gap-4">
           <BentoCard icon={Footprints} label="Steps" value={metrics.steps} target="/ 6000" color="text-[#00FFA3]" delay={0.2} />
           
           {/* REAL BODY ENERGY INTELLIGENCE CARD */}
@@ -642,10 +642,11 @@ export default function Dashboard() {
                   <span className="text-white/40 text-[10px] font-medium uppercase tracking-widest">/ {metrics.energy_stats?.targetCalories || targetCalories} In</span>
                 </div>
                 <div className="text-white/40 text-[10px] font-bold uppercase tracking-widest mt-1">
-                  {metrics.energy_stats?.deficit > 0 ? 'deficit' : metrics.energy_stats?.surplus > 0 ? 'surplus' : 'maintenance'}
+                  {metrics.energy_stats?.deficit ? 'deficit' : metrics.energy_stats?.surplus ? 'surplus' : 'maintenance'}
                 </div>
               </div>
             </div>
+          </motion.div>
           
           <BentoCard icon={Droplets} label="Water" value={metrics.water} target="/ 3000 ml" color="text-blue-400" delay={0.4} />
 
@@ -653,7 +654,7 @@ export default function Dashboard() {
           <BentoCard icon={Moon} label="Sleep" value={metrics.sleep_hours || 0} target="hrs" color="text-indigo-400" delay={0.45} />
           <BentoCard icon={Activity} label="Recovery" value={`${metrics.recovery_score || 0}%`} target="score" color="text-purple-400" delay={0.5} />
         </section>
-
+        
       </main>
 
            {/* FIXED BOTTOM NAVIGATION */}
