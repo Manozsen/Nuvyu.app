@@ -274,14 +274,30 @@ export default function Dashboard() {
       // Safely attach the user email for avatar fallback logic
       setUserProfile({ ...profile, email: user.email });
 
-      const startOfDay = new Date();
-      startOfDay.setHours(0, 0, 0, 0);
+      // Timezone Normalized Data Sync
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const todayDateStr = `${year}-${month}-${day}`;
 
-      const { data: logs } = await supabase
+      const twoDaysAgo = new Date();
+      twoDaysAgo.setDate(now.getDate() - 2);
+
+      // Fetch broadly, filter locally to prevent UTC timeline desync (Fixes XP & Dashboard Activity bugs)
+      const { data: rawLogs } = await supabase
         .from('daily_logs')
         .select('*')
         .eq('user_id', user.id)
-        .gte('created_at', startOfDay.toISOString());
+        .gte('created_at', twoDaysAgo.toISOString());
+
+      const logs = (rawLogs || []).filter(log => {
+        const logDate = new Date(log.created_at);
+        const lYear = logDate.getFullYear();
+        const lMonth = String(logDate.getMonth() + 1).padStart(2, '0');
+        const lDay = String(logDate.getDate()).padStart(2, '0');
+        return `${lYear}-${lMonth}-${lDay}` === todayDateStr;
+      });
 
       let totalSteps = 0;
       let totalWater = 0;
