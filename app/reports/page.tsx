@@ -474,7 +474,7 @@ export default function InsightsPage() {
                  <div className="border-b border-white/5 pb-3">
                     <span className="text-white/80 text-sm font-medium block mb-1">Why Score Changed</span>
                     <span className="font-bold text-[#00FFA3] text-sm">{insights.actionable.why}</span>
-                 </div>
+                  </div>
                  
                  {insights.actionable.missed && (
                  <div className="border-b border-white/5 pb-3">
