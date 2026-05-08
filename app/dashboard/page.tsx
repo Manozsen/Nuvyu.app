@@ -389,14 +389,32 @@ export default function Dashboard() {
         .gte('created_at', threeDaysAgo.toISOString())
         .lt('created_at', startOfDay.toISOString());
 
-            // Fetch Recovery Data (Synced to local date)
-      const { data: latestSleep } = await supabase.from('sleep_logs')
+       // Fetch Recovery Data (Synced to local date)
+      const { data: latestSleepRaw } = await supabase.from('sleep_logs')
         .select('*').eq('user_id', user.id)
         .order('date', { ascending: false }).limit(1).single();
-            
-      const recoveryData = latestSleep 
-        ? { ...calculateRecoveryScore(latestSleep.sleep_hours, latestSleep.sleep_quality), sleep_hours: latestSleep.sleep_hours } 
-        : null;
+      
+      // 🛠️ BUG FIX: Dual-Source Sleep Pipeline
+      // If no dedicated sleep log exists, fallback to timeline 'sleep' logs to prevent 0% drops
+      const timelineSleep = (logs || []).find((l: any) => l.log_type === 'sleep');
+      const latestSleep = latestSleepRaw || (timelineSleep ? {
+          sleep_hours: safeNumber(timelineSleep.data?.sleep_hours || timelineSleep.data?.amount || timelineSleep.data?.duration),
+          sleep_quality: timelineSleep.data?.quality || 'moderate',
+          recovery_score: 0 // Auto-calculated below safely
+      } : null);
+      
+      const sleepHours = safeNumber(latestSleep?.sleep_hours);
+      const dbScore = safeNumber(latestSleep?.recovery_score);
+      // Generate a dynamic fallback score if the database score is missing or 0
+      const computedScore = dbScore > 0 ? dbScore : (sleepHours > 0 ? Math.min(100, Math.round((sleepHours / 8) * 100)) : 0);
+      const recState = calculateRecoveryState(sleepHours, latestSleep?.sleep_quality || 'moderate', 'moderate', safeNumber(energyStats?.energyBalance));
+
+      const recoveryData = latestSleep ? {
+        sleep_hours: sleepHours,
+        recovery_score: computedScore,
+        recovery_state: recState,
+        fatigue_risk: detectFatiguePattern(recState, sleepHours, safeNumber(energyStats?.activityBurn))
+      } : null;
 
       // EXECUTE FULL ENGINE FLOW
       const nudgeResponse = await generateCoachNudge(user.id, profile, logs || [], pastLogs || [], calculatedScore, recoveryData, safeNumber(energyStats?.energyBalance));
