@@ -71,8 +71,8 @@ export default function Dashboard() {
   const chat_limit_window = 6; // hours
   const chat_usage_count = 0;
 
-    // 1. DATA COLLECTION
-  const getCoachMetrics = (userId: string, profile: any, todayLogs: any[], pastLogs: any[], currentScore: number, recoveryData: any = null) => {
+        // 1. DATA COLLECTION
+  const getCoachMetrics = (userId: string, profile: any, todayLogs: any[], pastLogs: any[], currentScore: number, recoveryData: any = null, energyBalance: number = 0) => {
     let today_steps = 0;
     let today_water = 0;
     let lastLogTime = 0;
@@ -112,6 +112,7 @@ export default function Dashboard() {
       recovery_state: safeRecoveryState(recoveryData?.recovery_state),
       fatigue_risk: safeFatigueRisk(recoveryData?.fatigue_risk),
       sleep_average: safeNumber(recoveryData?.sleep_hours),
+      energy_balance: energyBalance,
       // Deep Personalization Fields
       primary_target: profile.primary_target || profile.goal,
       motivation_reason: profile.motivation_reason || 'health',
@@ -166,7 +167,7 @@ export default function Dashboard() {
   };
 
     // 4. AI CONTEXT BUILDER
-  const buildAIContext = (metrics: DashboardMetrics, behavior: string, pattern: any, last_3_messages: string[], consistency: string): AIContext => {
+  const buildAIContext = (metrics: ReturnType<typeof getCoachMetrics>, behavior: string, pattern: any, last_3_messages: string[], consistency: string): AIContext => {
     return {
       goal: metrics.goal,
       activity_level: metrics.activity_level,
@@ -212,8 +213,8 @@ export default function Dashboard() {
   };
 
       // 6. CORE HYBRID ENGINE
-    const generateCoachNudge = async (userId: string, profile: any, todayLogs: any[], pastLogs: any[], currentScore: number, recoveryData: any = null) => {
-    const metrics = getCoachMetrics(userId, profile, todayLogs, pastLogs, currentScore, recoveryData);
+    const generateCoachNudge = async (userId: string, profile: any, todayLogs: any[], pastLogs: any[], currentScore: number, recoveryData: any = null, energyBalance: number = 0) => {
+    const metrics = getCoachMetrics(userId, profile, todayLogs, pastLogs, currentScore, recoveryData, energyBalance);
     const behavior = detectBehavior(metrics);
 
     // AI Memory + Pattern Engine Execution
@@ -398,7 +399,7 @@ export default function Dashboard() {
         : null;
 
       // EXECUTE FULL ENGINE FLOW
-      const nudgeResponse = await generateCoachNudge(user.id, profile, logs || [], pastLogs || [], calculatedScore, recoveryData);
+      const nudgeResponse = await generateCoachNudge(user.id, profile, logs || [], pastLogs || [], calculatedScore, recoveryData, safeNumber(energyStats?.energyBalance));
       setCoachMessage(nudgeResponse.message);
       // FIX: Added 'as "ai" | "rule"' to satisfy TypeScript's strict type checking
       setCoachType(nudgeResponse.type as "ai" | "rule");
