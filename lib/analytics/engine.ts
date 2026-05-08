@@ -45,7 +45,7 @@ const getLocalDateStr = (d: Date) => {
   return `${y}-${m}-${day}`;
 };
 
-import { calculateEnergyBalance } from '../metabolism/energy-engine';
+import { calculateEnergyBalance, getLocalDateString } from '../calories/energyEngine';
 
 export async function getAnalytics(supabase: any, userId: string, days: number) {
   try {
@@ -82,8 +82,9 @@ export async function getAnalytics(supabase: any, userId: string, days: number) 
          return getLocalDateStr(logDate) === dateStr;
       });
 
-            // 🧠 Use REAL BODY ENERGY INTELLIGENCE SYSTEM
+              // 🧠 Use REAL BODY ENERGY INTELLIGENCE SYSTEM
       const energyData = calculateEnergyBalance(profile, dayLogs);
+      const dynamic_burn = energyData.totalBurn;
 
       aggregated.push({
         date: d.toLocaleDateString('en-US', { weekday: 'short' }),
