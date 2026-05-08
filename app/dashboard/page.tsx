@@ -322,7 +322,8 @@ export default function Dashboard() {
       }
 
       // 1. Energy Clarity Fix & Centralized Dynamic Burn Integration
-      const energyBurned = calculateDynamicBurn(profile, logs || []);
+      const burnMetrics: any = calculateDynamicBurn(profile, logs || []);
+      const energyBurned = burnMetrics.total_burn || burnMetrics; // Fallback ensures stability if cache lags
       const safeEnergyIntake = energyIntake || 0;
 
       // 2. Central Source of Truth Score Calculation
