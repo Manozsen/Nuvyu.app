@@ -413,7 +413,7 @@ export default function Dashboard() {
         current_score: calculatedScore
       }, logsCount > 0);
 
-      // Safe state update (Fixed Syntax Error)
+            // Safe state update (Fixed Syntax Error)
       setMetrics({
         score: calculatedScore,
         steps: totalSteps,
@@ -421,9 +421,14 @@ export default function Dashboard() {
         logsCount: logsCount,
         energy_burned: energyBurned,
         energy_intake: safeEnergyIntake,
-        energy_stats: energyStats,
+        // Syncing all missing TypeScript interface properties securely
+        energy_stats: typeof energyStats !== 'undefined' ? energyStats : null,
+        energy_balance: typeof energyStats !== 'undefined' ? (energyStats?.energyBalance || 0) : 0,
         sleep_hours: recoveryData?.sleep_hours || 0,
         recovery_score: recoveryData?.recovery_score || 0,
+        recovery_state: recoveryData?.recovery_state || "unknown",
+        fatigue_risk: recoveryData?.fatigue_risk || "unknown",
+        // Keeping retention & summary intact
         score_summary: getScoreSummary(explData?.breakdown || scoreBreakdown),
         streak_count: habitData.streak_count,
         best_streak: habitData.best_streak,
