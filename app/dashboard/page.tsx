@@ -340,25 +340,23 @@ export default function Dashboard() {
       const { finalScore: calculatedScore, breakdown: scoreBreakdown } = calculateDailyScore(logs || [], baseScore);
       
       // FIX: Generate safe local date string to prevent UTC timezone shift from overwriting yesterday's data
-      const year = startOfDay.getFullYear();
-      const month = String(startOfDay.getMonth() + 1).padStart(2, '0');
-      const day = String(startOfDay.getDate()).padStart(2, '0');
-      const todayDateStr = `${year}-${month}-${day}`;
-
-      // Safe Upsert Explanation (Avoids duplicate writes)
+      const localYear = startOfDay.getFullYear();
+      const localMonth = String(startOfDay.getMonth() + 1).padStart(2, '0');
+      const localDay = String(startOfDay.getDate()).padStart(2, '0');
+      const scoreDateStr = `${localYear}-${localMonth}-${localDay}`;
+// Safe Upsert Explanation (Avoids duplicate writes)
       await supabase.from('score_explanations').upsert({
         user_id: user.id,
-        date: todayDateStr,
+        date: scoreDateStr,
         breakdown: scoreBreakdown,
         final_score: calculatedScore
       }, { onConflict: 'user_id, date' });
-
-      // Fetch today's explanation safely for state injection
+// Fetch today's explanation safely for state injection
       const { data: explData } = await supabase
         .from('score_explanations')
         .select('breakdown')
         .eq('user_id', user.id)
-        .eq('date', todayDateStr)
+        .eq('date', scoreDateStr)
         .single();
 
       // RESTORED: Debug logs to verify calculations
