@@ -340,6 +340,7 @@ export default function Dashboard() {
       const { finalScore: calculatedScore, breakdown: scoreBreakdown } = calculateDailyScore(logs || [], baseScore);
       
       // FIX: Generate safe local date string to prevent UTC timezone shift from overwriting yesterday's data
+      const startOfDay = new Date(); // Safely restored missing date object reference
       const localYear = startOfDay.getFullYear();
       const localMonth = String(startOfDay.getMonth() + 1).padStart(2, '0');
       const localDay = String(startOfDay.getDate()).padStart(2, '0');
