@@ -111,6 +111,7 @@ export default function Dashboard() {
       consistency_type: profile.consistency_type || 'beginner',
       personality_style: profile.personality_style || 'calm'
     };
+   };
 
     // 2. BEHAVIOR DETECTION
   const detectBehavior = (metrics: any) => {
@@ -123,7 +124,7 @@ export default function Dashboard() {
     if (metrics.today_steps > metrics.avg_steps_3_days) return "improving";
     return "consistent";
   };
-
+ };
     // 3. RULE-BASED FALLBACK
   const generateRuleNudge = (metrics: any, behavior: string, pattern: any) => {
     const isFatLoss = metrics.goal === 'Lean & Fit' || (metrics.primary_target || '').includes('fat');
