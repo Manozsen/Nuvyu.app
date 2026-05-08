@@ -20,16 +20,19 @@ export default function Dashboard() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
   
-        const [metrics, setMetrics] = useState({ 
+          const [metrics, setMetrics] = useState({ 
     score: 0, 
     steps: 0, 
     water: 0, 
     logsCount: 0,
     energy_burned: 0,
     energy_intake: 0,
+    energy_stats: null as any,
     energy_balance: null as any,
     sleep_hours: 0,
     recovery_score: 0,
+    recovery_state: "unknown",
+    fatigue_risk: "unknown",
     score_summary: "",
     streak_count: 0,
     best_streak: 0,
