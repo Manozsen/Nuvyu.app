@@ -29,7 +29,6 @@ export default function Dashboard() {
     energy_intake: 0,
     energy_stats: null as any,
     score_summary: "",
-    score_summary: "",
     streak_count: 0,
     best_streak: 0,
     reward_message: "",
