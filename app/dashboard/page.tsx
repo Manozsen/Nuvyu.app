@@ -11,7 +11,7 @@ import { getRecentMemory, saveCoachMemory, detectUserPattern, calculateConsisten
 import { calculateDailyScore } from '../../lib/score/engine';
 import { calculateRecoveryScore } from '../../lib/recovery/engine';
 import { updateHabit } from '../../lib/habit/engine';
-import { calculateEnergyBalance } from '../../lib/metabolism/energy-engine';
+import { calculateEnergyBalance, getLocalDateString, calculateRecoveryState, detectFatiguePattern } from '../../lib/calories/energyEngine';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -20,16 +20,15 @@ export default function Dashboard() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
   
-            const [metrics, setMetrics] = useState({ 
+          const [metrics, setMetrics] = useState({ 
     score: 0, 
     steps: 0, 
     water: 0, 
     logsCount: 0,
     energy_burned: 0,
     energy_intake: 0,
-    energy_balance: null as any,
-    sleep_hours: 0,
-    recovery_score: 0,
+    energy_stats: null as any,
+    score_summary: "",
     score_summary: "",
     streak_count: 0,
     best_streak: 0,
@@ -179,8 +178,11 @@ export default function Dashboard() {
       recovery_state: metrics.recovery_state,
       fatigue_risk: metrics.fatigue_risk,
       sleep_average: metrics.sleep_average,
-      // Advanced AI Psychological Profiling
+            // Advanced AI Psychological Profiling
       target: metrics.primary_target,
+      recovery_state: metrics.recovery_state,
+      fatigue_risk: metrics.fatigue_risk,
+      energy_balance: metrics.energy_balance,
       motivation: metrics.motivation_reason,
       timeline: metrics.target_timeline,
       user_consistency_type: metrics.consistency_type,
