@@ -125,12 +125,21 @@ export default function Dashboard() {
     return "consistent";
   };
 
-  // 3. RULE-BASED FALLBACK
+      // 3. RULE-BASED FALLBACK
   const generateRuleNudge = (metrics: any, behavior: string, pattern: any) => {
     const isFatLoss = metrics.goal === 'Lean & Fit' || (metrics.primary_target || '').includes('fat');
     const isMuscle = metrics.goal === 'Muscular' || (metrics.primary_target || '').includes('muscle');
     const isOlder = (metrics.age || 25) >= 40;
     const target = (metrics.primary_target || '').toLowerCase();
+    
+    // 🧠 TIME-AWARE ENGINE
+    const hour = new Date().getHours();
+    const timeOfDay = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : hour < 21 ? 'evening' : 'night';
+
+    if (timeOfDay === 'morning' && behavior === 'inactive') return "Good morning! Din shuru ho chuka hai, let's get some steps in early.";
+    if (timeOfDay === 'night' && behavior !== 'sleep_deprived') return "Great work today. Ab screen time kam karo aur recovery pe focus karo.";
+    if (timeOfDay === 'night' && behavior === 'sleep_deprived') return "Pichli raat neend kam thi. Aaj jaldi so jao, recovery is where muscle grows.";
+    if (timeOfDay === 'afternoon' && behavior === 'improving') return "Solid afternoon momentum! Evening tak streak maintain rakhna.";
 
     // Target-Based Behavior Priorities
     if (target.includes('six_pack') && behavior === "consistent") return "Abs kitchen mein bante hain! Nutrition aur hydration maintain karo.";
@@ -379,8 +388,11 @@ export default function Dashboard() {
         .gte('created_at', threeDaysAgo.toISOString())
         .lt('created_at', startOfDay.toISOString());
 
-      // Fetch Recovery Data
-      const { data: latestSleep } = await supabase.from('sleep_logs').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1).single();
+      // Fetch Recovery Data (Centralized Sync)
+      const { data: latestSleep } = await supabase.from('sleep_logs')
+        .select('*').eq('user_id', user.id)
+        .order('date', { ascending: false }).limit(1).single();
+        
       const recoveryData = latestSleep 
         ? { ...calculateRecoveryScore(latestSleep.sleep_hours, latestSleep.sleep_quality), sleep_hours: latestSleep.sleep_hours } 
         : null;
