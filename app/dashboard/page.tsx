@@ -124,8 +124,8 @@ export default function Dashboard() {
     if (metrics.today_steps > metrics.avg_steps_3_days) return "improving";
     return "consistent";
   };
- };
-    // 3. RULE-BASED FALLBACK
+
+  // 3. RULE-BASED FALLBACK
   const generateRuleNudge = (metrics: any, behavior: string, pattern: any) => {
     const isFatLoss = metrics.goal === 'Lean & Fit' || (metrics.primary_target || '').includes('fat');
     const isMuscle = metrics.goal === 'Muscular' || (metrics.primary_target || '').includes('muscle');
