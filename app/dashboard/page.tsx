@@ -12,27 +12,29 @@ import { calculateDailyScore } from '../../lib/score/engine';
 import { calculateRecoveryScore } from '../../lib/recovery/engine';
 import { updateHabit } from '../../lib/habit/engine';
 import { calculateEnergyBalance, getLocalDateString, calculateRecoveryState, detectFatiguePattern } from '../../lib/calories/energyEngine';
+import { DashboardMetrics } from '../../lib/types/dashboard';
+import { AIContext } from '../../lib/types/ai';
+import { safeNumber, safeRecoveryState, safeFatigueRisk, safeEnergyStats } from '../../lib/utils/safe';
 
 export default function Dashboard() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [userProfile, setUserProfile] = useState<any>(null);
-  
-          const [metrics, setMetrics] = useState({ 
+    const [userProfile, setUserProfile] = useState<any>(null);
+  const [metrics, setMetrics] = useState<DashboardMetrics>({ 
     score: 0, 
     steps: 0, 
     water: 0, 
     logsCount: 0,
     energy_burned: 0,
     energy_intake: 0,
-    energy_stats: null as any,
-    energy_balance: null as any,
+    energy_stats: null,
+    energy_balance: 0,
     sleep_hours: 0,
     recovery_score: 0,
-    recovery_state: "unknown",
-    fatigue_risk: "unknown",
+    recovery_state: "moderate", // Fixed strict enum
+    fatigue_risk: "low", // Fixed strict enum
     score_summary: "",
     streak_count: 0,
     best_streak: 0,
@@ -107,9 +109,9 @@ export default function Dashboard() {
       last_reset_date: profile.last_reset_date,
       coach_tone: profile.coach_tone,
       hoursSinceLastLog: todayLogs.length === 0 ? 24 : (Date.now() - lastLogTime) / (1000 * 60 * 60),
-      recovery_state: recoveryData?.recovery_state || "unknown",
-      fatigue_risk: recoveryData?.fatigue_risk || "unknown",
-      sleep_average: recoveryData?.sleep_hours || 0,
+      recovery_state: safeRecoveryState(recoveryData?.recovery_state),
+      fatigue_risk: safeFatigueRisk(recoveryData?.fatigue_risk),
+      sleep_average: safeNumber(recoveryData?.sleep_hours),
       // Deep Personalization Fields
       primary_target: profile.primary_target || profile.goal,
       motivation_reason: profile.motivation_reason || 'health',
@@ -163,8 +165,8 @@ export default function Dashboard() {
     return isMuscle ? `Solid consistency. Recovery aur protein pe focus rakhna.` : `On track! Yeh discipline maintain karna hai.`;
   };
 
-  // 4. AI CONTEXT BUILDER
-    const buildAIContext = (metrics: any, behavior: string, pattern: any, last_3_messages: string[], consistency: string) => {
+    // 4. AI CONTEXT BUILDER
+  const buildAIContext = (metrics: DashboardMetrics, behavior: string, pattern: any, last_3_messages: string[], consistency: string): AIContext => {
     return {
       goal: metrics.goal,
       activity_level: metrics.activity_level,
@@ -413,7 +415,7 @@ export default function Dashboard() {
         current_score: calculatedScore
       }, logsCount > 0);
 
-            // Safe state update (Fixed Syntax Error)
+      // Strictly typed & normalized state update
       setMetrics({
         score: calculatedScore,
         steps: totalSteps,
@@ -421,20 +423,18 @@ export default function Dashboard() {
         logsCount: logsCount,
         energy_burned: energyBurned,
         energy_intake: safeEnergyIntake,
-        // Syncing all missing TypeScript interface properties securely
-        energy_stats: typeof energyStats !== 'undefined' ? energyStats : null,
-        energy_balance: typeof energyStats !== 'undefined' ? (energyStats?.energyBalance || 0) : 0,
-        sleep_hours: recoveryData?.sleep_hours || 0,
-        recovery_score: recoveryData?.recovery_score || 0,
-        recovery_state: recoveryData?.recovery_state || "unknown",
-        fatigue_risk: recoveryData?.fatigue_risk || "unknown",
-        // Keeping retention & summary intact
+        energy_stats: energyStats ? safeEnergyStats(energyStats) : null,
+        energy_balance: safeNumber(energyStats?.energyBalance),
+        sleep_hours: safeNumber(recoveryData?.sleep_hours),
+        recovery_score: safeNumber(recoveryData?.recovery_score),
+        recovery_state: safeRecoveryState(recoveryData?.recovery_state),
+        fatigue_risk: safeFatigueRisk(recoveryData?.fatigue_risk),
         score_summary: getScoreSummary(explData?.breakdown || scoreBreakdown),
-        streak_count: habitData.streak_count,
-        best_streak: habitData.best_streak,
-        reward_message: habitData.reward_message,
-        xp: profile.xp || 0,
-        level: profile.level || 1
+        streak_count: safeNumber(habitData.streak_count),
+        best_streak: safeNumber(habitData.best_streak),
+        reward_message: String(habitData.reward_message || ""),
+        xp: safeNumber(profile.xp),
+        level: safeNumber(profile.level, 1)
       });
 
             // 🧠 PART 3 & 8: CALCULATE TODAY XP (No extra DB calls, reusing existing data)
