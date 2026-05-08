@@ -103,6 +103,7 @@ export async function getAnalytics(supabase: any, userId: string, days: number) 
         bmr_burn: energyData?.bmrBurn || 0,
         energy_status: (energyData?.deficit && energyData.deficit > 0) ? 'deficit' : (energyData?.surplus && energyData.surplus > 0) ? 'surplus' : 'maintenance'
       });
+    } // <-- CRITICAL FIX: Properly closes the for (let i = days - 1...) loop
 
     const stats = {
       stepsTrend: calculateTrend(aggregated.map(a => a.steps)),
