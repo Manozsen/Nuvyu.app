@@ -111,14 +111,17 @@ export default function LogsPage() {
       // 2. Save Core Log
       await supabase.from('daily_logs').insert({ user_id: userId, log_type: modalType, data: payloadData });
 
-      // 3. FIX: Properly Save Sleep Log (Constraint: user_id, date)
+       // 3. FIX: Properly Save Sleep Log (Constraint: user_id, date)
       if (modalType === 'sleep') {
         const hrs = parseFloat(amount) || 0;
         const { recovery_score } = calculateRecoveryScore(hrs, sleepQuality);
-        const todayStr = new Date().toISOString().split('T')[0];
+        
+        // Generate robust local date string to prevent UTC duplicates
+        const now = new Date();
+        const localDateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
         
         await supabase.from('sleep_logs').upsert({
-          user_id: userId, date: todayStr, sleep_hours: hrs, sleep_quality: sleepQuality, recovery_score
+          user_id: userId, date: localDateStr, sleep_hours: hrs, sleep_quality: sleepQuality, recovery_score
         }, { onConflict: 'user_id, date' });
       }
 
