@@ -82,9 +82,8 @@ export async function getAnalytics(supabase: any, userId: string, days: number) 
          return getLocalDateStr(logDate) === dateStr;
       });
 
-              // 🧠 Use REAL BODY ENERGY INTELLIGENCE SYSTEM
+            // 🧠 Use REAL BODY ENERGY INTELLIGENCE SYSTEM
       const energyData = calculateEnergyBalance(profile, dayLogs);
-      const dynamic_burn = energyData.totalBurn;
 
       aggregated.push({
         date: d.toLocaleDateString('en-US', { weekday: 'short' }),
@@ -95,15 +94,15 @@ export async function getAnalytics(supabase: any, userId: string, days: number) 
         sleep_hours: parseFloat(s.sleep_hours) || 0,
         recovery_score: parseInt(s.recovery_score) || 0,
         streak: h.streak_count || 0,
-        calorie_burn: energyData.burned.total_burn,
-        calorie_target: energyData.target,
-        calorie_intake: energyData.consumed.total_intake,
-        meal_timeline: energyData.consumed.meal_timeline,
-        activity_breakdown: energyData.burned.activity_breakdown,
-        bmr_burn: energyData.burned.bmr_burn,
-        energy_status: energyData.status
+        calorie_burn: energyData?.totalBurn || 0,
+        calorie_target: energyData?.targetCalories || 0,
+        calorie_intake: energyData?.intakeCalories || 0,
+        meal_timeline: energyData?.intakeTimeline || [],
+        // Safely map the new burnTimeline to the old UI expectations to prevent Reports page UI crashes
+        activity_breakdown: (energyData?.burnTimeline || []).map((b: any) => ({ name: b.source, burn: b.calories })),
+        bmr_burn: energyData?.bmrBurn || 0,
+        energy_status: (energyData?.deficit && energyData.deficit > 0) ? 'deficit' : (energyData?.surplus && energyData.surplus > 0) ? 'surplus' : 'maintenance'
       });
-    }
 
     const stats = {
       stepsTrend: calculateTrend(aggregated.map(a => a.steps)),
