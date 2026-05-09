@@ -87,18 +87,10 @@ export async function getAnalytics(supabase: any, userId: string, days: number) 
       // 🧠 Strictly Typed Energy Mapping
       const energyData = calculateEnergyBalance(profile, dayLogs);
 
-      // 🛠️ BUG FIX: Sleep Data Pipeline Stabilization
-      // Extract sleep from dedicated sleep_logs OR fallback to daily_logs timeline entries
+      // 🛠️ STRICT SLEEP SCHEMA STANDARDIZATION
       const dailySleepLog = dayLogs.find((l: any) => l.log_type === 'sleep');
-      let finalSleepHours = safeNumber(s?.sleep_hours);
-      if (finalSleepHours === 0 && dailySleepLog) {
-          finalSleepHours = safeNumber(dailySleepLog.data?.sleep_hours || dailySleepLog.data?.amount || dailySleepLog.data?.duration);
-      }
-      
-      let finalRecoveryScore = safeNumber(s?.recovery_score);
-      if (finalRecoveryScore === 0 && finalSleepHours > 0) {
-          finalRecoveryScore = Math.min(100, Math.round((finalSleepHours / 8) * 100)); // Auto-calculate if DB is 0
-      }
+      const finalSleepHours = safeSleepHours(dailySleepLog?.data, s);
+      const finalRecoveryScore = safeRecoveryScore(s?.recovery_score, finalSleepHours);
 
       const dayData: AnalyticsDailyData = {
         date: d.toLocaleDateString('en-US', { weekday: 'short' }),
