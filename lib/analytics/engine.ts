@@ -49,6 +49,18 @@ import { calculateEnergyBalance, getLocalDateString } from '../calories/energyEn
 import { AnalyticsDailyData } from '../types/analytics';
 import { safeSleepHours, safeRecoveryScore } from '../utils/sleep';
 
+// 🛠️ LOCAL SAFE UTILITIES (Prevents NaN/Undefined crashes during analytics parsing)
+const safeNumber = (value: any, fallback = 0): number => { 
+  const num = Number(value); 
+  return Number.isFinite(num) ? num : fallback; 
+};
+const safeArray = (value: any) => { 
+  return Array.isArray(value) ? value : []; 
+};
+const safeString = (value: any, fallback = ''): string => { 
+  return typeof value === 'string' ? value : fallback; 
+};
+
 export async function getAnalytics(supabase: any, userId: string, days: number) {
   try {
     const startDate = new Date();
