@@ -15,6 +15,7 @@ import { calculateEnergyBalance, getLocalDateString, calculateRecoveryState, det
 import { DashboardMetrics } from '../../lib/types/dashboard';
 import { AIContext } from '../../lib/types/ai';
 import { safeSleepHours, safeSleepQuality, safeRecoveryScore } from '../../lib/utils/sleep';
+import { safeNumber, safeRecoveryState, safeFatigueRisk, safeEnergyStats } from '../../lib/utils/safe';
 
 export default function Dashboard() {
   const router = useRouter();
