@@ -47,7 +47,7 @@ const getLocalDateStr = (d: Date) => {
 
 import { calculateEnergyBalance, getLocalDateString } from '../calories/energyEngine';
 import { AnalyticsDailyData } from '../types/analytics';
-import { safeNumber, safeArray } from '../utils/safe';
+import { safeSleepHours, safeRecoveryScore } from '../utils/sleep';
 
 export async function getAnalytics(supabase: any, userId: string, days: number) {
   try {
