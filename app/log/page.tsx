@@ -12,6 +12,23 @@ import { calculateRecoveryScore } from '../../lib/recovery/engine';
 import { updateHabit } from '../../lib/habit/engine';
 import { calculateXP, calculateLevel, didLevelUp } from '../../lib/xp/engine';
 import { estimateActivityCalories, generateWorkoutSuggestions } from '../../lib/activity/engine';
+import { safeNumber, safeString } from '../../lib/utils/safe';
+
+// 🧠 LOGS INTELLIGENCE HELPERS
+const getMealType = () => {
+  const hour = new Date().getHours();
+  if (hour < 11) return 'breakfast';
+  if (hour < 16) return 'lunch';
+  if (hour < 21) return 'dinner';
+  return 'snack';
+};
+
+const getHydrationMessage = (currentWater: number) => {
+  if (currentWater === 0) return "Morning hydration incomplete";
+  if (currentWater < 1500) return "Keep drinking! Recovery depends on it.";
+  if (currentWater < 3000) return `${Math.ceil((3000 - currentWater)/250)} glasses away from target!`;
+  return "Hydration optimal today 💧";
+};
 
 export default function LogsPage() {
   const router = useRouter();
@@ -28,6 +45,15 @@ export default function LogsPage() {
   const [successFeedback, setSuccessFeedback] = useState<string | null>(null);
 
   // Input States
+    // 🧠 Intelligence States
+  const [mealType, setMealType] = useState<'breakfast' | 'lunch' | 'dinner' | 'snack'>(getMealType());
+  const [waterProgress, setWaterProgress] = useState(0);
+
+  // Auto-calculate hydration for intelligence visuals
+  useEffect(() => {
+    const totalWater = feedLogs.filter(l => l.log_type === 'water').reduce((acc, l) => acc + safeNumber(l.data?.amount), 0);
+    setWaterProgress(Math.min(100, Math.round((totalWater / 3000) * 100)));
+  }, [feedLogs]);
   const [amount, setAmount] = useState('');
   const [textInput, setTextInput] = useState('');
   const [sleepQuality, setSleepQuality] = useState('average');
