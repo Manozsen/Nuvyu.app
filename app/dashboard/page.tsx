@@ -14,7 +14,7 @@ import { updateHabit } from '../../lib/habit/engine';
 import { calculateEnergyBalance, getLocalDateString, calculateRecoveryState, detectFatiguePattern } from '../../lib/calories/energyEngine';
 import { DashboardMetrics } from '../../lib/types/dashboard';
 import { AIContext } from '../../lib/types/ai';
-import { safeNumber, safeRecoveryState, safeFatigueRisk, safeEnergyStats } from '../../lib/utils/safe';
+import { safeSleepHours, safeSleepQuality, safeRecoveryScore } from '../../lib/utils/sleep';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -389,27 +389,22 @@ export default function Dashboard() {
         .gte('created_at', threeDaysAgo.toISOString())
         .lt('created_at', startOfDay.toISOString());
 
-       // Fetch Recovery Data (Synced to local date)
-      const { data: latestSleepRaw } = await supabase.from('sleep_logs')
+             // Fetch Recovery Data strictly from sleep_logs (Synced to local date)
+      const { data: latestSleep } = await supabase.from('sleep_logs')
         .select('*').eq('user_id', user.id)
         .order('date', { ascending: false }).limit(1).single();
       
-      // 🛠️ BUG FIX: Dual-Source Sleep Pipeline
-      // If no dedicated sleep log exists, fallback to timeline 'sleep' logs to prevent 0% drops
+      // Find legacy timeline sleep as safe fallback for backward compatibility
       const timelineSleep = (logs || []).find((l: any) => l.log_type === 'sleep');
-      const latestSleep = latestSleepRaw || (timelineSleep ? {
-          sleep_hours: safeNumber(timelineSleep.data?.sleep_hours || timelineSleep.data?.amount || timelineSleep.data?.duration),
-          sleep_quality: timelineSleep.data?.quality || 'moderate',
-          recovery_score: 0 // Auto-calculated below safely
-      } : null);
       
-      const sleepHours = safeNumber(latestSleep?.sleep_hours);
-      const dbScore = safeNumber(latestSleep?.recovery_score);
-      // Generate a dynamic fallback score if the database score is missing or 0
-      const computedScore = dbScore > 0 ? dbScore : (sleepHours > 0 ? Math.min(100, Math.round((sleepHours / 8) * 100)) : 0);
-      const recState = calculateRecoveryState(sleepHours, latestSleep?.sleep_quality || 'moderate', 'moderate', safeNumber(energyStats?.energyBalance));
+      // STRICT SLEEP SCHEMA STANDARDIZATION
+      const sleepHours = safeSleepHours(timelineSleep?.data, latestSleep);
+      const sleepQuality = safeSleepQuality(timelineSleep?.data, latestSleep);
+      const computedScore = safeRecoveryScore(latestSleep?.recovery_score, sleepHours);
+      
+      const recState = calculateRecoveryState(sleepHours, sleepQuality, 'moderate', safeNumber(energyStats?.energyBalance));
 
-      const recoveryData = latestSleep ? {
+      const recoveryData = (sleepHours > 0 || latestSleep) ? {
         sleep_hours: sleepHours,
         recovery_score: computedScore,
         recovery_state: recState,
