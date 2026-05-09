@@ -99,7 +99,7 @@ export default function LogsPage() {
       let payloadData: any = {};
       if (modalType === 'water' || modalType === 'steps') payloadData = { amount: parseFloat(amount) };
       else if (modalType === 'food') payloadData = { text: textInput.trim() };
-      else if (modalType === 'sleep') payloadData = { hours: parseFloat(amount), quality: sleepQuality };
+      else if (modalType === 'sleep') payloadData = { sleep_hours: parseFloat(amount), sleep_quality: sleepQuality }
       else if (modalType === 'workout') payloadData = { 
         exercise: workoutData.exercise, sets: parseInt(workoutData.sets)||0, reps: parseInt(workoutData.reps)||0, duration: parseInt(workoutData.duration)||0 
       };
