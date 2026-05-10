@@ -353,15 +353,20 @@ export default function LogsPage() {
                     className="w-full bg-black/50 border border-white/10 rounded-2xl p-4 font-bold focus:border-[#00FFA3] focus:outline-none relative z-10" 
                     autoFocus 
                   />
-                 {modalType === 'water' && (
-                    <div className="grid grid-cols-4 gap-2">
+               {modalType === 'water' && (
+  
+                   <div className="grid grid-cols-4 gap-2">
                       {[250, 500, 750, 1000].map(val => (
                         <button key={val} type="button" onClick={() => setAmount(prev => (safeNumber(prev) + val).toString())} className="py-3 rounded-xl bg-white/5 border border-white/10 text-white/70 font-bold text-xs hover:bg-blue-500/20 hover:border-blue-500/50 hover:text-blue-400 transition-all shadow-sm active:scale-95">
-                          +{val}ml
+     
+                      +{val}ml
                         </button>
                       ))}
                     </div>
-                  )}
+             
+                 )}
+                </div>
+              )}
 
               {modalType === 'food' && (
                 <div className="space-y-4">
