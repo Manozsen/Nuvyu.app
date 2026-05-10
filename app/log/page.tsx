@@ -283,8 +283,16 @@ export default function LogsPage() {
                  className="flex items-center gap-4 bg-[#0A0A0A]/50 border border-white/5 p-4 rounded-2xl"
                >
                  <div className={`w-10 h-10 rounded-full bg-white/5 flex items-center justify-center shrink-0 border border-white/5 ${color}`}><Icon size={18} /></div>
-                 <div className="flex-1">
-                   <p className="text-sm font-bold text-white/90">{content}</p>
+                                  <div className="flex-1">
+                   <h4 className="text-sm font-bold text-white/90 capitalize flex items-center gap-2">
+                     {content}
+                     {log.log_type === 'food' && log.data?.meal_type && (
+                       <span className="text-[8px] bg-orange-500/10 text-orange-400 px-1.5 py-0.5 rounded uppercase tracking-widest border border-orange-500/20">
+                         {log.data.meal_type}
+                       </span>
+                     )}
+                   </h4>
+                  
                    <p className="text-[10px] font-medium text-white/40 uppercase tracking-widest mt-1">{timeStr} • {log.log_type}</p>
                  </div>
                </motion.div>
