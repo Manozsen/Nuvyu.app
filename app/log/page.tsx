@@ -404,16 +404,16 @@ export default function LogsPage() {
               )}
 
               {/* CUSTOM ACTIVITY */}
-              {modalType === 'activity' && (
+               {modalType === 'activity' && (
                 <div className="space-y-3">
                   <div className="flex flex-wrap gap-2 mb-2">
                     {['Trekking', 'Swimming', 'Football', 'Cycling', 'Yoga', 'Walking', 'Dance'].map(act => (
-                      <button key={act} type="button" onClick={() => setActivityData({...activityData, name: act})} className={`px-3 py-1.5 rounded-lg border text-[10px] font-bold uppercase tracking-widest transition-all ${activityData.name === act ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50' : 'bg-white/5 border-white/10 text-white/60 hover:text-yellow-400 hover:border-yellow-500/30'}`}>
+                      <button key={act} type="button" onClick={() => setActivityData({...activityData, type: act})} className={`px-3 py-1.5 rounded-lg border text-[10px] font-bold uppercase tracking-widest transition-all ${activityData.type === act ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50' : 'bg-white/5 border-white/10 text-white/60 hover:text-yellow-400 hover:border-yellow-500/30'}`}>
                         {act}
                       </button>
                     ))}
                   </div>
-                  <input type="text" value={activityData.name} onChange={e => setActivityData({...activityData, name: e.target.value})} placeholder="Activity Name (e.g. Trekking)" className="w-full bg-black/50 border border-white/10 rounded-2xl p-4 font-bold focus:border-yellow-500 focus:outline-none" autoFocus />
+                  <input type="text" value={activityData.type} onChange={e => setActivityData({...activityData, type: e.target.value})} placeholder="Activity Name (e.g. Trekking)" className="w-full bg-black/50 border border-white/10 rounded-2xl p-4 font-bold focus:border-yellow-500 focus:outline-none" autoFocus />
                   <input type="number" value={activityData.duration} onChange={e => setActivityData({...activityData, duration: e.target.value})} placeholder="Duration in Minutes" className="w-full bg-black/50 border border-white/10 rounded-2xl p-4 font-bold focus:border-yellow-500 focus:outline-none" />
                   <div className="flex gap-2">
                     {['low', 'medium', 'high'].map(int => (
