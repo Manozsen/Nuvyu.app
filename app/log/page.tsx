@@ -365,7 +365,7 @@ export default function LogsPage() {
                   <input 
                     type="text" 
                     value={foodText} 
-                    onChange={e => setFoodText(e.target.value)} 
+                    onChange={e => setTextInput(e.target.value)} 
                     placeholder="What did you eat? (e.g. 2 roti + dal)" 
                     className="w-full bg-black/50 border border-white/10 rounded-2xl p-4 font-bold focus:border-orange-400 focus:outline-none" 
                     autoFocus 
