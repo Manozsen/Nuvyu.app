@@ -121,17 +121,18 @@ export default function LogsPage() {
     setSaving(true);
 
     try {
-      // 1. Prepare Payload
+            // 1. Prepare Payload (Strictly Typed)
       let payloadData: any = {};
-      if (modalType === 'water' || modalType === 'steps') payloadData = { amount: parseFloat(amount) };
-      else if (modalType === 'food') payloadData = { text: textInput.trim() };
-      else if (modalType === 'sleep') payloadData = { sleep_hours: parseFloat(amount), sleep_quality: sleepQuality }
+      if (modalType === 'water' || modalType === 'steps') payloadData = { amount: safeNumber(amount) };
+      else if (modalType === 'food') payloadData = { text: safeString(textInput).trim(), meal_type: mealType };
+      else if (modalType === 'sleep') payloadData = { sleep_hours: safeNumber(amount), sleep_quality: sleepQuality }
       else if (modalType === 'workout') payloadData = { 
-        exercise: workoutData.exercise, sets: parseInt(workoutData.sets)||0, reps: parseInt(workoutData.reps)||0, duration: parseInt(workoutData.duration)||0 
+        exercise: safeString(workoutData.exercise), sets: safeNumber(workoutData.sets), reps: safeNumber(workoutData.reps), duration: safeNumber(workoutData.duration) 
       };
       else if (modalType === 'activity') {
-        const estCals = estimateActivityCalories(activityData.type, parseInt(activityData.duration), activityData.intensity);
-        payloadData = { activity_name: activityData.type, duration_mins: parseInt(activityData.duration), intensity: activityData.intensity, estimated_calories: estCals };
+        const duration = safeNumber(activityData.duration);
+        const estCals = estimateActivityCalories(activityData.type, duration, activityData.intensity);
+        payloadData = { activity_name: activityData.type, duration_mins: duration, intensity: activityData.intensity, estimated_calories: estCals };
       }
 
       // 2. Save Core Log
