@@ -312,21 +312,63 @@ export default function LogsPage() {
               </div>
 
               {/* INPUT LOGIC BASED ON TYPE */}
-              {(modalType === 'water' || modalType === 'steps') && (
-                <div>
+               {(modalType === 'water' || modalType === 'steps') && (
+                <div className="space-y-4">
                   {modalType === 'water' && (
-                    <div className="flex gap-2 mb-4">
-                      {['250', '500', '1000'].map(v => <button key={v} onClick={() => setAmount(v)} className="flex-1 py-2 rounded-xl bg-white/5 text-xs font-bold hover:bg-blue-500/20 hover:text-blue-400">+{v}ml</button>)}
+                    <div className="relative p-6 rounded-[2rem] bg-blue-500/10 border border-blue-500/20 overflow-hidden text-center shadow-inner">
+                      <motion.div className="absolute bottom-0 left-0 right-0 bg-blue-500/20 z-0" initial={{ height: 0 }} animate={{ height: `${waterProgress}%` }} transition={{ duration: 1 }} />
+                      <div className="relative z-10 flex flex-col items-center gap-1">
+                        <Droplets size={24} className="text-blue-400 mb-1" />
+                        <p className="text-blue-400 text-sm font-bold uppercase tracking-widest">
+                          {getHydrationMessage(feedLogs.filter(l => l.log_type === 'water').reduce((acc, l) => acc + safeNumber(l.data?.amount), 0))}
+                        </p>
+                      </div>
                     </div>
                   )}
-                  <input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder={modalType === 'water' ? 'Amount in ml' : 'Step count'} className="w-full bg-black/50 border border-white/10 rounded-2xl p-5 text-xl font-black text-center focus:border-[#00FFA3] focus:outline-none" autoFocus />
+                  <input 
+                    type="number" 
+                    value={amount} 
+                    onChange={e => setAmount(e.target.value)} 
+                    placeholder={modalType === 'water' ? "Amount in ml" : "Number of steps"} 
+                    className="w-full bg-black/50 border border-white/10 rounded-2xl p-4 font-bold focus:border-[#00FFA3] focus:outline-none relative z-10" 
+                    autoFocus 
+                  />
+                  {modalType === 'water' && (
+                    <div className="grid grid-cols-4 gap-2">
+                      {[250, 500, 750, 1000].map(val => (
+                        <button key={val} type="button" onClick={() => setAmount(val.toString())} className="py-3 rounded-xl bg-white/5 border border-white/10 text-white/70 font-bold text-xs hover:bg-blue-500/20 hover:border-blue-500/50 hover:text-blue-400 transition-all shadow-sm">
+                          +{val}ml
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
               {modalType === 'food' && (
-                <textarea value={textInput} onChange={e => setTextInput(e.target.value)} placeholder="What did you eat?" className="w-full h-32 bg-black/50 border border-white/10 rounded-2xl p-5 text-base font-medium resize-none focus:border-[#00FFA3] focus:outline-none" autoFocus />
+                <div className="space-y-4">
+                  <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                    {(['breakfast', 'lunch', 'dinner', 'snack'] as const).map(type => (
+                      <button key={type} type="button" onClick={() => setMealType(type)} className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest shrink-0 transition-all ${mealType === type ? 'bg-orange-500/20 text-orange-400 border border-orange-500/50 shadow-md' : 'bg-white/5 text-white/50 border border-white/10'}`}>
+                        {type}
+                      </button>
+                    ))}
+                  </div>
+                  <input 
+                    type="text" 
+                    value={foodText} 
+                    onChange={e => setFoodText(e.target.value)} 
+                    placeholder="What did you eat? (e.g. 2 roti + dal)" 
+                    className="w-full bg-black/50 border border-white/10 rounded-2xl p-4 font-bold focus:border-orange-400 focus:outline-none" 
+                    autoFocus 
+                  />
+                  <div className="text-white/30 text-[10px] font-bold uppercase tracking-widest px-2 flex justify-between">
+                    <span>AI Context parsing active</span>
+                    <span>Ready</span>
+                  </div>
+                </div>
               )}
-
+              
               {modalType === 'sleep' && (
                 <div className="space-y-4">
                   <input type="number" step="0.5" value={amount} onChange={e => setAmount(e.target.value)} placeholder="Hours (e.g. 7.5)" className="w-full bg-black/50 border border-white/10 rounded-2xl p-5 text-xl font-black text-center focus:border-indigo-500 focus:outline-none" autoFocus />
@@ -355,8 +397,15 @@ export default function LogsPage() {
 
               {/* CUSTOM ACTIVITY */}
               {modalType === 'activity' && (
-                <div className="space-y-4">
-                  <input type="text" value={activityData.type} onChange={e => setActivityData({...activityData, type: e.target.value})} placeholder="Activity (e.g. Hiking, Football)" className="w-full bg-black/50 border border-white/10 rounded-2xl p-4 font-bold focus:border-yellow-500 focus:outline-none" autoFocus />
+                <div className="space-y-3">
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {['Trekking', 'Swimming', 'Football', 'Cycling', 'Yoga', 'Walking', 'Dance'].map(act => (
+                      <button key={act} type="button" onClick={() => setActivityData({...activityData, name: act})} className={`px-3 py-1.5 rounded-lg border text-[10px] font-bold uppercase tracking-widest transition-all ${activityData.name === act ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50' : 'bg-white/5 border-white/10 text-white/60 hover:text-yellow-400 hover:border-yellow-500/30'}`}>
+                        {act}
+                      </button>
+                    ))}
+                  </div>
+                  <input type="text" value={activityData.name} onChange={e => setActivityData({...activityData, name: e.target.value})} placeholder="Activity Name (e.g. Trekking)" className="w-full bg-black/50 border border-white/10 rounded-2xl p-4 font-bold focus:border-yellow-500 focus:outline-none" autoFocus />
                   <input type="number" value={activityData.duration} onChange={e => setActivityData({...activityData, duration: e.target.value})} placeholder="Duration in Minutes" className="w-full bg-black/50 border border-white/10 rounded-2xl p-4 font-bold focus:border-yellow-500 focus:outline-none" />
                   <div className="flex gap-2">
                     {['low', 'medium', 'high'].map(int => (
