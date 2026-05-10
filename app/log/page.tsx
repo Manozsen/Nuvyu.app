@@ -271,12 +271,23 @@ export default function LogsPage() {
              let color = "text-white/50";
              let content = "Logged activity";
              
-             if (log.log_type === 'water') { Icon = Droplets; color = "text-blue-400"; content = `Drank ${log.data.amount} ml water`; }
-             if (log.log_type === 'steps') { Icon = Footprints; color = "text-[#00FFA3]"; content = `Walked ${log.data.amount} steps`; }
-             if (log.log_type === 'food') { Icon = Utensils; color = "text-orange-400"; content = `Ate: ${log.data.text}`; }
-             if (log.log_type === 'sleep') { Icon = Moon; color = "text-indigo-400"; content = `Slept ${log.data.hours} hrs (${log.data.quality})`; }
-             if (log.log_type === 'workout') { Icon = Dumbbell; color = "text-purple-400"; content = log.data.exercise ? `${log.data.exercise} - ${log.data.sets}x${log.data.reps}` : `Workout complete`; }
-             if (log.log_type === 'activity') { Icon = Zap; color = "text-yellow-400"; content = `${log.data.activity_name} (${log.data.duration_mins} mins)`; }
+             if (log.log_type === 'water') { Icon = Droplets; color = "text-blue-400"; content = `Drank ${safeNumber(log.data?.amount)} ml water`; }
+             if (log.log_type === 'steps') { Icon = Footprints; color = "text-[#00FFA3]"; content = `Walked ${safeNumber(log.data?.amount)} steps`; }
+             if (log.log_type === 'food') { Icon = Utensils; color = "text-orange-400"; content = `Ate: ${safeString(log.data?.text)}`; }
+             if (log.log_type === 'sleep') { 
+               Icon = Moon; color = "text-indigo-400"; 
+               const hrs = log.data?.sleep_hours ?? log.data?.hours ?? log.data?.amount ?? 0;
+               const qual = log.data?.sleep_quality ?? log.data?.quality ?? "moderate";
+               content = `Slept ${hrs} hrs (${qual})`; 
+             }
+             if (log.log_type === 'workout') { 
+               Icon = Dumbbell; color = "text-purple-400"; 
+               content = log.data?.exercise ? `${log.data.exercise} - ${safeNumber(log.data.sets)}x${safeNumber(log.data.reps)}` : `Workout complete`; 
+             }
+             if (log.log_type === 'activity') { 
+               Icon = Zap; color = "text-yellow-400"; 
+               content = `${log.data?.activity_name || log.data?.type || 'Activity'} (${safeNumber(log.data?.duration_mins || log.data?.duration)} mins)`; 
+             }
 
              return (
                <motion.div 
@@ -342,17 +353,15 @@ export default function LogsPage() {
                     className="w-full bg-black/50 border border-white/10 rounded-2xl p-4 font-bold focus:border-[#00FFA3] focus:outline-none relative z-10" 
                     autoFocus 
                   />
-                  {modalType === 'water' && (
+                 {modalType === 'water' && (
                     <div className="grid grid-cols-4 gap-2">
                       {[250, 500, 750, 1000].map(val => (
-                        <button key={val} type="button" onClick={() => setAmount(val.toString())} className="py-3 rounded-xl bg-white/5 border border-white/10 text-white/70 font-bold text-xs hover:bg-blue-500/20 hover:border-blue-500/50 hover:text-blue-400 transition-all shadow-sm">
+                        <button key={val} type="button" onClick={() => setAmount(prev => (safeNumber(prev) + val).toString())} className="py-3 rounded-xl bg-white/5 border border-white/10 text-white/70 font-bold text-xs hover:bg-blue-500/20 hover:border-blue-500/50 hover:text-blue-400 transition-all shadow-sm active:scale-95">
                           +{val}ml
                         </button>
                       ))}
                     </div>
                   )}
-                </div>
-              )}
 
               {modalType === 'food' && (
                 <div className="space-y-4">
@@ -371,8 +380,23 @@ export default function LogsPage() {
                     className="w-full bg-black/50 border border-white/10 rounded-2xl p-4 font-bold focus:border-orange-400 focus:outline-none" 
                     autoFocus 
                   />
-                  <div className="text-white/30 text-[10px] font-bold uppercase tracking-widest px-2 flex justify-between">
-                    <span>AI Context parsing active</span>
+                  
+                  {/* 🧠 FOOD MEMORY FOUNDATION */}
+                  {feedLogs.filter(l => l.log_type === 'food' && l.data?.text).length > 0 && !textInput && (
+                    <div className="pt-2">
+                      <span className="text-white/40 text-[10px] font-bold uppercase tracking-widest block mb-2 px-1">Recent Meals</span>
+                      <div className="flex flex-wrap gap-2">
+                        {Array.from(new Set(feedLogs.filter(l => l.log_type === 'food' && l.data?.text).map(l => l.data.text))).slice(0, 5).map((food: any) => (
+                          <button key={food} type="button" onClick={() => setTextInput(food)} className="px-3 py-1.5 bg-white/5 hover:bg-orange-500/20 border border-white/5 hover:border-orange-500/30 text-white/70 hover:text-orange-400 rounded-lg text-xs font-medium transition-all active:scale-95">
+                            {food}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="text-white/30 text-[10px] font-bold uppercase tracking-widest px-2 flex justify-between mt-2">
+                    <span>AI Context parsing prep</span>
                     <span>Ready</span>
                   </div>
                 </div>
