@@ -25,9 +25,26 @@ export function calculateRecoveryScore(sleepHours: number, sleepQuality: string)
   if (recovery_score < 40 || sleepHours < 5) fatigue_risk = "high";
   else if (recovery_score < 60) fatigue_risk = "moderate";
 
-  return {
+    return {
     recovery_score,
     recovery_state,
     fatigue_risk
   };
 }
+
+// 🧠 PREDICTIVE RECOVERY SYSTEM
+export function detectBurnoutRisk(recovery_score: number, sleepHours: number, consecutiveDaysActive: number, energyDeficit: number) {
+  let burnout_risk = "low";
+  const signals = [];
+
+  if (sleepHours > 0 && sleepHours < 6) signals.push("sleep_debt");
+  if (recovery_score < 50) signals.push("low_recovery");
+  if (consecutiveDaysActive > 5 && recovery_score < 60) signals.push("overtraining_risk");
+  if (energyDeficit > 1000) signals.push("severe_calorie_deficit");
+
+  if (signals.length >= 2) burnout_risk = "high";
+  else if (signals.length === 1) burnout_risk = "medium";
+
+  return { risk_level: burnout_risk, signals };
+}
+
