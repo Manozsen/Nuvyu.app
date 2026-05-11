@@ -57,6 +57,20 @@ export default function LogsPage() {
   const [amount, setAmount] = useState('');
   const [textInput, setTextInput] = useState('');
   const [sleepQuality, setSleepQuality] = useState('average');
+
+    // 🧠 SMART VALIDATION & EDITING ENGINE
+  const [validationWarning, setValidationWarning] = useState<string | null>(null);
+  const [editingLogId, setEditingLogId] = useState<string | null>(null);
+  
+  const openEditModal = (log: any) => {
+    setEditingLogId(log.id);
+    setModalType(log.log_type);
+    if (log.log_type === 'water' || log.log_type === 'steps') setAmount(log.data?.amount?.toString() || '');
+    if (log.log_type === 'sleep') { setAmount(log.data?.sleep_hours?.toString() || ''); setSleepQuality(log.data?.sleep_quality || 'average'); }
+    if (log.log_type === 'food') { setTextInput(log.data?.text || ''); setMealType(log.data?.meal_type || getMealType()); }
+    if (log.log_type === 'workout') setWorkoutData({ exercise: log.data?.exercise||'', sets: log.data?.sets||'', reps: log.data?.reps||'', duration: log.data?.duration||'' });
+    if (log.log_type === 'activity') setActivityData({ type: log.data?.activity_name||log.data?.type||'', duration: log.data?.duration_mins||'', intensity: log.data?.intensity||'medium' });
+  };
   
   // Workout & Activity Intelligence
   const [workoutData, setWorkoutData] = useState({ exercise: '', sets: '', reps: '', duration: '' });
@@ -99,13 +113,15 @@ export default function LogsPage() {
     setLoading(false);
   };
 
-  const handleCloseModal = () => {
+    const handleCloseModal = () => {
     setModalType(null);
     setAmount('');
     setTextInput('');
     setWorkoutData({ exercise: '', sets: '', reps: '', duration: '' });
     setActivityData({ type: '', duration: '', intensity: 'medium' });
     setSuccessFeedback(null);
+    setValidationWarning(null);
+    setEditingLogId(null);
   };
 
   const isFormValid = () => {
@@ -118,13 +134,26 @@ export default function LogsPage() {
 
   const executeSave = async () => {
     if (!userId || !isFormValid()) return; 
+
+    // 🧠 SMART LOG VALIDATION SYSTEM (Soft Anomalies)
+    if (!validationWarning) {
+      if (modalType === 'steps' && parseFloat(amount) > 40000) { setValidationWarning("40K+ steps detected. Save again to confirm."); return; }
+      if (modalType === 'water' && parseFloat(amount) > 6000) { setValidationWarning("6L+ water detected. Save again to confirm."); return; }
+      if (modalType === 'sleep' && parseFloat(amount) > 16) { setValidationWarning("16h+ sleep detected. Save again to confirm."); return; }
+      if (modalType === 'workout' && parseFloat(workoutData.duration) > 180) { setValidationWarning("3hr+ workout detected. Save again to confirm."); return; }
+    }
+
     setSaving(true);
+    setValidationWarning(null);
 
     try {
             // 1. Prepare Payload (Strictly Typed)
       let payloadData: any = {};
       if (modalType === 'water' || modalType === 'steps') payloadData = { amount: safeNumber(amount) };
-      else if (modalType === 'food') payloadData = { text: safeString(textInput).trim(), meal_type: mealType };
+      else if (modalType === 'food') payloadData = { 
+        text: safeString(textInput).trim(), meal_type: mealType,
+        ai_nutrition_prep: { status: 'pending', sync_ready: true } // 🧠 Phase 5 scalable architecture setup
+      };
       else if (modalType === 'sleep') payloadData = { sleep_hours: safeNumber(amount), sleep_quality: sleepQuality }
       else if (modalType === 'workout') payloadData = { 
         exercise: safeString(workoutData.exercise), sets: safeNumber(workoutData.sets), reps: safeNumber(workoutData.reps), duration: safeNumber(workoutData.duration) 
@@ -135,8 +164,12 @@ export default function LogsPage() {
         payloadData = { activity_name: activityData.type, duration_mins: duration, intensity: activityData.intensity, estimated_calories: estCals };
       }
 
-      // 2. Save Core Log
-      await supabase.from('daily_logs').insert({ user_id: userId, log_type: modalType, data: payloadData });
+      // 2. Save or Update Core Log
+      if (editingLogId) {
+        await supabase.from('daily_logs').update({ data: payloadData }).eq('id', editingLogId);
+      } else {
+        await supabase.from('daily_logs').insert({ user_id: userId, log_type: modalType, data: payloadData });
+      }
 
        // 3. FIX: Properly Save Sleep Log (Constraint: user_id, date)
       if (modalType === 'sleep') {
@@ -199,7 +232,12 @@ export default function LogsPage() {
     }
   };
 
-  const filteredFeed = feedLogs.filter(log => {
+    const filteredFeed = feedLogs.filter(log => {
+    // 🧠 TIMELINE RETENTION ENGINE: 7-day rolling window
+    const logDate = new Date(log.created_at);
+    const daysOld = (new Date().getTime() - logDate.getTime()) / (1000 * 3600 * 24);
+    if (daysOld > 7) return false;
+
     if (activeTab === 'all') return true;
     if (activeTab === 'nutrition') return log.log_type === 'food' || log.log_type === 'water';
     if (activeTab === 'workout') return log.log_type === 'workout' || log.log_type === 'activity' || log.log_type === 'steps';
