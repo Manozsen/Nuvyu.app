@@ -333,7 +333,7 @@ export default function LogsPage() {
                  className="flex items-center gap-4 bg-[#0A0A0A]/50 border border-white/5 p-4 rounded-2xl"
                >
                  <div className={`w-10 h-10 rounded-full bg-white/5 flex items-center justify-center shrink-0 border border-white/5 ${color}`}><Icon size={18} /></div>
-                                  <div className="flex-1">
+                 <div className="flex-1">
                    <h4 className="text-sm font-bold text-white/90 capitalize flex items-center gap-2">
                      {content}
                      {log.log_type === 'food' && log.data?.meal_type && (
@@ -343,8 +343,18 @@ export default function LogsPage() {
                      )}
                    </h4>
                   
-                   <p className="text-[10px] font-medium text-white/40 uppercase tracking-widest mt-1">{timeStr} • {log.log_type}</p>
+                   {/* 🧠 TIMELINE INTELLIGENCE v4 (Contextual Labels) */}
+                   <p className="text-[10px] font-medium text-white/40 uppercase tracking-widest mt-1 flex items-center">
+                     {timeStr} • {log.log_type}
+                     {log.log_type === 'workout' && safeNumber(log.data?.duration) >= 60 && <span className="ml-1.5 text-purple-400/80 tracking-normal capitalize">🔥 High Endurance</span>}
+                     {log.log_type === 'sleep' && safeNumber(log.data?.sleep_hours) < 6 && <span className="ml-1.5 text-red-400/80 tracking-normal capitalize">⚠️ Low Recovery</span>}
+                   </p>
                  </div>
+                 
+                 {/* 🧠 LOG EDITING ENGINE */}
+                 <button onClick={() => openEditModal(log)} className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-white/30 hover:text-white/80 hover:bg-white/10 transition-colors shadow-sm active:scale-95 shrink-0">
+                   <Plus size={14} className="rotate-45" />
+                 </button>
                </motion.div>
              )
           })}
@@ -491,12 +501,17 @@ export default function LogsPage() {
                 </div>
               )}
 
+              {validationWarning && (
+                <div className="mt-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold text-center">
+                  ⚠️ {validationWarning}
+                </div>
+              )}
               <button 
                 disabled={!isFormValid() || saving || !!successFeedback}
                 onClick={executeSave} 
-                className="w-full mt-6 bg-[#00FFA3] text-black font-black text-lg py-4 rounded-2xl flex justify-center items-center gap-2 disabled:opacity-50 transition-all hover:shadow-[0_0_20px_rgba(0,255,163,0.3)]"
+                className={`w-full mt-6 ${validationWarning ? 'bg-red-400' : 'bg-[#00FFA3]'} text-black font-black text-lg py-4 rounded-2xl flex justify-center items-center gap-2 disabled:opacity-50 transition-all hover:shadow-[0_0_20px_rgba(0,255,163,0.3)]`}
               >
-                {saving ? <Loader2 className="animate-spin" size={22}/> : successFeedback ? <><CheckCircle2 size={20} /> {successFeedback}</> : 'Save Log'}
+                {saving ? <Loader2 className="animate-spin" size={22}/> : successFeedback ? <><CheckCircle2 size={20} /> {successFeedback}</> : validationWarning ? 'Confirm & Save Anyway' : editingLogId ? 'Update Log' : 'Save Log'}
               </button>
             </motion.div>
           </>
