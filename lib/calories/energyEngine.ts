@@ -30,8 +30,15 @@ export function calculateActivityCalories(type: string, durationMins: number, in
 
 export function calculateEnergyBalance(profile: any, logs: any[]) {
   const weight = profile?.weight || 70;
-  const bmr = profile?.bmr || 1500;
-  let targetCalories = profile?.target_calories || profile?.tdee || 2000;
+  
+  // 🧠 REAL PERSONALIZED CALORIE ENGINE (Mifflin-St Jeor fallback if DB BMR missing)
+  let bmr = profile?.bmr || 1500;
+  if (profile?.age && profile?.height && profile?.weight && profile?.gender) {
+    const isMale = profile.gender.toLowerCase() === 'male';
+    bmr = (10 * profile.weight) + (6.25 * profile.height) - (5 * profile.age) + (isMale ? 5 : -161);
+  }
+  
+  let targetCalories = profile?.target_calories || profile?.tdee || Math.round(bmr * 1.2);
 
   const progressiveBMR = calculateProgressiveBMR(bmr);
   let stepsBurn = 0;
