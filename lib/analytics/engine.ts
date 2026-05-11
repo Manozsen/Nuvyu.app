@@ -175,7 +175,7 @@ export function buildAIAnalyticsContext(analytics: any) {
     hydration_trend: analytics.stats.waterTrend,
     recovery_trend: analytics.stats.recoveryTrend,
     burn_trend: analytics.stats.calorieBurnTrend,
-    activity_consistency: analytics.stats.stepsTrend
+    activity_consistency: analytics.stats.stepsTrend,
     consistency_score: analytics.stats?.scoreTrend || 'stable'
   };
 }
