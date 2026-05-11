@@ -148,7 +148,7 @@ export async function getAnalytics(supabase: any, userId: string, days: number) 
   }
 }
 
-// 🧠 PART 7: AI-READY ANALYTICS CONTEXT
+// 🧠 PART 7: AI-READY ANALYTICS CONTEXT & BEHAVIORAL PATTERN ENGINE
 export function buildAIAnalyticsContext(analytics: any) {
   if (!analytics || !analytics.dailyData) return {};
   
@@ -158,12 +158,24 @@ export function buildAIAnalyticsContext(analytics: any) {
   const validSteps = analytics.dailyData.filter((d:any) => d.steps > 0);
   const avg_steps = validSteps.length > 0 ? validSteps.reduce((a:any, b:any) => a + b.steps, 0) / validSteps.length : 0;
 
+  // 🧠 BEHAVIORAL PATTERN ENGINE: Detect anomalies and shifting habits securely
+  const behavior_insights: string[] = [];
+  if (avg_sleep > 0 && avg_sleep < 6) behavior_insights.push("chronic_sleep_debt");
+  if (avg_steps > 0 && avg_steps < 4000) behavior_insights.push("low_movement_pattern");
+  
+  const recentDays = analytics.dailyData.slice(-3);
+  const recentWater = recentDays.reduce((acc: number, d: any) => acc + (d.water || 0), 0) / (recentDays.length || 1);
+  if (recentWater > 0 && recentWater < 1500) behavior_insights.push("hydration_inconsistency");
+
   return {
     avg_sleep: Math.round(avg_sleep * 10) / 10,
     avg_steps: Math.round(avg_steps),
+    behavior_insights,
+    recent_water_avg: Math.round(recentWater),
     hydration_trend: analytics.stats.waterTrend,
     recovery_trend: analytics.stats.recoveryTrend,
     burn_trend: analytics.stats.calorieBurnTrend,
     activity_consistency: analytics.stats.stepsTrend
+    consistency_score: analytics.stats?.scoreTrend || 'stable'
   };
 }
