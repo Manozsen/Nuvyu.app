@@ -195,7 +195,6 @@ export function buildAIAnalyticsContext(analytics: any) {
     return {
     recent_water_avg: Math.round(recentWater),
     streak_risk,
-    behavior_insights,
     avg_sleep: Math.round(avg_sleep * 10) / 10,
     avg_steps: Math.round(avg_steps),
     behavior_insights,
