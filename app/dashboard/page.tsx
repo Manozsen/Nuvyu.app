@@ -171,8 +171,14 @@ export default function Dashboard() {
     return isMuscle ? `Solid consistency. Recovery aur protein pe focus rakhna.` : `On track! Yeh discipline maintain karna hai.`;
   };
 
+    // 🧠 LOCAL SCHEMA EXTENSION: Safely supports new Adaptive Behavior OS fields without mutating external types
+interface AdaptiveAIContext extends AIContext {
+  burnout_risk?: string;
+  adaptive_mode?: string;
+}
+
     // 4. AI CONTEXT BUILDER
-  const buildAIContext = (metrics: ReturnType<typeof getCoachMetrics>, behavior: string, pattern: any, last_3_messages: string[], consistency: string): AIContext => {
+  const buildAIContext = (metrics: ReturnType<typeof getCoachMetrics>, behavior: string, pattern: any, last_3_messages: string[], consistency: string): AdaptiveAIContext => {
     return {
       goal: metrics.goal,
       activity_level: metrics.activity_level,
