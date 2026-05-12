@@ -202,10 +202,10 @@ export default function Dashboard() {
     };
   };
   
-  // 5. AI COACH (PRIMARY EXPERIENCE)
+    // 5. AI COACH (PRIMARY EXPERIENCE)
   const generateAINudge = async (context: any, tone: string, userId: string) => {
     try {
-      const prompt = `Coach tone: ${tone}. User: ${context.age}yo ${context.gender}, Goal: ${context.goal}. Behavior: ${context.behavior_type}. Context: ${JSON.stringify(context)}. Give a 2-line Hinglish motivational nudge.`;
+      const prompt = `Coach tone: ${tone}. User: ${context.age}yo ${context.gender}, Goal: ${context.goal}. Behavior: ${context.behavior_type}. Burnout Risk: ${context.burnout_risk}. Adaptive Mode: ${context.adaptive_mode}. Context: ${JSON.stringify(context)}. Give a 2-line Hinglish motivational nudge. DO NOT be generic. Be highly contextual to their data.`;
       const res = await fetch('/api/ai/coach', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -219,9 +219,9 @@ export default function Dashboard() {
     }
   };
 
-      // 6. CORE HYBRID ENGINE
-    const generateCoachNudge = async (userId: string, profile: any, todayLogs: any[], pastLogs: any[], currentScore: number, recoveryData: any = null, energyBalance: number = 0) => {
-    const metrics = getCoachMetrics(userId, profile, todayLogs, pastLogs, currentScore, recoveryData, energyBalance);
+    // 6. CORE HYBRID ENGINE
+    const generateCoachNudge = async (userId: string, profile: any, todayLogs: any[], pastLogs: any[], currentScore: number, recoveryData: any = null, energyBalance: number = 0, burnoutRisk: string = "low", adaptiveGoals: any = null) => {
+    const metrics = getCoachMetrics(userId, profile, todayLogs, pastLogs, currentScore, recoveryData, energyBalance, burnoutRisk, adaptiveGoals);
     const behavior = detectBehavior(metrics);
 
     // AI Memory + Pattern Engine Execution
@@ -339,7 +339,7 @@ export default function Dashboard() {
         });
       }
 
-            // 1. REAL BODY ENERGY INTELLIGENCE SYSTEM
+      // 1. REAL BODY ENERGY INTELLIGENCE SYSTEM
       const energyStats = calculateEnergyBalance(profile, logs || []);
       const energyBurned = energyStats.totalBurn;
       const safeEnergyIntake = energyStats.intakeCalories;
@@ -396,7 +396,7 @@ export default function Dashboard() {
         .gte('created_at', threeDaysAgo.toISOString())
         .lt('created_at', startOfDay.toISOString());
 
-             // Fetch Recovery Data strictly from sleep_logs (Synced to local date)
+      // Fetch Recovery Data strictly from sleep_logs (Synced to local date)
       const { data: latestSleep } = await supabase.from('sleep_logs')
         .select('*').eq('user_id', user.id)
         .order('date', { ascending: false }).limit(1).single();
@@ -411,15 +411,19 @@ export default function Dashboard() {
       
       const recState = calculateRecoveryState(sleepHours, sleepQuality, 'moderate', safeNumber(energyStats?.energyBalance));
 
-      const recoveryData = (sleepHours > 0 || latestSleep) ? {
+       const recoveryData = (sleepHours > 0 || latestSleep) ? {
         sleep_hours: sleepHours,
         recovery_score: computedScore,
         recovery_state: recState,
         fatigue_risk: detectFatiguePattern(recState, sleepHours, safeNumber(energyStats?.activityBurn))
       } : null;
 
-      // EXECUTE FULL ENGINE FLOW
-      const nudgeResponse = await generateCoachNudge(user.id, profile, logs || [], pastLogs || [], calculatedScore, recoveryData, safeNumber(energyStats?.energyBalance));
+      // 🧠 BURNOUT & ADAPTIVE GOAL ENGINE EXECUTION
+      const { risk_level: burnoutRisk } = detectBurnoutRisk(computedScore, sleepHours, safeNumber(profile.streak_count), safeNumber(energyStats?.deficit));
+      const adaptiveGoals = calculateAdaptiveGoals(safeNumber(profile.tdee, 2000), 6000, recState, burnoutRisk);
+
+      // EXECUTE FULL ENGINE FLOW (AI Context v2)
+      const nudgeResponse = await generateCoachNudge(user.id, profile, logs || [], pastLogs || [], calculatedScore, recoveryData, safeNumber(energyStats?.energyBalance), burnoutRisk, adaptiveGoals);
       setCoachMessage(nudgeResponse.message);
       // FIX: Added 'as "ai" | "rule"' to satisfy TypeScript's strict type checking
       setCoachType(nudgeResponse.type as "ai" | "rule");
@@ -498,9 +502,13 @@ export default function Dashboard() {
     );
   }
 
-  if (!mounted || !userProfile) return null;
+   if (!mounted || !userProfile) return null;
 
-  const targetCalories = userProfile.target_calories || userProfile.tdee || 2000;
+  // 🧠 ADAPTIVE BEHAVIOR OS: Dynamically adjust UI targets based on recovery
+  const baseTDEE = userProfile.target_calories || userProfile.tdee || 2000;
+  const { risk_level: currentBurnoutRisk } = detectBurnoutRisk(metrics.recovery_score, metrics.sleep_hours, metrics.streak_count, Math.abs(Math.min(0, metrics.energy_balance)));
+  const { recommended_calories: targetCalories, recommended_steps: targetSteps } = calculateAdaptiveGoals(baseTDEE, 6000, metrics.recovery_state, currentBurnoutRisk);
+
   let energyColorClass = "text-[#00FFA3]";
   if (metrics.energy_intake > 0) {
     const intakeRatio = metrics.energy_intake / targetCalories;
@@ -642,8 +650,8 @@ export default function Dashboard() {
            </Link>
         </div>
 
-            <section className="grid grid-cols-2 gap-4">
-          <BentoCard icon={Footprints} label="Steps" value={metrics.steps} target="/ 6000" color="text-[#00FFA3]" delay={0.2} />
+          <section className="grid grid-cols-2 gap-4">
+          <BentoCard icon={Footprints} label="Steps" value={metrics.steps} target={`/ ${targetSteps}`} color="text-[#00FFA3]" delay={0.2} />
           
           {/* REAL BODY ENERGY INTELLIGENCE CARD */}
           <motion.div 
