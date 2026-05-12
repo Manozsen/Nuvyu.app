@@ -192,11 +192,12 @@ export function buildAIAnalyticsContext(analytics: any) {
         behavior_insights.push("streak_drop_risk");
       }
 
-    return {
-    recent_water_avg: Math.round(recentWater),
-    streak_risk,
+   return {
     avg_sleep: Math.round(avg_sleep * 10) / 10,
     avg_steps: Math.round(avg_steps),
+    consistency_score: analytics.stats?.scoreTrend || 'stable',
+    recent_water_avg: Math.round(recentWater),
+    streak_risk,
     behavior_insights,
     recent_water_avg: Math.round(recentWater),
     hydration_trend: analytics.stats.waterTrend,
