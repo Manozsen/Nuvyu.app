@@ -13,6 +13,8 @@ import { calculateRecoveryScore } from '../../lib/recovery/engine';
 import { updateHabit } from '../../lib/habit/engine';
 import { calculateEnergyBalance, getLocalDateString, calculateRecoveryState, detectFatiguePattern } from '../../lib/calories/energyEngine';
 import { DashboardMetrics } from '../../lib/types/dashboard';
+import { detectBurnoutRisk } from '../../lib/recovery/engine';
+import { calculateAdaptiveGoals } from '../../lib/personalization/engine';
 import { AIContext } from '../../lib/types/ai';
 import { safeSleepHours, safeSleepQuality, safeRecoveryScore } from '../../lib/utils/sleep';
 import { safeNumber, safeRecoveryState, safeFatigueRisk, safeEnergyStats } from '../../lib/utils/safe';
@@ -22,7 +24,7 @@ export default function Dashboard() {
   const [mounted, setMounted] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-    const [userProfile, setUserProfile] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const [metrics, setMetrics] = useState<DashboardMetrics>({ 
     score: 0, 
     steps: 0, 
@@ -72,8 +74,8 @@ export default function Dashboard() {
   const chat_limit_window = 6; // hours
   const chat_usage_count = 0;
 
-        // 1. DATA COLLECTION
-  const getCoachMetrics = (userId: string, profile: any, todayLogs: any[], pastLogs: any[], currentScore: number, recoveryData: any = null, energyBalance: number = 0) => {
+  // 1. DATA COLLECTION
+  const getCoachMetrics = (userId: string, profile: any, todayLogs: any[], pastLogs: any[], currentScore: number, recoveryData: any = null, energyBalance: number = 0, burnoutRisk: string = "low", adaptiveGoals: any = null) => {
     let today_steps = 0;
     let today_water = 0;
     let lastLogTime = 0;
@@ -114,6 +116,8 @@ export default function Dashboard() {
       fatigue_risk: safeFatigueRisk(recoveryData?.fatigue_risk),
       sleep_average: safeNumber(recoveryData?.sleep_hours),
       energy_balance: energyBalance,
+      burnout_risk: burnoutRisk,
+      adaptive_mode: adaptiveGoals?.adaptation_mode || "maintain",
       // Deep Personalization Fields
       primary_target: profile.primary_target || profile.goal,
       motivation_reason: profile.motivation_reason || 'health',
@@ -188,6 +192,8 @@ export default function Dashboard() {
       target: metrics.primary_target,
       recovery_state: metrics.recovery_state,
       fatigue_risk: metrics.fatigue_risk,
+      burnout_risk: metrics.burnout_risk,
+      adaptive_mode: metrics.adaptive_mode,
       energy_balance: metrics.energy_balance,
       motivation: metrics.motivation_reason,
       timeline: metrics.target_timeline,
@@ -294,7 +300,7 @@ export default function Dashboard() {
       // Safely attach the user email for avatar fallback logic
       setUserProfile({ ...profile, email: user.email });
 
-            // Timezone Safe Fetch (Fixes Timeline Sync Bug)
+      // Timezone Safe Fetch (Fixes Timeline Sync Bug)
       const now = new Date();
       const todayDateStr = getLocalDateString(now);
 
