@@ -181,25 +181,16 @@ export function buildAIAnalyticsContext(analytics: any) {
 
   let streak_risk = "low";
 
-  if (
-    analytics.stats?.scoreTrend === 'declining' ||
-    (
-      recentDays.length > 0 &&
-      recentDays[recentDays.length - 1]?.score < 40
-    )
-  ) {
-    streak_risk = "high";
-    behavior_insights.push("streak_drop_risk");
-  }
-
-  // 🧠 BEHAVIORAL PATTERN ENGINE: Detect anomalies and shifting habits securely
-  const behavior_insights: string[] = [];
-  if (avg_sleep > 0 && avg_sleep < 6) behavior_insights.push("chronic_sleep_debt");
-  if (avg_steps > 0 && avg_steps < 4000) behavior_insights.push("low_movement_pattern");
-  
-  const recentDays = analytics.dailyData.slice(-3);
-  const recentWater = recentDays.reduce((acc: number, d: any) => acc + (d.water || 0), 0) / (recentDays.length || 1);
-  if (recentWater > 0 && recentWater < 1500) behavior_insights.push("hydration_inconsistency");
+        if (
+        analytics.stats?.scoreTrend === 'declining' ||
+        (
+          recentDays.length > 0 &&
+          recentDays[recentDays.length - 1]?.score < 40
+        )
+      ) {
+        streak_risk = "high";
+        behavior_insights.push("streak_drop_risk");
+      }
 
     return {
     recent_water_avg: Math.round(recentWater),
