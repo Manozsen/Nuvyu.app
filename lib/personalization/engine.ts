@@ -44,3 +44,30 @@ export function calculateAdvancedCalories(bmr: number, tdee: number, primaryTarg
 
   return Math.round(targetCalories);
 }
+
+// 🧠 ADAPTIVE GOAL ENGINE 
+// Intelligently adjusts daily targets based on fatigue and recovery data to prevent burnout.
+
+export function calculateAdaptiveGoals(baseTDEE: number, baseSteps: number, recovery_state: string, burnout_risk: string) {
+  let adaptive_tdee = baseTDEE || 2000;
+  let adaptive_steps = baseSteps || 6000;
+  let recommendation = "maintain";
+
+  // 🧠 Burnout Protection Logic
+  if (burnout_risk === 'high' || recovery_state === 'poor' || recovery_state === 'overtrained') {
+    adaptive_steps = Math.max(3000, baseSteps * 0.7); // Safely reduce movement load by 30%
+    adaptive_tdee = baseTDEE + 200; // Slight caloric surplus recommended to aid physical recovery
+    recommendation = "recovery_focus";
+  } 
+  // 🧠 Progressive Overload Logic
+  else if (recovery_state === 'optimal' || recovery_state === 'excellent') {
+    adaptive_steps = baseSteps * 1.1; // Safely suggest a 10% movement increase
+    recommendation = "progressive_overload";
+  }
+
+  return {
+    recommended_steps: Math.round(adaptive_steps),
+    recommended_calories: Math.round(adaptive_tdee),
+    adaptation_mode: recommendation
+  };
+}
