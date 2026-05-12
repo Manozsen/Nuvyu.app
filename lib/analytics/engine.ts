@@ -192,18 +192,15 @@ export function buildAIAnalyticsContext(analytics: any) {
         behavior_insights.push("streak_drop_risk");
       }
 
-   return {
+      return {
     avg_sleep: Math.round(avg_sleep * 10) / 10,
     avg_steps: Math.round(avg_steps),
-    consistency_score: analytics.stats?.scoreTrend || 'stable',
     recent_water_avg: Math.round(recentWater),
     streak_risk,
     behavior_insights,
-    recent_water_avg: Math.round(recentWater),
-    hydration_trend: analytics.stats.waterTrend,
-    recovery_trend: analytics.stats.recoveryTrend,
-    burn_trend: analytics.stats.calorieBurnTrend,
-    activity_consistency: analytics.stats.stepsTrend,
+    hydration_trend: analytics.stats?.waterTrend || 'stable',
+    recovery_trend: analytics.stats?.recoveryTrend || 'stable',
+    burn_trend: analytics.stats?.calorieBurnTrend || 'stable',
+    activity_consistency: analytics.stats?.stepsTrend || 'stable',
     consistency_score: analytics.stats?.scoreTrend || 'stable'
   };
-}
