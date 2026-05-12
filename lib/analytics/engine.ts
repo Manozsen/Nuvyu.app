@@ -204,3 +204,4 @@ export function buildAIAnalyticsContext(analytics: any) {
     activity_consistency: analytics.stats?.stepsTrend || 'stable',
     consistency_score: analytics.stats?.scoreTrend || 'stable'
   };
+}
