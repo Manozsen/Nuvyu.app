@@ -343,11 +343,13 @@ export default function LogsPage() {
                      )}
                    </h4>
                   
-                   {/* 🧠 TIMELINE INTELLIGENCE v4 (Contextual Labels) */}
-                   <p className="text-[10px] font-medium text-white/40 uppercase tracking-widest mt-1 flex items-center">
-                     {timeStr} • {log.log_type}
-                     {log.log_type === 'workout' && safeNumber(log.data?.duration) >= 60 && <span className="ml-1.5 text-purple-400/80 tracking-normal capitalize">🔥 High Endurance</span>}
-                     {log.log_type === 'sleep' && safeNumber(log.data?.sleep_hours) < 6 && <span className="ml-1.5 text-red-400/80 tracking-normal capitalize">⚠️ Low Recovery</span>}
+                   {/* 🧠 TIMELINE INTELLIGENCE v5 (Adaptive Badges & Burnout Markers) */}
+                   <p className="text-[10px] font-medium text-white/40 uppercase tracking-widest mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1">
+                     <span>{timeStr} • {log.log_type}</span>
+                     {log.log_type === 'workout' && safeNumber(log.data?.duration) >= 60 && <span className="text-purple-400/80 tracking-normal capitalize">🔥 High Endurance</span>}
+                     {log.log_type === 'workout' && log.data?.intensity === 'high' && <span className="text-orange-400/80 tracking-normal capitalize">⚡ CNS Load</span>}
+                     {log.log_type === 'sleep' && safeNumber(log.data?.sleep_hours) > 0 && safeNumber(log.data?.sleep_hours) < 6 && <span className="text-red-400/80 tracking-normal capitalize">⚠️ Sleep Debt</span>}
+                     {log.log_type === 'water' && safeNumber(log.data?.amount) >= 1000 && <span className="text-blue-400/80 tracking-normal capitalize">💧 Mega Hydration</span>}
                    </p>
                  </div>
                  
