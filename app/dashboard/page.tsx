@@ -118,6 +118,8 @@ export default function Dashboard() {
       energy_balance: energyBalance,
       burnout_risk: burnoutRisk,
       adaptive_mode: adaptiveGoals?.adaptation_mode || "maintain",
+      workout_intensity: adaptiveGoals?.workout_intensity || "moderate",
+      recommended_water: adaptiveGoals?.recommended_water || 3000,
       // Deep Personalization Fields
       primary_target: profile.primary_target || profile.goal,
       motivation_reason: profile.motivation_reason || 'health',
@@ -171,13 +173,15 @@ export default function Dashboard() {
     return isMuscle ? `Solid consistency. Recovery aur protein pe focus rakhna.` : `On track! Yeh discipline maintain karna hai.`;
   };
 
-    // 🧠 LOCAL SCHEMA EXTENSION: Safely supports new Adaptive Behavior OS fields without mutating external types
+  // 🧠 LOCAL SCHEMA EXTENSION: Safely supports new Adaptive Behavior OS & Adherence fields
 interface AdaptiveAIContext extends AIContext {
   burnout_risk?: string;
   adaptive_mode?: string;
+  workout_intensity_recommendation?: string;
+  recommended_water?: number;
 }
 
-    // 4. AI CONTEXT BUILDER
+  // 4. AI CONTEXT BUILDER
   const buildAIContext = (metrics: ReturnType<typeof getCoachMetrics>, behavior: string, pattern: any, last_3_messages: string[], consistency: string): AdaptiveAIContext => {
     return {
       goal: metrics.goal,
@@ -200,6 +204,8 @@ interface AdaptiveAIContext extends AIContext {
       fatigue_risk: metrics.fatigue_risk,
       burnout_risk: metrics.burnout_risk,
       adaptive_mode: metrics.adaptive_mode,
+      workout_intensity_recommendation: metrics.workout_intensity,
+      recommended_water: metrics.recommended_water,
       energy_balance: metrics.energy_balance,
       motivation: metrics.motivation_reason,
       timeline: metrics.target_timeline,
@@ -510,10 +516,10 @@ interface AdaptiveAIContext extends AIContext {
 
    if (!mounted || !userProfile) return null;
 
-  // 🧠 ADAPTIVE BEHAVIOR OS: Dynamically adjust UI targets based on recovery
+    // 🧠 ADAPTIVE BEHAVIOR OS: Dynamically adjust UI targets based on recovery & adherence
   const baseTDEE = userProfile.target_calories || userProfile.tdee || 2000;
   const { risk_level: currentBurnoutRisk } = detectBurnoutRisk(metrics.recovery_score, metrics.sleep_hours, metrics.streak_count, Math.abs(Math.min(0, metrics.energy_balance)));
-  const { recommended_calories: targetCalories, recommended_steps: targetSteps } = calculateAdaptiveGoals(baseTDEE, 6000, metrics.recovery_state, currentBurnoutRisk);
+  const { recommended_calories: targetCalories, recommended_steps: targetSteps, recommended_water: targetWater, adaptation_mode } = calculateAdaptiveGoals(baseTDEE, 6000, metrics.recovery_state, currentBurnoutRisk);
 
   let energyColorClass = "text-[#00FFA3]";
   if (metrics.energy_intake > 0) {
