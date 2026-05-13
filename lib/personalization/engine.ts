@@ -48,26 +48,41 @@ export function calculateAdvancedCalories(bmr: number, tdee: number, primaryTarg
 // 🧠 ADAPTIVE GOAL ENGINE 
 // Intelligently adjusts daily targets based on fatigue and recovery data to prevent burnout.
 
-export function calculateAdaptiveGoals(baseTDEE: number, baseSteps: number, recovery_state: string, burnout_risk: string) {
+// 🧠 RECOVERY ADAPTATION SYSTEM (Supports optional adherence parameters safely backward compatible)
+export function calculateAdaptiveGoals(baseTDEE: number, baseSteps: number, recovery_state: string, burnout_risk: string, adherence_profile: string = "stable") {
   let adaptive_tdee = baseTDEE || 2000;
   let adaptive_steps = baseSteps || 6000;
+  let recommended_water = 3000;
+  let workout_intensity = "moderate";
   let recommendation = "maintain";
 
-  // 🧠 Burnout Protection Logic
+  // 🧠 Burnout & Recovery Protection Logic
   if (burnout_risk === 'high' || recovery_state === 'poor' || recovery_state === 'overtrained') {
     adaptive_steps = Math.max(3000, baseSteps * 0.7); // Safely reduce movement load by 30%
     adaptive_tdee = baseTDEE + 200; // Slight caloric surplus recommended to aid physical recovery
+    recommended_water = 3500; // Extra hydration for cellular recovery
+    workout_intensity = "low_impact_only";
     recommendation = "recovery_focus";
   } 
   // 🧠 Progressive Overload Logic
   else if (recovery_state === 'optimal' || recovery_state === 'excellent') {
     adaptive_steps = baseSteps * 1.1; // Safely suggest a 10% movement increase
+    workout_intensity = "high_intensity_approved";
     recommendation = "progressive_overload";
+  }
+
+  // 🧠 Smart Adherence Friction Reduction
+  if (adherence_profile === "struggling" && recommendation !== "recovery_focus") {
+    adaptive_steps = Math.min(adaptive_steps, 5000); // Reduce cognitive/physical load to rebuild habit momentum safely
+    recommendation = "habit_rebuilding";
   }
 
   return {
     recommended_steps: Math.round(adaptive_steps),
     recommended_calories: Math.round(adaptive_tdee),
+    recommended_water,
+    workout_intensity,
     adaptation_mode: recommendation
   };
 }
+
