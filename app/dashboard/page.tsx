@@ -628,6 +628,13 @@ interface AdaptiveAIContext extends AIContext {
                 Level {retention.level}
               </span>
               
+              {/* 🧠 DASHBOARD INTELLIGENCE v6 (Adaptive Recovery Indicators) */}
+              {adaptation_mode === 'recovery_focus' && (
+                <span className="text-red-400 bg-red-500/10 px-2 py-1 rounded-md border border-red-500/20 capitalize flex items-center gap-1">
+                  ⚠️ Recovery Mode
+                </span>
+              )}
+              
               {((metrics as any).streak_count > 0) && (
                 <>
                   <span className="w-1 h-1 rounded-full bg-white/20"></span>
@@ -696,8 +703,8 @@ interface AdaptiveAIContext extends AIContext {
             </div>
           </motion.div>
           
-          <BentoCard icon={Droplets} label="Water" value={metrics.water} target="/ 3000 ml" color="text-blue-400" delay={0.4} />
-
+         <BentoCard icon={Droplets} label="Water" value={metrics.water} target={`/ ${targetWater} ml`} color="text-blue-400" delay={0.4} />
+            
           {/* Recovery & Sleep Integrations */}
           <BentoCard icon={Moon} label="Sleep" value={metrics.sleep_hours || 0} target="hrs" color="text-indigo-400" delay={0.45} />
           <BentoCard icon={Activity} label="Recovery" value={`${metrics.recovery_score || 0}%`} target="score" color="text-purple-400" delay={0.5} />
