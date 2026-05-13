@@ -217,9 +217,10 @@ export function buildAIAnalyticsContext(analytics: any) {
         streak_risk = "high";
         behavior_insights.push("streak_drop_risk");
       }
-
-    return {
-         // 🧠 BYPASS EXCESS PROPERTY CHECK: Safely package all AI intelligence 
+  
+// 🧠 BYPASS EXCESS PROPERTY CHECK: Safely package all AI intelligence
+    
+  return { 
   const aiContext = {
     avg_sleep: Math.round(avg_sleep * 10) / 10,
     avg_steps: Math.round(avg_steps),
