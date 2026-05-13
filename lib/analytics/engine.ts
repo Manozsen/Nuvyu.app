@@ -172,8 +172,23 @@ export function buildAIAnalyticsContext(analytics: any) {
   const adherence_score = Math.round(((daysHitWater + daysHitSteps) / (totalDays * 2)) * 100) || 0;
   
   let consistency_profile = "stable";
-  if (adherence_score >= 80) consistency_profile = "highly_adherent";
-  else if (adherence_score <= 40) consistency_profile = "struggling";
+  let adherence_risk = "low";
+  let motivation_stability = "stable";
+  let routine_stability = "stable";
+
+  // 🧠 ADHERENCE PREDICTION SYSTEM
+  if (adherence_score >= 80) {
+    consistency_profile = "highly_adherent";
+    routine_stability = "high";
+  } else if (adherence_score <= 40) {
+    consistency_profile = "struggling";
+    adherence_risk = "high";
+    motivation_stability = "declining";
+    routine_stability = "low";
+  } else if (adherence_score <= 60) {
+    adherence_risk = "medium";
+    motivation_stability = "vulnerable";
+  }
 
   const behavior_insights: string[] = [];
   behavior_insights.push(`adherence_${consistency_profile}`);
