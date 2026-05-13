@@ -219,8 +219,6 @@ export function buildAIAnalyticsContext(analytics: any) {
       }
   
 // 🧠 BYPASS EXCESS PROPERTY CHECK: Safely package all AI intelligence
-    
-  return { 
   const aiContext = {
     avg_sleep: Math.round(avg_sleep * 10) / 10,
     avg_steps: Math.round(avg_steps),
