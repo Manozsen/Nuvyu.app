@@ -219,6 +219,8 @@ export function buildAIAnalyticsContext(analytics: any) {
       }
 
     return {
+         // 🧠 BYPASS EXCESS PROPERTY CHECK: Safely package all AI intelligence 
+  const aiContext = {
     avg_sleep: Math.round(avg_sleep * 10) / 10,
     avg_steps: Math.round(avg_steps),
     recent_water_avg: Math.round(recentWater),
@@ -226,6 +228,9 @@ export function buildAIAnalyticsContext(analytics: any) {
     behavior_insights,
     adherence_score,
     consistency_profile,
+    adherence_risk,
+    motivation_stability,
+    routine_stability,
     hydration_trend: analytics.stats?.waterTrend || 'stable',
     recovery_trend: analytics.stats?.recoveryTrend || 'stable',
     burn_trend: analytics.stats?.calorieBurnTrend || 'stable',
