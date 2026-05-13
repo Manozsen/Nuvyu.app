@@ -349,6 +349,7 @@ export default function LogsPage() {
                      {log.log_type === 'workout' && safeNumber(log.data?.duration) >= 60 && <span className="text-purple-400/80 tracking-normal capitalize">🔥 High Endurance</span>}
                      {log.log_type === 'workout' && log.data?.intensity === 'high' && <span className="text-orange-400/80 tracking-normal capitalize">⚡ CNS Load</span>}
                      {log.log_type === 'sleep' && safeNumber(log.data?.sleep_hours) > 0 && safeNumber(log.data?.sleep_hours) < 6 && <span className="text-red-400/80 tracking-normal capitalize">⚠️ Sleep Debt</span>}
+                     {log.log_type === 'sleep' && safeNumber(log.data?.sleep_hours) >= 8 && <span className="text-indigo-400/80 tracking-normal capitalize">✨ Optimal Recovery</span>}
                      {log.log_type === 'water' && safeNumber(log.data?.amount) >= 1000 && <span className="text-blue-400/80 tracking-normal capitalize">💧 Mega Hydration</span>}
                    </p>
                  </div>
