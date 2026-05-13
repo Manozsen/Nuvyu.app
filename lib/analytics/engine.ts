@@ -165,7 +165,18 @@ export function buildAIAnalyticsContext(analytics: any) {
       0
     ) / (recentDays.length || 1);
 
+  // 🧠 SMART ADHERENCE ENGINE: Safely calculate long-term habit consistency
+  const totalDays = analytics.dailyData.length || 1;
+  const daysHitWater = analytics.dailyData.filter((d:any) => d.water >= 2000).length;
+  const daysHitSteps = analytics.dailyData.filter((d:any) => d.steps >= 6000).length;
+  const adherence_score = Math.round(((daysHitWater + daysHitSteps) / (totalDays * 2)) * 100) || 0;
+  
+  let consistency_profile = "stable";
+  if (adherence_score >= 80) consistency_profile = "highly_adherent";
+  else if (adherence_score <= 40) consistency_profile = "struggling";
+
   const behavior_insights: string[] = [];
+  behavior_insights.push(`adherence_${consistency_profile}`);
 
   if (avg_sleep > 0 && avg_sleep < 6) {
     behavior_insights.push("chronic_sleep_debt");
@@ -192,12 +203,14 @@ export function buildAIAnalyticsContext(analytics: any) {
         behavior_insights.push("streak_drop_risk");
       }
 
-      return {
+    return {
     avg_sleep: Math.round(avg_sleep * 10) / 10,
     avg_steps: Math.round(avg_steps),
     recent_water_avg: Math.round(recentWater),
     streak_risk,
     behavior_insights,
+    adherence_score,
+    consistency_profile,
     hydration_trend: analytics.stats?.waterTrend || 'stable',
     recovery_trend: analytics.stats?.recoveryTrend || 'stable',
     burn_trend: analytics.stats?.calorieBurnTrend || 'stable',
