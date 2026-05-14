@@ -246,7 +246,7 @@ interface AdaptiveAIContext extends AIContext {
       const pattern = detectUserPattern(memoryData);
       const consistency = calculateConsistency(memoryData);
       const longTermMemory = extractLongTermMemory(memoryData);
-    const last_3_messages = memory.slice(0, 3).map((m: any) => m.message);
+      const last_3_messages = (memoryData || []).slice(0, 3).map((m: any) => m.message);
 
     const ruleNudge = generateRuleNudge(metrics, behavior, pattern);
     const aiContext = buildAIContext(metrics, pattern || "unknown", null, [], last_3_messages, consistency);
