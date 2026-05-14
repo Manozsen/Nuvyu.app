@@ -7,7 +7,8 @@ import { createBrowserClient } from '@supabase/ssr';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 // Using relative paths to bypass Next.js alias resolution errors
-import { getRecentMemory, saveCoachMemory, detectUserPattern, calculateConsistency } from '../../lib/coach/memory';
+import { getRecentMemory, saveCoachMemory, detectUserPattern, calculateConsistency, extractLongTermMemory } from '../../lib/coach/memory';
+import { predictAdherenceRisk } from '../../lib/recovery/engine';
 import { calculateDailyScore } from '../../lib/score/engine';
 import { calculateRecoveryScore } from '../../lib/recovery/engine';
 import { updateHabit } from '../../lib/habit/engine';
@@ -173,12 +174,16 @@ export default function Dashboard() {
     return isMuscle ? `Solid consistency. Recovery aur protein pe focus rakhna.` : `On track! Yeh discipline maintain karna hai.`;
   };
 
-  // 🧠 LOCAL SCHEMA EXTENSION: Safely supports new Adaptive Behavior OS & Adherence fields
+  // 🧠 LOCAL SCHEMA EXTENSION: Safely supports AI Orchestration & Long-Term Memory
 interface AdaptiveAIContext extends AIContext {
   burnout_risk?: string;
   adaptive_mode?: string;
   workout_intensity_recommendation?: string;
   recommended_water?: number;
+  adherence_risk?: string;
+  motivation_stability?: string;
+  long_term_memory?: any;
+  consistency_flags?: string[];
 }
 
   // 4. AI CONTEXT BUILDER
@@ -237,13 +242,14 @@ interface AdaptiveAIContext extends AIContext {
     const behavior = detectBehavior(metrics);
 
     // AI Memory + Pattern Engine Execution
-    const memory = await getRecentMemory(supabase, userId);
-    const pattern = detectUserPattern(memory);
-    const consistency = calculateConsistency(memory);
+    const memoryData = await getRecentMemory(supabase, userId);
+      const pattern = detectUserPattern(memoryData);
+      const consistency = calculateConsistency(memoryData);
+      const longTermMemory = extractLongTermMemory(memoryData);
     const last_3_messages = memory.slice(0, 3).map((m: any) => m.message);
 
     const ruleNudge = generateRuleNudge(metrics, behavior, pattern);
-    const aiContext = buildAIContext(metrics, behavior, pattern, last_3_messages, consistency);
+    const aiContext = buildAIContext(metrics, pattern || "unknown", null, [], last_3_messages, consistency);
 
     // Rate Limiting System (Monetization Check)
     const limit = metrics.plan_type === 'pro' ? 100 : 20;
