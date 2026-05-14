@@ -42,9 +42,24 @@ export function detectBurnoutRisk(recovery_score: number, sleepHours: number, co
   if (consecutiveDaysActive > 5 && recovery_score < 60) signals.push("overtraining_risk");
   if (energyDeficit > 1000) signals.push("severe_calorie_deficit");
 
-  if (signals.length >= 2) burnout_risk = "high";
-  else if (signals.length === 1) burnout_risk = "medium";
+// 🧠 ADHERENCE PREDICTION ENGINE
+export function predictAdherenceRisk(recoveryScore: number, streakCount: number, recentConsistency: string) {
+  let adherence_risk = "low";
+  const consistency_flags = [];
 
-  return { risk_level: burnout_risk, signals };
+  const safeConsistency = String(recentConsistency).toLowerCase();
+  if (safeConsistency === "struggling" || safeConsistency === "needs_improvement") consistency_flags.push("routine_inconsistency");
+  if (recoveryScore < 50) consistency_flags.push("fatigue_driven_dropoff");
+  if (streakCount === 0) consistency_flags.push("streak_collapse_risk");
+
+  if (consistency_flags.length >= 2) adherence_risk = "high";
+  else if (consistency_flags.length === 1) adherence_risk = "medium";
+
+  return { 
+    adherence_risk, 
+    consistency_flags,
+    motivation_stability: adherence_risk === "high" ? "declining" : "stable"
+  };
 }
+
 
