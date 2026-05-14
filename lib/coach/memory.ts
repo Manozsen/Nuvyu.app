@@ -112,12 +112,30 @@ export function detectUserPattern(memory: any[]) {
   if (lowStepsCount >= 3) return "repeating_low_steps";
   if (lowWaterCount >= 3) return "hydration_issue";
 
-  // Memory is ordered DESC: memory[0] is most recent
-  if (memory[0].score > memory[1].score && memory[1].score > memory[2].score) {
-    return "improving_trend";
-  }
+// 5. extractLongTermMemory (LONG-TERM BEHAVIOR MEMORY v3)
+export function extractLongTermMemory(memory: any[]) {
+  if (!memory || memory.length === 0) return { memory_status: "insufficient_data" };
+  
+  let repeated_failures = 0;
+  let recovery_history: string[] = [];
+  let hydration_history: number[] = [];
 
-  return "inconsistent_behavior";
+  memory.forEach(m => {
+    if (m.score < 40) repeated_failures++;
+    if (m.recovery_state) recovery_history.push(m.recovery_state);
+    if (m.water) hydration_history.push(m.water);
+  });
+
+  const avg_water = hydration_history.reduce((a, b) => a + b, 0) / (hydration_history.length || 1);
+  const burnout_cycles = repeated_failures >= 2;
+
+  return {
+    repeated_failure_count: repeated_failures,
+    long_term_hydration_avg: Math.round(avg_water),
+    frequent_recovery_state: recovery_history[0] || "unknown",
+    burnout_cycles_detected: burnout_cycles,
+    memory_status: "active"
+  };
 }
 
 // 4. calculateConsistency
