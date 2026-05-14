@@ -249,7 +249,7 @@ interface AdaptiveAIContext extends AIContext {
       const last_3_messages = (memoryData || []).slice(0, 3).map((m: any) => m.message);
 
     const ruleNudge = generateRuleNudge(metrics, behavior, pattern);
-    const aiContext = buildAIContext(metrics, pattern || "unknown", null, [], last_3_messages, consistency);
+    const aiContext = buildAIContext(metrics, behavior, pattern, last_3_messages, consistency);
 
     // Rate Limiting System (Monetization Check)
     const limit = metrics.plan_type === 'pro' ? 100 : 20;
