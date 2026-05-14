@@ -111,6 +111,12 @@ export function detectUserPattern(memory: any[]) {
 
   if (lowStepsCount >= 3) return "repeating_low_steps";
   if (lowWaterCount >= 3) return "hydration_issue";
+  if (memory[0].score > memory[1].score && memory[1].score > memory[2].score) {
+    return "improving_trend";
+  }
+
+  return "inconsistent_behavior";
+} // <-- CRITICAL FIX: Closes detectUserPattern safely
 
 // 5. extractLongTermMemory (LONG-TERM BEHAVIOR MEMORY v3)
 export function extractLongTermMemory(memory: any[]) {
