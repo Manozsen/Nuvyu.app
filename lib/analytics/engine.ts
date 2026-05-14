@@ -171,23 +171,22 @@ export function buildAIAnalyticsContext(analytics: any) {
   const daysHitSteps = analytics.dailyData.filter((d:any) => d.steps >= 6000).length;
   const adherence_score = Math.round(((daysHitWater + daysHitSteps) / (totalDays * 2)) * 100) || 0;
   
-  let consistency_profile = "stable";
+    let consistency_profile = "stable";
+  if (adherence_score >= 80) consistency_profile = "highly_adherent";
+  else if (adherence_score <= 40) consistency_profile = "struggling";
+
+  const behavior_insights: string[] = [];
+  behavior_insights.push(`adherence_${consistency_profile}`);
+  
+  // 🧠 ADHERENCE PREDICTION ENGINE INTEGRATION
   let adherence_risk = "low";
   let motivation_stability = "stable";
-  let routine_stability = "stable";
-
-  // 🧠 ADHERENCE PREDICTION SYSTEM
-  if (adherence_score >= 80) {
-    consistency_profile = "highly_adherent";
-    routine_stability = "high";
-  } else if (adherence_score <= 40) {
-    consistency_profile = "struggling";
+  if (consistency_profile === "struggling") {
     adherence_risk = "high";
     motivation_stability = "declining";
-    routine_stability = "low";
-  } else if (adherence_score <= 60) {
+    behavior_insights.push("routine_inconsistency", "fatigue_driven_dropoff");
+  } else if (adherence_score < 60) {
     adherence_risk = "medium";
-    motivation_stability = "vulnerable";
   }
 
   const behavior_insights: string[] = [];
