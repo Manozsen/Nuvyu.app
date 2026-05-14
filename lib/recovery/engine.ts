@@ -41,6 +41,11 @@ export function detectBurnoutRisk(recovery_score: number, sleepHours: number, co
   if (recovery_score < 50) signals.push("low_recovery");
   if (consecutiveDaysActive > 5 && recovery_score < 60) signals.push("overtraining_risk");
   if (energyDeficit > 1000) signals.push("severe_calorie_deficit");
+  if (signals.length >= 2) burnout_risk = "high";
+  else if (signals.length === 1) burnout_risk = "medium";
+
+  return { risk_level: burnout_risk, signals };
+} // <-- CRITICAL FIX: Closes detectBurnoutRisk safely
 
 // 🧠 ADHERENCE PREDICTION ENGINE
 export function predictAdherenceRisk(recoveryScore: number, streakCount: number, recentConsistency: string) {
