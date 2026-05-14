@@ -171,11 +171,11 @@ export function buildAIAnalyticsContext(analytics: any) {
   const daysHitSteps = analytics.dailyData.filter((d:any) => d.steps >= 6000).length;
   const adherence_score = Math.round(((daysHitWater + daysHitSteps) / (totalDays * 2)) * 100) || 0;
   
-    let consistency_profile = "stable";
+  let consistency_profile = "stable";
   if (adherence_score >= 80) consistency_profile = "highly_adherent";
   else if (adherence_score <= 40) consistency_profile = "struggling";
 
-  const behavior_insights: string[] = [];
+  // Safely reuse the behavior_insights array already declared above
   behavior_insights.push(`adherence_${consistency_profile}`);
   
   // 🧠 ADHERENCE PREDICTION ENGINE INTEGRATION
