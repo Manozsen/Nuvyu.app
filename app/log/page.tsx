@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Loader2, Droplets, Footprints, Utensils, Dumbbell, CheckCircle2, Moon, Zap, Plus, X, Calendar as CalIcon, Activity } from 'lucide-react';
 import { createBrowserClient } from '@supabase/ssr';
@@ -232,18 +232,21 @@ export default function LogsPage() {
     }
   };
 
-    const filteredFeed = feedLogs.filter(log => {
-    // 🧠 TIMELINE RETENTION ENGINE: 7-day rolling window
-    const logDate = new Date(log.created_at);
-    const daysOld = (new Date().getTime() - logDate.getTime()) / (1000 * 3600 * 24);
-    if (daysOld > 7) return false;
+      // 🧠 LOGS PERFORMANCE ENGINE: Memoized rendering and filtering
+  const filteredFeed = useMemo(() => {
+    return feedLogs.filter(log => {
+      // 🧠 TIMELINE RETENTION ENGINE: 7-day rolling window
+      const logDate = new Date(log.created_at);
+      const daysOld = (new Date().getTime() - logDate.getTime()) / (1000 * 3600 * 24);
+      if (daysOld > 7) return false;
 
-    if (activeTab === 'all') return true;
-    if (activeTab === 'nutrition') return log.log_type === 'food' || log.log_type === 'water';
-    if (activeTab === 'workout') return log.log_type === 'workout' || log.log_type === 'activity' || log.log_type === 'steps';
-    if (activeTab === 'recovery') return log.log_type === 'sleep';
-    return true;
-  });
+      if (activeTab === 'all') return true;
+      if (activeTab === 'nutrition') return log.log_type === 'food' || log.log_type === 'water';
+      if (activeTab === 'workout') return log.log_type === 'workout' || log.log_type === 'activity' || log.log_type === 'steps';
+      if (activeTab === 'recovery') return log.log_type === 'sleep';
+      return true;
+    });
+  }, [feedLogs, activeTab]);
 
   const todayStr = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 
