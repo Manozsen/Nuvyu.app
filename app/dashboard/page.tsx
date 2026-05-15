@@ -773,20 +773,20 @@ interface AdaptiveAIContext extends AIContext {
   );
 }
 
-// RESTORED & SAFE BENTOCARD COMPONENT
+// RESTORED & SAFE BENTOCARD COMPONENT (UX STABILIZATION ENGINE)
 function BentoCard({ icon: Icon, label, value, target, color, delay }: any) {
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay }}
-      className="bg-[#0A0A0A] border border-white/10 rounded-[1.5rem] p-5 flex flex-col justify-between h-32 shadow-xl"
+      className="bg-[#0A0A0A] border border-white/10 rounded-[1.5rem] p-4 sm:p-5 flex flex-col justify-between h-28 sm:h-32 shadow-xl overflow-hidden"
     >
-      <div className="flex items-center gap-2">
-        <Icon size={18} className={color} />
-        <span className="text-white/50 text-[10px] font-bold uppercase tracking-widest">{label}</span>
+      <div className="flex items-center gap-2 truncate">
+        <Icon size={16} className={`shrink-0 ${color}`} />
+        <span className="text-white/50 text-[10px] sm:text-xs font-bold uppercase tracking-wider truncate">{label}</span>
       </div>
-      <div className="flex items-baseline gap-1 mt-4">
-        <span className="text-3xl font-bold">{value}</span>
-        <span className="text-white/40 text-xs font-medium pl-1">{target}</span>
+      <div className="mt-2">
+        <div className="text-xl sm:text-2xl font-black text-white tracking-tight truncate">{value}</div>
+        <div className="text-[10px] sm:text-xs font-medium text-white/40 mt-0.5 truncate">{target}</div>
       </div>
     </motion.div>
   );
