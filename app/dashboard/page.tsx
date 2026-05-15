@@ -254,6 +254,32 @@ interface AdaptiveAIContext extends AIContext {
     const ruleNudge = generateRuleNudge(metrics, behavior, pattern);
     const aiContext = buildAIContext(metrics, behavior, pattern, last_3_messages, consistency);
 
+            const ruleNudge = generateRuleNudge(metrics, behavior, pattern);
+      // Fixed strict arguments to prevent TypeScript inference crashes
+      const aiContext = buildAIContext(metrics, behavior, pattern, last_3_messages, consistency);
+      
+      // 🧠 AI ORCHESTRATION & ADHERENCE PREDICTION ENGINE (Safe Fallbacks)
+      const safeRecScore = recoveryData?.recovery_score ?? 50;
+      const safeStreak = Number(profile?.streak_count) || 0;
+      const { adherence_risk, consistency_flags, motivation_stability, adherence_drop_probability } = predictAdherenceRisk(safeRecScore, safeStreak, consistency);
+      
+      if (aiContext) {
+        aiContext.adherence_risk = adherence_risk;
+        aiContext.consistency_flags = consistency_flags;
+        aiContext.motivation_stability = motivation_stability;
+        aiContext.long_term_memory = longTermMemory;
+        
+        // 🧠 CONTEXTUAL NUDGE DELIVERY ENGINE (Dynamic Prioritization Layer)
+        let primary_coaching_focus = "General Motivation & Consistency";
+        if (metrics.burnout_risk === "high") primary_coaching_focus = "URGENT: Enforce rest and recovery. DO NOT push for high activity.";
+        else if (adherence_risk === "high") primary_coaching_focus = "URGENT: High risk of streak drop. Keep nudge extremely frictionless to rebuild habit.";
+        else if (metrics.today_water < 1500) primary_coaching_focus = "URGENT: Hydration is low. Focus strictly on reminding them to drink water.";
+        else if (metrics.fatigue_risk === "high") primary_coaching_focus = "URGENT: High fatigue detected. Suggest light mobility or sleep.";
+        
+        aiContext.primary_coaching_focus = primary_coaching_focus;
+        aiContext.adherence_drop_probability = adherence_drop_probability;
+      }
+
     // Rate Limiting System (Monetization Check)
     const limit = metrics.plan_type === 'pro' ? 100 : 20;
     const todayDate = new Date().toISOString().split('T')[0];
@@ -454,12 +480,12 @@ interface AdaptiveAIContext extends AIContext {
         console.log("AI limit reached, basic coaching active"); // Metadata flag processed but UI stays untouched
       }
 
-      // --- HABIT ENGINE: Sync streak on dashboard load ---
+       // --- HABIT ENGINE: Sync streak on dashboard load ---
       const habitData = await updateHabit(supabase, user.id, {
         steps_today: totalSteps,
         water_today: totalWater,
         current_score: calculatedScore,
-        adaptation_mode: adaptation_mode
+        adaptation_mode: adaptiveGoals?.adaptation_mode || "maintain"
       }, logsCount > 0);
 
       // Strictly typed & normalized state update
