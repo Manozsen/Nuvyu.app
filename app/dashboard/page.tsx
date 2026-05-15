@@ -15,20 +15,10 @@ import { updateHabit } from '../../lib/habit/engine';
 import { calculateEnergyBalance, getLocalDateString, calculateRecoveryState, detectFatiguePattern } from '../../lib/calories/energyEngine';
 import { DashboardMetrics } from '../../lib/types/dashboard';
 import { detectBurnoutRisk } from '../../lib/recovery/engine';
-import { calculateAdaptiveGoals } from '../../lib/personalization/engine';
+import { calculateAdaptiveGoals, getDynamicGreeting } from '../../lib/personalization/engine';
 import { AIContext } from '../../lib/types/ai';
 import { safeSleepHours, safeSleepQuality, safeRecoveryScore } from '../../lib/utils/sleep';
 import { safeNumber, safeRecoveryState, safeFatigueRisk, safeEnergyStats } from '../../lib/utils/safe';
-
-// 🧠 DYNAMIC GREETING ENGINE
-const getDynamicGreeting = () => {
-  const hour = new Date().getHours();
-  if (hour < 5) return "Up Late";
-  if (hour < 12) return "Good Morning";
-  if (hour < 17) return "Good Afternoon";
-  if (hour < 22) return "Good Evening";
-  return "Good Night";
-};
 
 export default function Dashboard() {
   const router = useRouter();
@@ -588,7 +578,7 @@ interface AdaptiveAIContext extends AIContext {
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}
             className="text-white/50 text-sm font-medium mt-1 capitalize"
           >
-            Good Evening, {userProfile.full_name ? userProfile.full_name.split(' ')[0] : 'Athlete'}.
+            {getDynamicGreeting()}, {userProfile.full_name ? userProfile.full_name.split(' ')[0] : 'Athlete'}.
           </motion.p>
         </div>
         <div className="flex gap-3 items-center">
