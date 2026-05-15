@@ -44,7 +44,10 @@ export function detectBurnoutRisk(recovery_score: number, sleepHours: number, co
   if (signals.length >= 2) burnout_risk = "high";
   else if (signals.length === 1) burnout_risk = "medium";
 
-  return { risk_level: burnout_risk, signals };
+  // 🧠 PREDICTIVE RECOVERY INTELLIGENCE: Burnout Probability
+  const burnout_probability = Math.min(100, signals.length * 30 + (recovery_score < 40 ? 25 : 0));
+
+  return { risk_level: burnout_risk, signals, burnout_probability };
 } // <-- CRITICAL FIX: Closes detectBurnoutRisk safely
 
 // 🧠 ADHERENCE PREDICTION ENGINE
@@ -57,14 +60,21 @@ export function predictAdherenceRisk(recoveryScore: number, streakCount: number,
   if (recoveryScore < 50) consistency_flags.push("fatigue_driven_dropoff");
   if (streakCount === 0) consistency_flags.push("streak_collapse_risk");
 
-  if (consistency_flags.length >= 2) adherence_risk = "high";
+   if (consistency_flags.length >= 2) adherence_risk = "high";
   else if (consistency_flags.length === 1) adherence_risk = "medium";
+
+  // 🧠 PREDICTIVE RECOVERY INTELLIGENCE: Adherence Drop Risk
+  let adherence_drop_probability = 10;
+  if (adherence_risk === "high") adherence_drop_probability = 85;
+  else if (adherence_risk === "medium") adherence_drop_probability = 45;
 
   return { 
     adherence_risk, 
     consistency_flags,
-    motivation_stability: adherence_risk === "high" ? "declining" : "stable"
+    motivation_stability: adherence_risk === "high" ? "declining" : "stable",
+    adherence_drop_probability
   };
 }
+
 
 
