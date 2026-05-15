@@ -251,13 +251,9 @@ interface AdaptiveAIContext extends AIContext {
       const longTermMemory = extractLongTermMemory(memoryData);
       const last_3_messages = (memoryData || []).slice(0, 3).map((m: any) => m.message);
 
-    const ruleNudge = generateRuleNudge(metrics, behavior, pattern);
-    const aiContext = buildAIContext(metrics, behavior, pattern, last_3_messages, consistency);
-
-            const ruleNudge = generateRuleNudge(metrics, behavior, pattern);
-      // Fixed strict arguments to prevent TypeScript inference crashes
+      const ruleNudge = generateRuleNudge(metrics, behavior, pattern);
       const aiContext = buildAIContext(metrics, behavior, pattern, last_3_messages, consistency);
-      
+
       // 🧠 AI ORCHESTRATION & ADHERENCE PREDICTION ENGINE (Safe Fallbacks)
       const safeRecScore = recoveryData?.recovery_score ?? 50;
       const safeStreak = Number(profile?.streak_count) || 0;
