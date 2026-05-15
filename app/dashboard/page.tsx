@@ -222,10 +222,10 @@ interface AdaptiveAIContext extends AIContext {
     };
   };
   
-    // 5. AI COACH (PRIMARY EXPERIENCE)
+      // 5. AI COACH (REAL RUNTIME FOUNDATION)
   const generateAINudge = async (context: any, tone: string, userId: string) => {
     try {
-      const prompt = `Coach tone: ${tone}. User: ${context.age}yo ${context.gender}, Goal: ${context.goal}. Behavior: ${context.behavior_type}. Burnout Risk: ${context.burnout_risk}. Adaptive Mode: ${context.adaptive_mode}. Context: ${JSON.stringify(context)}. Give a 2-line Hinglish motivational nudge. DO NOT be generic. Be highly contextual to their data.`;
+      const prompt = `Coach tone: ${tone}. User: ${context.age}yo ${context.gender}, Goal: ${context.goal}. Behavior: ${context.behavior_type}. Coaching Focus: ${context.primary_coaching_focus}. Context: ${JSON.stringify(context)}. Give a 2-line Hinglish behavioral nudge. Address the Coaching Focus explicitly. DO NOT be generic.`;
       const res = await fetch('/api/ai/coach', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -458,7 +458,8 @@ interface AdaptiveAIContext extends AIContext {
       const habitData = await updateHabit(supabase, user.id, {
         steps_today: totalSteps,
         water_today: totalWater,
-        current_score: calculatedScore
+        current_score: calculatedScore,
+        adaptation_mode: adaptation_mode
       }, logsCount > 0);
 
       // Strictly typed & normalized state update
