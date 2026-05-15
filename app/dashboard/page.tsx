@@ -267,11 +267,14 @@ interface AdaptiveAIContext extends AIContext {
         
         // 🧠 CONTEXTUAL NUDGE DELIVERY ENGINE (Dynamic Prioritization Layer)
         let primary_coaching_focus = "General Motivation & Consistency";
-        if (metrics.burnout_risk === "high") primary_coaching_focus = "URGENT: Enforce rest and recovery. DO NOT push for high activity.";
+        
+        // 🧠 REAL-TIME NUDGE VALIDATION: Protect against empty-state hallucinated praise
+        if (todayLogs.length === 0 && !recoveryData?.sleep_hours) primary_coaching_focus = "ACTIVATION: User has zero logs today. DO NOT praise them. Nudge them nicely to log their first glass of water, meal, or movement.";
+        else if (metrics.burnout_risk === "high") primary_coaching_focus = "URGENT: Enforce rest and recovery. DO NOT push for high activity.";
         else if (adherence_risk === "high") primary_coaching_focus = "URGENT: High risk of streak drop. Keep nudge extremely frictionless to rebuild habit.";
         else if (metrics.today_water < 1500) primary_coaching_focus = "URGENT: Hydration is low. Focus strictly on reminding them to drink water.";
         else if (metrics.fatigue_risk === "high") primary_coaching_focus = "URGENT: High fatigue detected. Suggest light mobility or sleep.";
-        
+
         aiContext.primary_coaching_focus = primary_coaching_focus;
         aiContext.adherence_drop_probability = adherence_drop_probability;
       }
