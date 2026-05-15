@@ -8,8 +8,15 @@ const getSupabase = () => {
   );
 };
 
-// 1. getRewardMessage
-export function getRewardMessage(streak: number) {
+// 1. getRewardMessage (🧠 ADAPTIVE HABIT EVOLUTION)
+export function getRewardMessage(streak: number, adaptation_mode: string = "maintain") {
+  if (adaptation_mode === "recovery_focus") {
+    if (streak >= 7) return "Healing up nicely 🌿";
+    return "Taking it easy to recover 🔋";
+  }
+  if (adaptation_mode === "habit_rebuilding") {
+    return "Building back momentum 🧱";
+  }
   if (streak >= 30) return "Elite consistency 🚀";
   if (streak >= 14) return "Habit lock ho rahi hai";
   if (streak >= 7) return "Discipline strong 💪";
@@ -116,7 +123,7 @@ export async function updateHabit(arg1: any, arg2?: any, arg3?: any, arg4?: bool
         }
     }
 
-    const message = getRewardMessage(streak_count);
+     const message = getRewardMessage(streak_count, metrics?.adaptation_mode);
 
     // 4. Upsert secure record
     await supabase.from('user_habits').upsert({
