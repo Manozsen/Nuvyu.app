@@ -20,6 +20,16 @@ import { AIContext } from '../../lib/types/ai';
 import { safeSleepHours, safeSleepQuality, safeRecoveryScore } from '../../lib/utils/sleep';
 import { safeNumber, safeRecoveryState, safeFatigueRisk, safeEnergyStats } from '../../lib/utils/safe';
 
+// 🧠 DYNAMIC GREETING ENGINE
+const getDynamicGreeting = () => {
+  const hour = new Date().getHours();
+  if (hour < 5) return "Up Late";
+  if (hour < 12) return "Good Morning";
+  if (hour < 17) return "Good Afternoon";
+  if (hour < 22) return "Good Evening";
+  return "Good Night";
+};
+
 export default function Dashboard() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
