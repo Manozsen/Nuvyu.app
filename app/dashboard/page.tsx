@@ -174,7 +174,7 @@ export default function Dashboard() {
     return isMuscle ? `Solid consistency. Recovery aur protein pe focus rakhna.` : `On track! Yeh discipline maintain karna hai.`;
   };
 
-  // 🧠 LOCAL SCHEMA EXTENSION: Safely supports AI Orchestration & Long-Term Memory
+// 🧠 LOCAL SCHEMA EXTENSION: Safely supports Real AI Coach Runtime & Nudge Delivery
 interface AdaptiveAIContext extends AIContext {
   burnout_risk?: string;
   adaptive_mode?: string;
@@ -184,6 +184,9 @@ interface AdaptiveAIContext extends AIContext {
   motivation_stability?: string;
   long_term_memory?: any;
   consistency_flags?: string[];
+  primary_coaching_focus?: string;
+  burnout_probability?: number;
+  adherence_drop_probability?: number;
 }
 
   // 4. AI CONTEXT BUILDER
