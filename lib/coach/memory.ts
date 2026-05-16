@@ -115,21 +115,29 @@ export function detectUserPattern(memory: any[]) {
     return "improving_trend";
   }
 
-  return "inconsistent_behavior";
-} // <-- CRITICAL FIX: Closes detectUserPattern safely
+    return "inconsistent_behavior";
+} 
 
-// 5. extractLongTermMemory (LONG-TERM BEHAVIOR MEMORY v3)
+// 🧠 5. extractLongTermMemory (LONG-TERM BEHAVIOR MEMORY v3 & AI HABIT LOOP ENGINE)
 export function extractLongTermMemory(memory: any[]) {
   if (!memory || memory.length === 0) return { memory_status: "insufficient_data" };
   
   let repeated_failures = 0;
   let recovery_history: string[] = [];
   let hydration_history: number[] = [];
+  let habit_loops: string[] = [];
 
-  memory.forEach(m => {
+  memory.forEach((m, idx) => {
     if (m.score < 40) repeated_failures++;
     if (m.recovery_state) recovery_history.push(m.recovery_state);
     if (m.water) hydration_history.push(m.water);
+    
+    // 🧠 Detect Behavioral Loops across days
+    if (idx < memory.length - 1) {
+      const nextDay = memory[idx + 1];
+      if (m.water < 1500 && nextDay.water < 1500 && !habit_loops.includes('chronic_dehydration_loop')) habit_loops.push('chronic_dehydration_loop');
+      if (m.score < 50 && nextDay.score < 50 && !habit_loops.includes('recovery_collapse_loop')) habit_loops.push('recovery_collapse_loop');
+    }
   });
 
   const avg_water = hydration_history.reduce((a, b) => a + b, 0) / (hydration_history.length || 1);
@@ -140,6 +148,7 @@ export function extractLongTermMemory(memory: any[]) {
     long_term_hydration_avg: Math.round(avg_water),
     frequent_recovery_state: recovery_history[0] || "unknown",
     burnout_cycles_detected: burnout_cycles,
+    habit_loops_detected: habit_loops,
     memory_status: "active"
   };
 }
