@@ -1,10 +1,14 @@
-export function calculateRecoveryScore(sleepHours: number, sleepQuality: string) {
+export function calculateRecoveryScore(sleepHours: number, sleepQuality: string, screenHours: number = 0) {
   let score = 50; // Base score
 
   // Hours logic
   if (sleepHours >= 8) score += 30;
   else if (sleepHours >= 6) score += 15;
   else score -= 20;
+
+  // 🧠 SCREEN RECOVERY INTELLIGENCE (Fatigue Penalty)
+  if (screenHours >= 8) score -= 25;
+  else if (screenHours >= 5) score -= 10;
 
   // Quality logic
   const quality = sleepQuality.toLowerCase();
