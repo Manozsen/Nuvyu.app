@@ -316,6 +316,7 @@ export default function LogsPage() {
              if (log.log_type === 'water') { Icon = Droplets; color = "text-blue-400"; content = `Drank ${safeNumber(log.data?.amount)} ml water`; }
              if (log.log_type === 'steps') { Icon = Footprints; color = "text-[#00FFA3]"; content = `Walked ${safeNumber(log.data?.amount)} steps`; }
              if (log.log_type === 'food') { Icon = Utensils; color = "text-orange-400"; content = `Ate: ${safeString(log.data?.text)}`; }
+             if (log.log_type === 'screen') { Icon = Activity; color = "text-pink-400"; content = `Screen Time: ${safeNumber(log.data?.amount)} hrs`; }
              if (log.log_type === 'sleep') { 
                Icon = Moon; color = "text-indigo-400"; 
                const hrs = log.data?.sleep_hours ?? log.data?.hours ?? log.data?.amount ?? 0;
@@ -462,14 +463,16 @@ export default function LogsPage() {
                 </div>
               )}
               
-              {modalType === 'sleep' && (
+             {(modalType === 'sleep' || modalType === 'screen') && (
                 <div className="space-y-4">
-                  <input type="number" step="0.5" value={amount} onChange={e => setAmount(e.target.value)} placeholder="Hours (e.g. 7.5)" className="w-full bg-black/50 border border-white/10 rounded-2xl p-5 text-xl font-black text-center focus:border-indigo-500 focus:outline-none" autoFocus />
-                  <div className="flex gap-2">
-                    {['poor', 'average', 'good'].map(q => (
-                      <button key={q} onClick={() => setSleepQuality(q)} className={`flex-1 py-3 rounded-xl text-xs font-bold capitalize ${sleepQuality === q ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/50' : 'bg-white/5 text-white/50'}`}>{q}</button>
-                    ))}
-                  </div>
+                  <input type="number" step="0.5" value={amount} onChange={e => setAmount(e.target.value)} placeholder={modalType === 'sleep' ? "Hours (e.g. 7.5)" : "Screen Hours (e.g. 6)"} className={`w-full bg-black/50 border border-white/10 rounded-2xl p-5 text-xl font-black text-center focus:outline-none ${modalType === 'sleep' ? 'focus:border-indigo-500' : 'focus:border-pink-500'}`} autoFocus />
+                  {modalType === 'sleep' && (
+                    <div className="flex gap-2">
+                      {['poor', 'average', 'good'].map(q => (
+                        <button key={q} onClick={() => setSleepQuality(q)} className={`flex-1 py-3 rounded-xl text-xs font-bold capitalize ${sleepQuality === q ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/50' : 'bg-white/5 text-white/50'}`}>{q}</button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
