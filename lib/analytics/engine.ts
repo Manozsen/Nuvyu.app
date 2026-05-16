@@ -184,7 +184,7 @@ export function buildAIAnalyticsContext(analytics: any) {
   let motivation_stability = "stable";
   let routine_stability = "stable";
   
-  if (consistency_profile === "struggling") {
+    if (consistency_profile === "struggling") {
     adherence_risk = "high";
     motivation_stability = "declining";
     routine_stability = "unstable";
@@ -192,7 +192,16 @@ export function buildAIAnalyticsContext(analytics: any) {
   } else if (adherence_score < 60) {
     adherence_risk = "medium";
   }
-
+  
+  // 🧠 MULTI-DAY BEHAVIORAL REASONING
+  if (recentDays.length === 3) {
+    const day1 = recentDays[0].score;
+    const day2 = recentDays[1].score;
+    const day3 = recentDays[2].score;
+    if (day1 > day2 && day2 > day3) behavior_insights.push("multi_day_recovery_collapse");
+    else if (day1 < day2 && day2 < day3) behavior_insights.push("multi_day_recovery_rebound");
+  }
+  
   if (avg_sleep > 0 && avg_sleep < 6) {
     behavior_insights.push("chronic_sleep_debt");
   }
