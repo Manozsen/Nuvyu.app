@@ -36,8 +36,8 @@ export function calculateRecoveryScore(sleepHours: number, sleepQuality: string,
   };
 }
 
-// 🧠 PREDICTIVE RECOVERY SYSTEM
-export function detectBurnoutRisk(recovery_score: number, sleepHours: number, consecutiveDaysActive: number, energyDeficit: number) {
+// 🧠 PREDICTIVE RECOVERY SYSTEM v2
+export function detectBurnoutRisk(recovery_score: number, sleepHours: number, consecutiveDaysActive: number, energyDeficit: number, recentRecoveryScores: number[] = []) {
   let burnout_risk = "low";
   const signals = [];
 
@@ -48,11 +48,23 @@ export function detectBurnoutRisk(recovery_score: number, sleepHours: number, co
   if (signals.length >= 2) burnout_risk = "high";
   else if (signals.length === 1) burnout_risk = "medium";
 
-  // 🧠 PREDICTIVE RECOVERY INTELLIGENCE: Burnout Probability
+  // 🧠 PREDICTIVE RECOVERY INTELLIGENCE
   const burnout_probability = Math.min(100, signals.length * 30 + (recovery_score < 40 ? 25 : 0));
+  
+  // Calculate Recovery Momentum (Positive/Negative Trajectory)
+  let recovery_momentum = "stable";
+  if (recentRecoveryScores.length >= 2) {
+    if (recentRecoveryScores[0] < recentRecoveryScores[1]) recovery_momentum = "declining";
+    if (recentRecoveryScores[0] > recentRecoveryScores[1] + 10) recovery_momentum = "improving";
+  }
 
-  return { risk_level: burnout_risk, signals, burnout_probability };
-} // <-- CRITICAL FIX: Closes detectBurnoutRisk safely
+  return { 
+    risk_level: burnout_risk, 
+    signals, 
+    burnout_probability,
+    recovery_momentum 
+  };
+}
 
 // 🧠 ADHERENCE PREDICTION ENGINE
 export function predictAdherenceRisk(recoveryScore: number, streakCount: number, recentConsistency: string) {
