@@ -265,17 +265,19 @@ interface AdaptiveAIContext extends AIContext {
         aiContext.motivation_stability = motivation_stability;
         aiContext.long_term_memory = longTermMemory;
         
-        // 🧠 CONTEXTUAL NUDGE DELIVERY ENGINE (Dynamic Prioritization Layer)
+        // 🧠 REAL-TIME ADAPTIVE ORCHESTRATION v2 (Dynamic Prioritization Layer)
         let primary_coaching_focus = "General Motivation & Consistency";
+        const hasHabitLoop = longTermMemory?.habit_loops_detected?.length > 0;
         
         // 🧠 REAL-TIME NUDGE VALIDATION: Protect against empty-state hallucinated praise
         if (todayLogs.length === 0 && !recoveryData?.sleep_hours) primary_coaching_focus = "ACTIVATION: User has zero logs today. DO NOT praise them. Nudge them nicely to log their first glass of water, meal, or movement.";
         else if (metrics.energy_balance < -1500) primary_coaching_focus = "URGENT: Severe calorie deficit detected. Warn them that eating too little destroys recovery and muscle. Eat food!";
         else if (metrics.burnout_risk === "high") primary_coaching_focus = "URGENT: Enforce rest and recovery. DO NOT push for high activity.";
         else if (adherence_risk === "high") primary_coaching_focus = "URGENT: High risk of streak drop. Keep nudge extremely frictionless to rebuild habit.";
+        else if (hasHabitLoop) primary_coaching_focus = `PATTERN DETECTED: User is in a ${longTermMemory.habit_loops_detected[0]}. Coach them to break this specific behavioral loop today.`;
         else if (metrics.today_water < 1500) primary_coaching_focus = "URGENT: Hydration is low. Focus strictly on reminding them to drink water.";
         else if (metrics.fatigue_risk === "high") primary_coaching_focus = "URGENT: High fatigue detected. Suggest light mobility or sleep.";
-
+        
         aiContext.primary_coaching_focus = primary_coaching_focus;
         aiContext.adherence_drop_probability = adherence_drop_probability;
       }
@@ -465,8 +467,9 @@ interface AdaptiveAIContext extends AIContext {
         fatigue_risk: detectFatiguePattern(recState, sleepHours, safeNumber(energyStats?.activityBurn), safeNumber(energyStats?.energyBalance))
       } : null;
 
-      // 🧠 BURNOUT & ADAPTIVE GOAL ENGINE EXECUTION
-      const { risk_level: burnoutRisk } = detectBurnoutRisk(computedScore, sleepHours, safeNumber(profile.streak_count), safeNumber(energyStats?.deficit));
+       // 🧠 BURNOUT & ADAPTIVE GOAL ENGINE EXECUTION
+      const recentRecScores = (pastLogs || []).filter(l => l.log_type === 'sleep').slice(0, 3).map(l => l.data?.recovery_score || 50);
+      const { risk_level: burnoutRisk, recovery_momentum } = detectBurnoutRisk(computedScore, sleepHours, safeNumber(profile.streak_count), safeNumber(energyStats?.deficit), recentRecScores);
       const adaptiveGoals = calculateAdaptiveGoals(safeNumber(profile.tdee, 2000), 6000, recState, burnoutRisk);
 
       // EXECUTE FULL ENGINE FLOW (AI Context v2)
