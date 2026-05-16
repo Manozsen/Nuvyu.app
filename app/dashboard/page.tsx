@@ -174,7 +174,7 @@ export default function Dashboard() {
     return isMuscle ? `Solid consistency. Recovery aur protein pe focus rakhna.` : `On track! Yeh discipline maintain karna hai.`;
   };
 
-// 🧠 LOCAL SCHEMA EXTENSION: Safely supports Real AI Coach Runtime & Nudge Delivery
+// 🧠 LOCAL SCHEMA EXTENSION: Safely supports AI Memory Graph & Real AI Coach Runtime
 interface AdaptiveAIContext extends AIContext {
   burnout_risk?: string;
   adaptive_mode?: string;
@@ -187,6 +187,7 @@ interface AdaptiveAIContext extends AIContext {
   primary_coaching_focus?: string;
   burnout_probability?: number;
   adherence_drop_probability?: number;
+  dominant_behavioral_trend?: string;
 }
 
   // 4. AI CONTEXT BUILDER
@@ -265,21 +266,28 @@ interface AdaptiveAIContext extends AIContext {
         aiContext.motivation_stability = motivation_stability;
         aiContext.long_term_memory = longTermMemory;
         
-        // 🧠 REAL-TIME ADAPTIVE ORCHESTRATION v2 (Dynamic Prioritization Layer)
+        // 🧠 RECOVERY-DRIVEN AI ORCHESTRATION v3 (Dynamic Context Prioritization)
         let primary_coaching_focus = "General Motivation & Consistency";
         const hasHabitLoop = longTermMemory?.habit_loops_detected?.length > 0;
+        const memoryTrend = longTermMemory?.dominant_behavioral_trend || "stable";
         
-        // 🧠 REAL-TIME NUDGE VALIDATION: Protect against empty-state hallucinated praise
-        if (todayLogs.length === 0 && !recoveryData?.sleep_hours) primary_coaching_focus = "ACTIVATION: User has zero logs today. DO NOT praise them. Nudge them nicely to log their first glass of water, meal, or movement.";
+        // 🧠 REAL-TIME NUDGE VALIDATION: Protect against empty-state hallucinated praise & prioritize recovery
+        if (todayLogs.length === 0 && !recoveryData?.sleep_hours) {
+          primary_coaching_focus = longTermMemory?.memory_decay_risk === "high_friction" 
+            ? "RE-ACTIVATION: User has been away. Welcome them back warmly without guilt. Suggest logging water."
+            : "ACTIVATION: User has zero logs today. DO NOT praise them. Nudge them nicely to log their first glass of water, meal, or movement.";
+        }
         else if (metrics.energy_balance < -1500) primary_coaching_focus = "URGENT: Severe calorie deficit detected. Warn them that eating too little destroys recovery and muscle. Eat food!";
-        else if (metrics.burnout_risk === "high") primary_coaching_focus = "URGENT: Enforce rest and recovery. DO NOT push for high activity.";
-        else if (adherence_risk === "high") primary_coaching_focus = "URGENT: High risk of streak drop. Keep nudge extremely frictionless to rebuild habit.";
-        else if (hasHabitLoop) primary_coaching_focus = `PATTERN DETECTED: User is in a ${longTermMemory.habit_loops_detected[0]}. Coach them to break this specific behavioral loop today.`;
-        else if (metrics.today_water < 1500) primary_coaching_focus = "URGENT: Hydration is low. Focus strictly on reminding them to drink water.";
-        else if (metrics.fatigue_risk === "high") primary_coaching_focus = "URGENT: High fatigue detected. Suggest light mobility or sleep.";
+        else if (metrics.burnout_risk === "high") primary_coaching_focus = "CRITICAL RECOVERY: Enforce rest and recovery. DO NOT push for high activity. Tell them rest is productive.";
+        else if (adherence_risk === "high") primary_coaching_focus = "FRICTION REDUCTION: High risk of streak drop. Keep nudge extremely easy to execute to rebuild habit momentum.";
+        else if (memoryTrend === "severe_fatigue_clustering") primary_coaching_focus = "PATTERN DETECTED: User is showing multi-day severe fatigue. Focus deeply on prioritizing sleep and hydration tonight.";
+        else if (hasHabitLoop) primary_coaching_focus = `BEHAVIORAL INTERVENTION: User is in a ${longTermMemory.habit_loops_detected[0]}. Coach them specifically to break this behavioral loop today.`;
+        else if (metrics.today_water < 1500) primary_coaching_focus = "HYDRATION PRIORITY: Hydration is low. Focus strictly on reminding them to drink water for recovery.";
+        else if (metrics.fatigue_risk === "high") primary_coaching_focus = "FATIGUE MANAGEMENT: High fatigue detected. Suggest light mobility, stretching, or early sleep.";
         
         aiContext.primary_coaching_focus = primary_coaching_focus;
         aiContext.adherence_drop_probability = adherence_drop_probability;
+        aiContext.dominant_behavioral_trend = memoryTrend;
       }
 
     // Rate Limiting System (Monetization Check)
