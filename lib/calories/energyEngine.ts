@@ -120,9 +120,11 @@ export function calculateRecoveryState(sleepHours: number, sleepQuality: string,
   return 'overtrained';
 }
 
-export function detectFatiguePattern(recoveryState: string, sleepHours: number, activityBurn: number) {
+export function detectFatiguePattern(recoveryState: string, sleepHours: number, activityBurn: number, energyBalance: number = 0) {
   if (sleepHours > 0 && sleepHours < 6 && activityBurn > 800) return 'high_risk';
+  if (energyBalance < -1500) return 'critical_warning';
   if (recoveryState === 'overtrained') return 'critical_warning';
   if (recoveryState === 'fatigued') return 'elevated_risk';
   return 'low_risk';
 }
+
