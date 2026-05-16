@@ -270,6 +270,7 @@ interface AdaptiveAIContext extends AIContext {
         
         // 🧠 REAL-TIME NUDGE VALIDATION: Protect against empty-state hallucinated praise
         if (todayLogs.length === 0 && !recoveryData?.sleep_hours) primary_coaching_focus = "ACTIVATION: User has zero logs today. DO NOT praise them. Nudge them nicely to log their first glass of water, meal, or movement.";
+        else if (metrics.energy_balance < -1500) primary_coaching_focus = "URGENT: Severe calorie deficit detected. Warn them that eating too little destroys recovery and muscle. Eat food!";
         else if (metrics.burnout_risk === "high") primary_coaching_focus = "URGENT: Enforce rest and recovery. DO NOT push for high activity.";
         else if (adherence_risk === "high") primary_coaching_focus = "URGENT: High risk of streak drop. Keep nudge extremely frictionless to rebuild habit.";
         else if (metrics.today_water < 1500) primary_coaching_focus = "URGENT: Hydration is low. Focus strictly on reminding them to drink water.";
@@ -461,7 +462,7 @@ interface AdaptiveAIContext extends AIContext {
         sleep_hours: sleepHours,
         recovery_score: computedScore,
         recovery_state: recState,
-        fatigue_risk: detectFatiguePattern(recState, sleepHours, safeNumber(energyStats?.activityBurn))
+        fatigue_risk: detectFatiguePattern(recState, sleepHours, safeNumber(energyStats?.activityBurn), safeNumber(energyStats?.energyBalance))
       } : null;
 
       // 🧠 BURNOUT & ADAPTIVE GOAL ENGINE EXECUTION
@@ -656,37 +657,37 @@ interface AdaptiveAIContext extends AIContext {
           </div>
 
           {/* 🧠 RETENTION STRIP (Level, Streak, XP) */}
-          <div className="w-full mt-5 flex items-center justify-between border-t border-white/5 pt-4">
-            <div className="flex items-center gap-2.5 text-[10px] font-bold uppercase tracking-widest text-white/70">
+          <div className="w-full mt-5 flex flex-col sm:flex-row sm:items-center justify-between border-t border-white/5 pt-4 gap-3">
+            <div className="flex flex-wrap items-center gap-2 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-white/70 w-full sm:w-auto">
               
-              <span className="text-[#00FFA3] bg-[#00FFA3]/10 px-2 py-1 rounded-md border border-[#00FFA3]/20">
+              <span className="text-[#00FFA3] bg-[#00FFA3]/10 px-2 py-1 rounded-md border border-[#00FFA3]/20 whitespace-nowrap shrink-0">
                 Level {retention.level}
               </span>
               
               {/* 🧠 DASHBOARD INTELLIGENCE v6 (Adaptive Recovery Indicators) */}
               {adaptation_mode === 'recovery_focus' && (
-                <span className="text-red-400 bg-red-500/10 px-2 py-1 rounded-md border border-red-500/20 capitalize flex items-center gap-1">
+                <span className="text-red-400 bg-red-500/10 px-2 py-1 rounded-md border border-red-500/20 capitalize flex items-center gap-1 whitespace-nowrap shrink-0">
                   ⚠️ Recovery Mode
                 </span>
               )}
               
               {((metrics as any).streak_count > 0) && (
                 <>
-                  <span className="w-1 h-1 rounded-full bg-white/20"></span>
-                  <span className="flex items-center gap-1 text-orange-400">
+                  <span className="hidden sm:block w-1 h-1 rounded-full bg-white/20 shrink-0"></span>
+                  <span className="flex items-center gap-1 text-orange-400 whitespace-nowrap shrink-0">
                     <Flame size={12} /> {(metrics as any).streak_count} Day Streak
                   </span>
                 </>
               )}
               
-              <span className="w-1 h-1 rounded-full bg-white/20"></span>
-              <span>+{retention.todayXP} XP Today</span>
+              <span className="hidden sm:block w-1 h-1 rounded-full bg-white/20 shrink-0"></span>
+              <span className="whitespace-nowrap shrink-0">+{retention.todayXP} XP Today</span>
               
             </div>
             
             {/* MICRO DOPAMINE EFFECT */}
             {retention.todayXP > 0 && (
-              <span className="text-[9px] font-bold text-white/40 uppercase tracking-widest text-right">
+              <span className="text-[9px] font-bold text-white/40 uppercase tracking-widest text-left sm:text-right shrink-0">
                 Momentum building 🔥
               </span>
             )}
