@@ -124,8 +124,8 @@ export default function LogsPage() {
     setEditingLogId(null);
   };
 
-  const isFormValid = () => {
-    if (modalType === 'water' || modalType === 'steps' || modalType === 'sleep') return parseFloat(amount) > 0;
+    const isFormValid = () => {
+    if (modalType === 'water' || modalType === 'steps' || modalType === 'sleep' || modalType === 'screen') return parseFloat(amount) > 0;
     if (modalType === 'food') return textInput.trim().length > 2;
     if (modalType === 'workout') return workoutData.exercise.trim().length > 2;
     if (modalType === 'activity') return activityData.type.trim().length > 2 && parseFloat(activityData.duration) > 0;
@@ -147,9 +147,9 @@ export default function LogsPage() {
     setValidationWarning(null);
 
     try {
-            // 1. Prepare Payload (Strictly Typed)
+      // 1. Prepare Payload (Strictly Typed)
       let payloadData: any = {};
-      if (modalType === 'water' || modalType === 'steps') payloadData = { amount: safeNumber(amount) };
+      if (modalType === 'water' || modalType === 'steps' || modalType === 'screen') payloadData = { amount: safeNumber(amount) };
       else if (modalType === 'food') payloadData = { 
         text: safeString(textInput).trim(), meal_type: mealType,
         ai_nutrition_prep: { status: 'pending', sync_ready: true } // 🧠 Phase 5 scalable architecture setup
