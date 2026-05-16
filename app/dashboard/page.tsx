@@ -775,7 +775,7 @@ interface AdaptiveAIContext extends AIContext {
 }
 
 // RESTORED & SAFE BENTOCARD COMPONENT (UX STABILIZATION ENGINE)
-function BentoCard({ icon: Icon, label, value, target, color, delay }: any) {
+const BentoCard = React.memo(function BentoCard({ icon: Icon, label, value, target, color, delay }: any) {
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay }}
@@ -789,6 +789,7 @@ function BentoCard({ icon: Icon, label, value, target, color, delay }: any) {
         <div className="text-xl sm:text-2xl font-black text-white tracking-tight truncate">{value}</div>
         <div className="text-[10px] sm:text-xs font-medium text-white/40 mt-0.5 truncate">{target}</div>
       </div>
-    </motion.div>
+     </motion.div>
   );
-}
+});
+
