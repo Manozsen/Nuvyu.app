@@ -40,8 +40,8 @@ export default function LogsPage() {
   const [feedLogs, setFeedLogs] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'all' | 'nutrition' | 'workout' | 'recovery'>('all');
 
-  // Quick Add Modal State
-  const [modalType, setModalType] = useState<'water' | 'steps' | 'food' | 'workout' | 'sleep' | 'activity' | null>(null);
+    // Quick Add Modal State
+  const [modalType, setModalType] = useState<'water' | 'steps' | 'food' | 'workout' | 'sleep' | 'activity' | 'screen' | null>(null);
   const [successFeedback, setSuccessFeedback] = useState<string | null>(null);
 
   // Input States
@@ -277,6 +277,7 @@ export default function LogsPage() {
             { id: 'food', icon: Utensils, label: 'Food', color: 'text-orange-400', bg: 'bg-orange-500/10 border-orange-500/20' },
             { id: 'workout', icon: Dumbbell, label: 'Workout', color: 'text-purple-400', bg: 'bg-purple-500/10 border-purple-500/20' },
             { id: 'sleep', icon: Moon, label: 'Sleep', color: 'text-indigo-400', bg: 'bg-indigo-500/10 border-indigo-500/20' },
+            { id: 'screen', icon: Activity, label: 'Screen', color: 'text-pink-400', bg: 'bg-pink-500/10 border-pink-500/20' },
             { id: 'activity', icon: Zap, label: 'Activity', color: 'text-yellow-400', bg: 'bg-yellow-500/10 border-yellow-500/20' }
           ].map(btn => (
             <button 
