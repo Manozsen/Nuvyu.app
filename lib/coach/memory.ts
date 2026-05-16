@@ -140,8 +140,22 @@ export function extractLongTermMemory(memory: any[]) {
     }
   });
 
-  const avg_water = hydration_history.reduce((a, b) => a + b, 0) / (hydration_history.length || 1);
+    const avg_water = hydration_history.reduce((a, b) => a + b, 0) / (hydration_history.length || 1);
   const burnout_cycles = repeated_failures >= 2;
+  
+  // 🧠 AI MEMORY GRAPH ENGINE (Multi-Day Behavioral Reasoning)
+  // Calculates the 'Memory Node Relevance' based on severe fatigue clustering
+  let dominant_behavioral_trend = "stable";
+  let memory_decay_risk = "low";
+  if (burnout_cycles && avg_water < 1500) dominant_behavioral_trend = "severe_fatigue_clustering";
+  else if (habit_loops.includes('chronic_dehydration_loop')) dominant_behavioral_trend = "hydration_neglect";
+  else if (habit_loops.includes('recovery_collapse_loop')) dominant_behavioral_trend = "recovery_instability";
+  
+  // Predict memory dropout if they haven't logged recently (mocking decay)
+  if (memory.length > 0) {
+    const lastLogDate = new Date(memory[0].date).getTime();
+    if ((new Date().getTime() - lastLogDate) > (86400000 * 2)) memory_decay_risk = "high_friction"; 
+  }
 
   return {
     repeated_failure_count: repeated_failures,
@@ -149,6 +163,8 @@ export function extractLongTermMemory(memory: any[]) {
     frequent_recovery_state: recovery_history[0] || "unknown",
     burnout_cycles_detected: burnout_cycles,
     habit_loops_detected: habit_loops,
+    dominant_behavioral_trend,
+    memory_decay_risk,
     memory_status: "active"
   };
 }
