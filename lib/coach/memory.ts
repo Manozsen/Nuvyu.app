@@ -143,19 +143,24 @@ export function extractLongTermMemory(memory: any[]) {
     const avg_water = hydration_history.reduce((a, b) => a + b, 0) / (hydration_history.length || 1);
   const burnout_cycles = repeated_failures >= 2;
   
-  // 🧠 AI MEMORY GRAPH ENGINE (Multi-Day Behavioral Reasoning)
+    // 🧠 AI MEMORY GRAPH ENGINE (Multi-Day Behavioral Reasoning)
   // Calculates the 'Memory Node Relevance' based on severe fatigue clustering
   let dominant_behavioral_trend = "stable";
   let memory_decay_risk = "low";
-  if (burnout_cycles && avg_water < 1500) dominant_behavioral_trend = "severe_fatigue_clustering";
-  else if (habit_loops.includes('chronic_dehydration_loop')) dominant_behavioral_trend = "hydration_neglect";
-  else if (habit_loops.includes('recovery_collapse_loop')) dominant_behavioral_trend = "recovery_instability";
+  let memory_importance_score = 0;
+  
+  if (burnout_cycles && avg_water < 1500) { dominant_behavioral_trend = "severe_fatigue_clustering"; memory_importance_score += 40; }
+  else if (habit_loops.includes('chronic_dehydration_loop')) { dominant_behavioral_trend = "hydration_neglect"; memory_importance_score += 25; }
+  else if (habit_loops.includes('recovery_collapse_loop')) { dominant_behavioral_trend = "recovery_instability"; memory_importance_score += 35; }
   
   // Predict memory dropout if they haven't logged recently (mocking decay)
   if (memory.length > 0) {
     const lastLogDate = new Date(memory[0].date).getTime();
-    if ((new Date().getTime() - lastLogDate) > (86400000 * 2)) memory_decay_risk = "high_friction"; 
+    if ((new Date().getTime() - lastLogDate) > (86400000 * 2)) { memory_decay_risk = "high_friction"; memory_importance_score += 30; }
   }
+
+  // Add failure weight to memory significance
+  memory_importance_score = Math.min(100, memory_importance_score + (repeated_failures * 10));
 
   return {
     repeated_failure_count: repeated_failures,
@@ -165,6 +170,7 @@ export function extractLongTermMemory(memory: any[]) {
     habit_loops_detected: habit_loops,
     dominant_behavioral_trend,
     memory_decay_risk,
+    memory_importance_score,
     memory_status: "active"
   };
 }
