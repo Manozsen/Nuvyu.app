@@ -153,7 +153,7 @@ export function extractLongTermMemory(memory: any[]) {
   else if (habit_loops.includes('chronic_dehydration_loop')) { dominant_behavioral_trend = "hydration_neglect"; memory_importance_score += 25; }
   else if (habit_loops.includes('recovery_collapse_loop')) { dominant_behavioral_trend = "recovery_instability"; memory_importance_score += 35; }
   
-  // Predict memory dropout if they haven't logged recently (mocking decay)
+    // Predict memory dropout if they haven't logged recently (mocking decay)
   if (memory.length > 0) {
     const lastLogDate = new Date(memory[0].date).getTime();
     if ((new Date().getTime() - lastLogDate) > (86400000 * 2)) { memory_decay_risk = "high_friction"; memory_importance_score += 30; }
@@ -161,6 +161,13 @@ export function extractLongTermMemory(memory: any[]) {
 
   // Add failure weight to memory significance
   memory_importance_score = Math.min(100, memory_importance_score + (repeated_failures * 10));
+  
+  // 🧠 MEMORY PRIORITY MATRIX (Adaptive Weighting & Decay)
+  // Safely decrease importance if the most recent day was actually highly recovered
+  if (memory.length > 0 && memory[0].score >= 80 && memory_importance_score > 0) {
+    memory_importance_score = Math.max(0, memory_importance_score - 20);
+    if (memory_importance_score < 20) dominant_behavioral_trend = "recovering_trend";
+  }
 
   return {
     repeated_failure_count: repeated_failures,
