@@ -224,11 +224,16 @@ interface AdaptiveAIContext extends AIContext {
     };
   };
   
-     // 5. AI COACH (REAL RUNTIME FOUNDATION - STRUCTURED ORCHESTRATION)
+     // 5. AI COACH (TOKEN-AWARE CONTEXT COMPRESSION LAYER)
   const generateAINudge = async (context: any, tone: string, userId: string) => {
     try {
+      // Safely compress payload by omitting heavy arrays from the final LLM prompt
+      const { long_term_memory, consistency_flags, ...compressedContext } = context;
+      const memorySummary = long_term_memory?.memory_status === 'active' ? { trend: long_term_memory.dominant_behavioral_trend, importance: long_term_memory.memory_importance_score } : 'insufficient_history';
+      
       const orchestrationMeta = context.orchestration ? JSON.stringify(context.orchestration) : `Focus: ${context.primary_coaching_focus}`;
-      const prompt = `System: Act as an adaptive behavioral OS. Tone: ${tone}. User: ${context.age}yo ${context.gender}, Goal: ${context.goal}. Behavior: ${context.behavior_type}.\n\nOrchestration Signals:\n${orchestrationMeta}\n\nContext Summary:\n${JSON.stringify(context)}\n\nGenerate a 2-line Hinglish behavioral nudge honoring the orchestration urgency and friction strategy. DO NOT be generic.`;
+      const prompt = `System: Act as an adaptive behavioral OS. Tone: ${tone}. User: ${context.age}yo ${context.gender}, Goal: ${context.goal}. Behavior: ${context.behavior_type}.\n\nOrchestration Signals:\n${orchestrationMeta}\n\nMemory Profile:\n${JSON.stringify(memorySummary)}\n\nState Snapshot:\n${JSON.stringify(compressedContext)}\n\nGenerate a 2-line Hinglish behavioral nudge honoring the orchestration urgency, mode, and friction strategy. DO NOT be generic. DO NOT mention raw data points awkwardly.`;
+      
       const res = await fetch('/api/ai/coach', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -268,63 +273,53 @@ interface AdaptiveAIContext extends AIContext {
         aiContext.motivation_stability = motivation_stability;
         aiContext.long_term_memory = longTermMemory;
         
-       // 🧠 PROFESSIONAL AI ORCHESTRATION LAYER (Metadata-first, NO hardcoded coaching copy)
+              // 🧠 PROFESSIONAL AI ORCHESTRATION LAYER (Signal Weighting Engine)
         let primary_coaching_focus = "general_consistency";
-        let orchestration = {
-          mode: "general_consistency",
-          urgency: "low",
-          tone: "motivating",
-          friction_strategy: "standard",
-          behavioral_state: "stable"
-        };
-        
         const hasHabitLoop = longTermMemory?.habit_loops_detected?.length > 0;
         const memoryTrend = longTermMemory?.dominant_behavioral_trend || "stable";
-        
-        // 🧠 REAL-TIME ORCHESTRATION SIGNALING: Pure behavioral prioritization
+
+        // 🧠 1. Calculate Sub-System Weights (0.0 to 1.0)
+        let weights = { recovery: 0.0, hydration: 0.0, adherence: 0.0, deficit: 0.0, fatigue: 0.0, memory_friction: 0.0 };
+
+        if (metrics.energy_balance < -1500) weights.deficit = 1.0;
+        if (metrics.burnout_risk === "high") weights.recovery = 0.95;
+        if (adherence_risk === "high") weights.adherence = 0.90;
+        if (memoryTrend === "severe_fatigue_clustering") weights.recovery = Math.max(weights.recovery, 0.85);
+        if (metrics.today_water < 1500) weights.hydration = 0.80;
+        if (metrics.fatigue_risk === "high") weights.fatigue = 0.75;
+        if (longTermMemory?.memory_decay_risk === "high_friction") weights.memory_friction = 0.70;
+
+        // 🧠 2. Determine Dominant Priority Signal
+        let highestWeight = 0;
+        let dominantSignal = "general_consistency";
+        Object.entries(weights).forEach(([key, val]) => {
+          if (val > highestWeight) { highestWeight = val; dominantSignal = key; }
+        });
+
+        // 🧠 3. Construct Token-Aware AI Packet Metadata
+        let orchestration: Record<string, any> = { mode: "general_consistency", urgency: "low", tone: "motivating", friction_strategy: "standard", behavioral_state: "stable" };
+
         if (todayLogs.length === 0 && !recoveryData?.sleep_hours) {
-          if (longTermMemory?.memory_decay_risk === "high_friction") {
-            primary_coaching_focus = "reactivation";
-            orchestration = { mode: "reactivation", urgency: "medium", tone: "warm_welcoming", friction_strategy: "ultra_low", behavioral_state: "returning_from_absence" };
-          } else {
-            primary_coaching_focus = "activation";
-            orchestration = { mode: "activation", urgency: "medium", tone: "encouraging", friction_strategy: "minimal", behavioral_state: "empty_state" };
-          }
+          orchestration = weights.memory_friction > 0
+            ? { mode: "reactivation", urgency: "medium", tone: "warm_welcoming", friction_strategy: "ultra_low", behavioral_state: "returning_from_absence" }
+            : { mode: "activation", urgency: "medium", tone: "encouraging", friction_strategy: "minimal", behavioral_state: "empty_state" };
+          dominantSignal = weights.memory_friction > 0 ? "reactivation" : "activation";
         }
-        else if (metrics.energy_balance < -1500) {
-          primary_coaching_focus = "severe_deficit_warning";
-          orchestration = { mode: "nutritional_priority", urgency: "critical", tone: "direct_warning", friction_strategy: "direct_action", behavioral_state: "starvation_risk" };
-        }
-        else if (metrics.burnout_risk === "high") {
-          primary_coaching_focus = "enforce_recovery";
-          orchestration = { mode: "recovery_priority", urgency: "high", tone: "protective", friction_strategy: "rest_enforcement", behavioral_state: "high_burnout_risk" };
-        }
-        else if (adherence_risk === "high") {
-          primary_coaching_focus = "friction_reduction";
-          orchestration = { mode: "habit_protection", urgency: "high", tone: "supportive", friction_strategy: "minimal_activation", behavioral_state: "adherence_collapse_risk" };
-        }
-        else if (memoryTrend === "severe_fatigue_clustering") {
-          primary_coaching_focus = "multi_day_fatigue_intervention";
-          orchestration = { mode: "recovery_priority", urgency: "high", tone: "empathetic_concern", friction_strategy: "rest_enforcement", behavioral_state: "chronic_fatigue" };
-        }
-        else if (hasHabitLoop) {
-          primary_coaching_focus = "behavioral_loop_intervention";
+        else if (dominantSignal === "deficit") orchestration = { mode: "nutritional_priority", urgency: "critical", tone: "direct_warning", friction_strategy: "direct_action", behavioral_state: "starvation_risk" };
+        else if (dominantSignal === "recovery") orchestration = { mode: "recovery_priority", urgency: "high", tone: "protective", friction_strategy: "rest_enforcement", behavioral_state: "high_burnout_risk" };
+        else if (dominantSignal === "adherence") orchestration = { mode: "habit_protection", urgency: "high", tone: "supportive", friction_strategy: "minimal_activation", behavioral_state: "adherence_collapse_risk" };
+        else if (hasHabitLoop && highestWeight < 0.8) {
           orchestration = { mode: "pattern_interrupt", urgency: "medium", tone: "analytical_coach", friction_strategy: "targeted_action", behavioral_state: longTermMemory.habit_loops_detected[0] };
+          dominantSignal = "behavioral_loop_intervention";
         }
-        else if (metrics.today_water < 1500) {
-          primary_coaching_focus = "hydration_urgency";
-          orchestration = { mode: "hydration_priority", urgency: "high", tone: "urgent_reminder", friction_strategy: "immediate_action", behavioral_state: "dehydrated" };
-        }
-        else if (metrics.fatigue_risk === "high") {
-          primary_coaching_focus = "fatigue_management";
-          orchestration = { mode: "recovery_priority", urgency: "medium", tone: "cautious", friction_strategy: "low_impact", behavioral_state: "acute_fatigue" };
-        }
-        
-        aiContext.primary_coaching_focus = primary_coaching_focus; // Transitional compatibility
-        aiContext.orchestration = orchestration; // True AI runtime metadata
+        else if (dominantSignal === "hydration") orchestration = { mode: "hydration_priority", urgency: "high", tone: "urgent_reminder", friction_strategy: "immediate_action", behavioral_state: "dehydrated" };
+        else if (dominantSignal === "fatigue") orchestration = { mode: "recovery_priority", urgency: "medium", tone: "cautious", friction_strategy: "low_impact", behavioral_state: "acute_fatigue" };
+
+        aiContext.primary_coaching_focus = dominantSignal; // Transitional compatibility
+        aiContext.orchestration = { ...orchestration, weights }; // True AI runtime metadata & Signal Matrix
         aiContext.adherence_drop_probability = adherence_drop_probability;
         aiContext.dominant_behavioral_trend = memoryTrend;
-      }
+}
 
     // Rate Limiting System (Monetization Check)
     const limit = metrics.plan_type === 'pro' ? 100 : 20;
