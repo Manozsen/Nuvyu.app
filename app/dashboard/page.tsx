@@ -188,6 +188,7 @@ interface AdaptiveAIContext extends AIContext {
   burnout_probability?: number;
   adherence_drop_probability?: number;
   dominant_behavioral_trend?: string;
+  orchestration?: Record<string, any>;
 }
 
   // 4. AI CONTEXT BUILDER
@@ -223,10 +224,11 @@ interface AdaptiveAIContext extends AIContext {
     };
   };
   
-      // 5. AI COACH (REAL RUNTIME FOUNDATION)
+     // 5. AI COACH (REAL RUNTIME FOUNDATION - STRUCTURED ORCHESTRATION)
   const generateAINudge = async (context: any, tone: string, userId: string) => {
     try {
-      const prompt = `Coach tone: ${tone}. User: ${context.age}yo ${context.gender}, Goal: ${context.goal}. Behavior: ${context.behavior_type}. Coaching Focus: ${context.primary_coaching_focus}. Context: ${JSON.stringify(context)}. Give a 2-line Hinglish behavioral nudge. Address the Coaching Focus explicitly. DO NOT be generic.`;
+      const orchestrationMeta = context.orchestration ? JSON.stringify(context.orchestration) : `Focus: ${context.primary_coaching_focus}`;
+      const prompt = `System: Act as an adaptive behavioral OS. Tone: ${tone}. User: ${context.age}yo ${context.gender}, Goal: ${context.goal}. Behavior: ${context.behavior_type}.\n\nOrchestration Signals:\n${orchestrationMeta}\n\nContext Summary:\n${JSON.stringify(context)}\n\nGenerate a 2-line Hinglish behavioral nudge honoring the orchestration urgency and friction strategy. DO NOT be generic.`;
       const res = await fetch('/api/ai/coach', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -266,26 +268,60 @@ interface AdaptiveAIContext extends AIContext {
         aiContext.motivation_stability = motivation_stability;
         aiContext.long_term_memory = longTermMemory;
         
-        // 🧠 RECOVERY-DRIVEN AI ORCHESTRATION v3 (Dynamic Context Prioritization)
-        let primary_coaching_focus = "General Motivation & Consistency";
+       // 🧠 PROFESSIONAL AI ORCHESTRATION LAYER (Metadata-first, NO hardcoded coaching copy)
+        let primary_coaching_focus = "general_consistency";
+        let orchestration = {
+          mode: "general_consistency",
+          urgency: "low",
+          tone: "motivating",
+          friction_strategy: "standard",
+          behavioral_state: "stable"
+        };
+        
         const hasHabitLoop = longTermMemory?.habit_loops_detected?.length > 0;
         const memoryTrend = longTermMemory?.dominant_behavioral_trend || "stable";
         
-        // 🧠 REAL-TIME NUDGE VALIDATION: Protect against empty-state hallucinated praise & prioritize recovery
+        // 🧠 REAL-TIME ORCHESTRATION SIGNALING: Pure behavioral prioritization
         if (todayLogs.length === 0 && !recoveryData?.sleep_hours) {
-          primary_coaching_focus = longTermMemory?.memory_decay_risk === "high_friction" 
-            ? "RE-ACTIVATION: User has been away. Welcome them back warmly without guilt. Suggest logging water."
-            : "ACTIVATION: User has zero logs today. DO NOT praise them. Nudge them nicely to log their first glass of water, meal, or movement.";
+          if (longTermMemory?.memory_decay_risk === "high_friction") {
+            primary_coaching_focus = "reactivation";
+            orchestration = { mode: "reactivation", urgency: "medium", tone: "warm_welcoming", friction_strategy: "ultra_low", behavioral_state: "returning_from_absence" };
+          } else {
+            primary_coaching_focus = "activation";
+            orchestration = { mode: "activation", urgency: "medium", tone: "encouraging", friction_strategy: "minimal", behavioral_state: "empty_state" };
+          }
         }
-        else if (metrics.energy_balance < -1500) primary_coaching_focus = "URGENT: Severe calorie deficit detected. Warn them that eating too little destroys recovery and muscle. Eat food!";
-        else if (metrics.burnout_risk === "high") primary_coaching_focus = "CRITICAL RECOVERY: Enforce rest and recovery. DO NOT push for high activity. Tell them rest is productive.";
-        else if (adherence_risk === "high") primary_coaching_focus = "FRICTION REDUCTION: High risk of streak drop. Keep nudge extremely easy to execute to rebuild habit momentum.";
-        else if (memoryTrend === "severe_fatigue_clustering") primary_coaching_focus = "PATTERN DETECTED: User is showing multi-day severe fatigue. Focus deeply on prioritizing sleep and hydration tonight.";
-        else if (hasHabitLoop) primary_coaching_focus = `BEHAVIORAL INTERVENTION: User is in a ${longTermMemory.habit_loops_detected[0]}. Coach them specifically to break this behavioral loop today.`;
-        else if (metrics.today_water < 1500) primary_coaching_focus = "HYDRATION PRIORITY: Hydration is low. Focus strictly on reminding them to drink water for recovery.";
-        else if (metrics.fatigue_risk === "high") primary_coaching_focus = "FATIGUE MANAGEMENT: High fatigue detected. Suggest light mobility, stretching, or early sleep.";
+        else if (metrics.energy_balance < -1500) {
+          primary_coaching_focus = "severe_deficit_warning";
+          orchestration = { mode: "nutritional_priority", urgency: "critical", tone: "direct_warning", friction_strategy: "direct_action", behavioral_state: "starvation_risk" };
+        }
+        else if (metrics.burnout_risk === "high") {
+          primary_coaching_focus = "enforce_recovery";
+          orchestration = { mode: "recovery_priority", urgency: "high", tone: "protective", friction_strategy: "rest_enforcement", behavioral_state: "high_burnout_risk" };
+        }
+        else if (adherence_risk === "high") {
+          primary_coaching_focus = "friction_reduction";
+          orchestration = { mode: "habit_protection", urgency: "high", tone: "supportive", friction_strategy: "minimal_activation", behavioral_state: "adherence_collapse_risk" };
+        }
+        else if (memoryTrend === "severe_fatigue_clustering") {
+          primary_coaching_focus = "multi_day_fatigue_intervention";
+          orchestration = { mode: "recovery_priority", urgency: "high", tone: "empathetic_concern", friction_strategy: "rest_enforcement", behavioral_state: "chronic_fatigue" };
+        }
+        else if (hasHabitLoop) {
+          primary_coaching_focus = "behavioral_loop_intervention";
+          orchestration = { mode: "pattern_interrupt", urgency: "medium", tone: "analytical_coach", friction_strategy: "targeted_action", behavioral_state: longTermMemory.habit_loops_detected[0] };
+        }
+        else if (metrics.today_water < 1500) {
+          primary_coaching_focus = "hydration_urgency";
+          orchestration = { mode: "hydration_priority", urgency: "high", tone: "urgent_reminder", friction_strategy: "immediate_action", behavioral_state: "dehydrated" };
+        }
+        else if (metrics.fatigue_risk === "high") {
+          primary_coaching_focus = "fatigue_management";
+          orchestration = { mode: "recovery_priority", urgency: "medium", tone: "cautious", friction_strategy: "low_impact", behavioral_state: "acute_fatigue" };
+        }
         
-        aiContext.primary_coaching_focus = primary_coaching_focus;
+        aiContext.primary_coaching_focus = primary_coaching_focus; // Transitional compatibility
+        aiContext.orchestration = orchestration; // True AI runtime metadata
         aiContext.adherence_drop_probability = adherence_drop_probability;
         aiContext.dominant_behavioral_trend = memoryTrend;
       }
