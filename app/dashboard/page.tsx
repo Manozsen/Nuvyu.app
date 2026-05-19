@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 // Using relative paths to bypass Next.js alias resolution errors
 import { getRecentMemory, saveCoachMemory, detectUserPattern, calculateConsistency, extractLongTermMemory } from '../../lib/coach/memory';
 import { predictAdherenceRisk } from '../../lib/recovery/engine';
+import { extractBehavioralMemories } from '../../lib/memory/engine';
 import { calculateDailyScore } from '../../lib/score/engine';
 import { calculateRecoveryScore } from '../../lib/recovery/engine';
 import { updateHabit } from '../../lib/habit/engine';
@@ -189,6 +190,7 @@ interface AdaptiveAIContext extends AIContext {
   adherence_drop_probability?: number;
   dominant_behavioral_trend?: string;
   orchestration?: Record<string, any>;
+  behavioral_routines?: any;
 }
 
   // 4. AI CONTEXT BUILDER
@@ -224,15 +226,22 @@ interface AdaptiveAIContext extends AIContext {
     };
   };
   
-     // 5. AI COACH (TOKEN-AWARE CONTEXT COMPRESSION LAYER)
+       // 5. AI COACH (TOKEN-AWARE CONTEXT COMPRESSION & ADAPTIVE ROUTING)
   const generateAINudge = async (context: any, tone: string, userId: string) => {
     try {
-      // Safely compress payload by omitting heavy arrays from the final LLM prompt
-      const { long_term_memory, consistency_flags, ...compressedContext } = context;
-      const memorySummary = long_term_memory?.memory_status === 'active' ? { trend: long_term_memory.dominant_behavioral_trend, importance: long_term_memory.memory_importance_score } : 'insufficient_history';
+      // Safely compress payload by omitting heavy arrays and flattening deep objects for LLM efficiency
+      const { long_term_memory, consistency_flags, behavioral_routines, ...compressedContext } = context;
+      
+      const memorySummary = long_term_memory?.memory_status === 'active' 
+        ? { trend: long_term_memory.dominant_behavioral_trend, importance: long_term_memory.memory_importance_score, loops: long_term_memory.habit_loops_detected } 
+        : 'insufficient_history';
+        
+      const routinesSummary = behavioral_routines?.memory_status === 'tracking_active'
+        ? { night_eating: behavioral_routines.night_eating_frequency, workout_time: behavioral_routines.preferred_workout_hour }
+        : 'learning_routines';
       
       const orchestrationMeta = context.orchestration ? JSON.stringify(context.orchestration) : `Focus: ${context.primary_coaching_focus}`;
-      const prompt = `System: Act as an adaptive behavioral OS. Tone: ${tone}. User: ${context.age}yo ${context.gender}, Goal: ${context.goal}. Behavior: ${context.behavior_type}.\n\nOrchestration Signals:\n${orchestrationMeta}\n\nMemory Profile:\n${JSON.stringify(memorySummary)}\n\nState Snapshot:\n${JSON.stringify(compressedContext)}\n\nGenerate a 2-line Hinglish behavioral nudge honoring the orchestration urgency, mode, and friction strategy. DO NOT be generic. DO NOT mention raw data points awkwardly.`;
+      const prompt = `System: Act as an adaptive behavioral OS. Tone: ${tone}. User: ${context.age}yo ${context.gender}, Goal: ${context.goal}. Behavior: ${context.behavior_type}.\n\nOrchestration Signals:\n${orchestrationMeta}\n\nMemory & Routines Profile:\n${JSON.stringify({ memorySummary, routinesSummary })}\n\nState Snapshot:\n${JSON.stringify(compressedContext)}\n\nGenerate a 2-line Hinglish behavioral nudge strictly honoring the orchestration urgency, mode, and friction strategy. DO NOT be generic. DO NOT mention raw metrics explicitly.`;
       
       const res = await fetch('/api/ai/coach', {
         method: 'POST',
@@ -262,10 +271,11 @@ interface AdaptiveAIContext extends AIContext {
       const ruleNudge = generateRuleNudge(metrics, behavior, pattern);
       const aiContext = buildAIContext(metrics, behavior, pattern, last_3_messages, consistency);
 
-      // 🧠 AI ORCHESTRATION & ADHERENCE PREDICTION ENGINE (Safe Fallbacks)
+      // 🧠 ADAPTIVE SIGNAL FUSION & ADHERENCE PREDICTION (Safe Fallbacks)
       const safeRecScore = recoveryData?.recovery_score ?? 50;
       const safeStreak = Number(profile?.streak_count) || 0;
       const { adherence_risk, consistency_flags, motivation_stability, adherence_drop_probability } = predictAdherenceRisk(safeRecScore, safeStreak, consistency);
+      const behavioralRoutines = extractBehavioralMemories(pastLogs || []);
       
       if (aiContext) {
         aiContext.adherence_risk = adherence_risk;
@@ -273,21 +283,29 @@ interface AdaptiveAIContext extends AIContext {
         aiContext.motivation_stability = motivation_stability;
         aiContext.long_term_memory = longTermMemory;
         
-              // 🧠 PROFESSIONAL AI ORCHESTRATION LAYER (Signal Weighting Engine)
+        // 🧠 PROFESSIONAL AI ORCHESTRATION LAYER (Signal Weighting Engine)
         let primary_coaching_focus = "general_consistency";
         const hasHabitLoop = longTermMemory?.habit_loops_detected?.length > 0;
         const memoryTrend = longTermMemory?.dominant_behavioral_trend || "stable";
 
-        // 🧠 1. Calculate Sub-System Weights (0.0 to 1.0)
+        // 🧠 1. MULTI-FACTOR AI PRIORITY MATRIX (Adaptive Fusion Weighting)
+        // Dynamically calculates non-linear severity based on interacting variables
         let weights = { recovery: 0.0, hydration: 0.0, adherence: 0.0, deficit: 0.0, fatigue: 0.0, memory_friction: 0.0 };
+        
+        const safeDeficit = Math.min(0, metrics.energy_balance);
+        
+        // Base Dynamic Calculations
+        weights.deficit = safeDeficit < -1000 ? Math.min(1.0, Math.abs(safeDeficit) / 2500) : 0;
+        weights.recovery = metrics.burnout_risk === "high" ? 0.95 : Math.max(0, (100 - safeRecScore) / 100);
+        weights.adherence = adherence_risk === "high" ? 0.90 : Math.min(1.0, adherence_drop_probability / 100);
+        weights.hydration = metrics.today_water < 2000 ? Math.min(1.0, (2000 - metrics.today_water) / 2000) : 0;
+        weights.fatigue = metrics.fatigue_risk === "high" ? 0.85 : (metrics.fatigue_risk === "moderate" ? 0.5 : 0.1);
+        weights.memory_friction = longTermMemory?.memory_decay_risk === "high_friction" ? 0.80 : 0;
 
-        if (metrics.energy_balance < -1500) weights.deficit = 1.0;
-        if (metrics.burnout_risk === "high") weights.recovery = 0.95;
-        if (adherence_risk === "high") weights.adherence = 0.90;
-        if (memoryTrend === "severe_fatigue_clustering") weights.recovery = Math.max(weights.recovery, 0.85);
-        if (metrics.today_water < 1500) weights.hydration = 0.80;
-        if (metrics.fatigue_risk === "high") weights.fatigue = 0.75;
-        if (longTermMemory?.memory_decay_risk === "high_friction") weights.memory_friction = 0.70;
+        // Contextual AI Amplifiers (Cross-Signal Interactions)
+        if (memoryTrend === "severe_fatigue_clustering") weights.recovery = Math.min(1.0, weights.recovery + 0.3);
+        if (behavioralRoutines?.night_eating_frequency > 1) weights.fatigue = Math.min(1.0, weights.fatigue + 0.2);
+        if (adherence_drop_probability > 60 && weights.fatigue > 0.6) weights.adherence = Math.min(1.0, weights.adherence + 0.25);
 
         // 🧠 2. Determine Dominant Priority Signal
         let highestWeight = 0;
@@ -319,7 +337,8 @@ interface AdaptiveAIContext extends AIContext {
         aiContext.orchestration = { ...orchestration, weights }; // True AI runtime metadata & Signal Matrix
         aiContext.adherence_drop_probability = adherence_drop_probability;
         aiContext.dominant_behavioral_trend = memoryTrend;
-}
+        aiContext.behavioral_routines = behavioralRoutines;
+      }
 
     // Rate Limiting System (Monetization Check)
     const limit = metrics.plan_type === 'pro' ? 100 : 20;
