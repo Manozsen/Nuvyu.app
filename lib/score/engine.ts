@@ -1,20 +1,39 @@
 export function calculateDailyScore(logs: any[], onboardingScore: number = 50) {
   try {
-    let totalSteps = 0;
+     let totalSteps = 0;
     let totalWater = 0;
     let workoutLogsCount = 0;
+    let validLogsCount = 0;
+    let screenHours = 0;
     let lastLogTime = 0;
-    const logsCount = logs.length;
 
-    // Single pass to aggregate required metrics (No duplicate loops in system)
+    // 🧠 TIMELINE-AWARE SCORING LOGIC (Single Pass Optimization)
     logs.forEach(log => {
-      const val = Number(log.data?.amount) || 0;
-      if (log.log_type === 'steps') totalSteps += val;
-      if (log.log_type === 'water') totalWater += val;
-      if (log.log_type === 'workout') workoutLogsCount += 1;
-      
       const logTime = new Date(log.created_at).getTime();
       if (logTime > lastLogTime) lastLogTime = logTime;
+
+      // 🧠 Fake Activity Resistance & Step Spam Prevention
+      if (log.log_type === 'steps') {
+        const val = Number(log.data?.amount) || 0;
+        if (val > 0 && val < 50000) { totalSteps += val; validLogsCount++; }
+      }
+      else if (log.log_type === 'water') {
+        const val = Number(log.data?.amount) || 0;
+        if (val > 0) { totalWater += val; validLogsCount++; }
+      }
+      else if (log.log_type === 'workout' || log.log_type === 'activity') {
+        // 🧠 Real Movement & Workout Authenticity Scoring
+        const duration = Number(log.data?.duration) || Number(log.data?.duration_mins) || 0;
+        if (duration >= 5) workoutLogsCount += 1; // Strict duration validation blocks fake activity points
+        validLogsCount++;
+      }
+      else if (log.log_type === 'screen') {
+        screenHours += Number(log.data?.amount) || 0;
+        validLogsCount++;
+      }
+      else if (['sleep', 'food'].includes(log.log_type)) {
+        validLogsCount++;
+      }
     });
 
     // 1. Behavior Variables
@@ -26,11 +45,20 @@ export function calculateDailyScore(logs: any[], onboardingScore: number = 50) {
     let inactivity_penalty = 0;
 
     // 2. Score Rules
-    if (effectiveSteps >= 6000) steps_points = 20;
+    if (effectiveSteps >= 10000) steps_points = 25;
+    else if (effectiveSteps >= 6000) steps_points = 20;
     else if (effectiveSteps >= 3000) steps_points = 10;
 
-    if (totalWater >= 2000) water_points = 15;
+    if (totalWater >= 3000) water_points = 20; // 🧠 Hydration Adherence Scoring
+    else if (totalWater >= 2000) water_points = 15;
     else if (totalWater >= 1000) water_points = 8;
+
+    if (workoutLogsCount >= 1) workout_bonus = 15;
+    if (validLogsCount > 0) log_bonus = 5; // Must be authentic valid log
+    
+    // 🧠 Screen Fatigue Penalties
+    if (screenHours >= 8) inactivity_penalty -= 15;
+    else if (screenHours >= 5) inactivity_penalty -= 5;
 
     // Fix 1: Anti-spam Log Bonus (Count UNIQUE log types only)
     const uniqueLogTypes = new Set(logs.map(log => log.log_type));
