@@ -299,7 +299,7 @@ interface AdaptiveAIContext extends AIContext {
         weights.recovery = metrics.burnout_risk === "high" ? 0.95 : Math.max(0, (100 - safeRecScore) / 100);
         weights.adherence = adherence_risk === "high" ? 0.90 : Math.min(1.0, adherence_drop_probability / 100);
         weights.hydration = metrics.today_water < 2000 ? Math.min(1.0, (2000 - metrics.today_water) / 2000) : 0;
-        weights.fatigue = (metrics.fatigue_risk === "high_risk" || metrics.fatigue_risk === "critical_warning") ? 0.85 : (metrics.fatigue_risk === "elevated_risk" ? 0.5 : 0.1);
+        weights.fatigue = metrics.fatigue_risk === "high" ? 0.85 : (metrics.fatigue_risk === "moderate" ? 0.5 : 0.1);
         weights.memory_friction = longTermMemory?.memory_decay_risk === "high_friction" ? 0.80 : 0;
 
         // Contextual AI Amplifiers (Cross-Signal Interactions)
