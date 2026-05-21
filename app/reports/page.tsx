@@ -41,24 +41,35 @@ export default function InsightsPage() {
       const boundaryDate = startDate.toISOString().split('T')[0];
 
       // Strict User Isolation
-            const { data, error } = await supabase
-        .from('score_explanations')
-        .select('date, final_score, breakdown')
-        .eq('user_id', user.id)
-        .gte('date', boundaryDate)
-        .order('date', { ascending: true });
+      // 🧠 PERFORMANCE OPTIMIZATION ENGINE (Parallel Data Fetching)
+const [
+  scoreResponse,
+  sleepResponse,
+  advancedAnalytics
+] = await Promise.all([
+  supabase
+    .from('score_explanations')
+    .select('date, final_score, breakdown')
+    .eq('user_id', user.id)
+    .gte('date', boundaryDate)
+    .order('date', { ascending: true }),
 
-      // Fetch Sleep Trends (Background Data for AI context)
-      const { data: sleepData } = await supabase
-        .from('sleep_logs')
-        .select('date, sleep_hours, recovery_score')
-        .eq('user_id', user.id)
-        .gte('date', boundaryDate)
-        .order('date', { ascending: true });
+  supabase
+    .from('sleep_logs')
+    .select('date, sleep_hours, recovery_score')
+    .eq('user_id', user.id)
+    .gte('date', boundaryDate)
+    .order('date', { ascending: true }),
 
-      // Fetch Advanced Analytics Intelligence
-      const advancedAnalytics = await getAnalytics(supabase, user.id, days);
-      const aiAnalyticsContext = buildAIAnalyticsContext(advancedAnalytics);
+  getAnalytics(supabase, user.id, days)
+]);
+
+const { data, error } = scoreResponse;
+const { data: sleepData } = sleepResponse;
+
+const aiAnalyticsContext = buildAIAnalyticsContext(
+  advancedAnalytics || {}
+);
 
       if (error || !data || data.length === 0) {
         setInsights(null);
