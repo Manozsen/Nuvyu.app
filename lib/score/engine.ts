@@ -1,11 +1,12 @@
 export function calculateDailyScore(logs: any[], onboardingScore: number = 50) {
-  try {
+    try {
      let totalSteps = 0;
     let totalWater = 0;
     let workoutLogsCount = 0;
     let validLogsCount = 0;
     let screenHours = 0;
     let lastLogTime = 0;
+    const logsCount = logs.length;
 
     // 🧠 TIMELINE-AWARE SCORING LOGIC (Single Pass Optimization)
     logs.forEach(log => {
