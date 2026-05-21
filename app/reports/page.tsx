@@ -419,6 +419,58 @@ export default function InsightsPage() {
                  </div>
               </div>
 
+          {/* 🧠 FOOD ANALYTICS VISUALIZATION SYSTEM */}
+          <div className="bg-[#0A0A0A]/90 backdrop-blur-2xl border border-white/10 rounded-[1.5rem] p-5 shadow-xl">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2">
+                <Utensils size={16} className="text-orange-400" />
+                <span className="text-white/50 text-[10px] font-bold uppercase tracking-widest">Nutrition Intelligence</span>
+              </div>
+            </div>
+            <div className="h-40 w-full">
+              {insights.advancedAnalytics?.dailyData?.filter((d:any) => d.calories_in > 0).length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={insights.advancedAnalytics.dailyData}>
+                    <XAxis dataKey="date" stroke="rgba(255,255,255,0.2)" fontSize={10} tickLine={false} axisLine={false} />
+                    <Tooltip contentStyle={{ backgroundColor: '#0A0A0A', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px', fontWeight: 'bold' }} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
+                    <Bar dataKey="calories_in" fill="#f97316" radius={[4, 4, 0, 0]} name="Intake (kcal)" maxBarSize={40} />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-white/30 text-xs font-medium">Log meals to build nutrition trends.</div>
+              )}
+            </div>
+          </div>
+
+          {/* 🧠 SCREEN TIME INTELLIGENCE GRAPH SYSTEM */}
+          <div className="bg-[#0A0A0A]/90 backdrop-blur-2xl border border-white/10 rounded-[1.5rem] p-5 shadow-xl">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2">
+                <Activity size={16} className="text-pink-400" />
+                <span className="text-white/50 text-[10px] font-bold uppercase tracking-widest">Screen Fatigue Trend</span>
+              </div>
+            </div>
+            <div className="h-40 w-full">
+              {insights.advancedAnalytics?.dailyData?.filter((d:any) => d.screen > 0).length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={insights.advancedAnalytics.dailyData}>
+                    <defs>
+                      <linearGradient id="colorScreen" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#f472b6" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#f472b6" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <XAxis dataKey="date" stroke="rgba(255,255,255,0.2)" fontSize={10} tickLine={false} axisLine={false} />
+                    <Tooltip contentStyle={{ backgroundColor: '#0A0A0A', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px', fontWeight: 'bold' }} cursor={{ stroke: 'rgba(255,255,255,0.1)' }} />
+                    <Area type="monotone" dataKey="screen" stroke="#f472b6" strokeWidth={3} fillOpacity={1} fill="url(#colorScreen)" name="Screen Hrs" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-white/30 text-xs font-medium">Log screen time to view fatigue correlation.</div>
+              )}
+            </div>
+          </div>
+
               {/* STREAK & CONSISTENCY TREND */}
               <div className="bg-[#0A0A0A]/90 backdrop-blur-2xl border border-white/10 rounded-[1.5rem] p-5 shadow-xl">
                  <div className="flex items-center justify-between mb-6">
