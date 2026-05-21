@@ -91,13 +91,16 @@ export default function LogsPage() {
         return;
       }
       setUserId(user.id);
-      fetchFeed(user.id);
       
-      // Personalize workout suggestions based on target/goal
-      const { data: profile } = await supabase.from('profiles').select('goal, primary_target').eq('id', user.id).single();
-      if (profile) {
-        setWorkoutSuggestions(generateWorkoutSuggestions(profile));
-      }
+      // 🧠 PERFORMANCE OPTIMIZATION ENGINE (Parallel Timeline Loading)
+      const [feedResponse, profileResponse] = await Promise.all([
+        supabase.from('daily_logs').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(100),
+        supabase.from('profiles').select('goal, primary_target').eq('id', user.id).single()
+      ]);
+      
+      if (feedResponse.data) setFeedLogs(feedResponse.data);
+      if (profileResponse.data) setWorkoutSuggestions(generateWorkoutSuggestions(profileResponse.data));
+      setLoading(false);
     };
     init();
   }, [supabase.auth, router]);
@@ -108,9 +111,8 @@ export default function LogsPage() {
       .select('*')
       .eq('user_id', uid)
       .order('created_at', { ascending: false })
-      .limit(30);
-    setFeedLogs(data || []);
-    setLoading(false);
+      .limit(100);
+    if (data) setFeedLogs(data);
   };
 
     const handleCloseModal = () => {
