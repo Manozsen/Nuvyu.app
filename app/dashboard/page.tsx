@@ -56,13 +56,14 @@ export default function Dashboard() {
   // Retention Engine State
   const [retention, setRetention] = useState({ xp: 0, level: 1, todayXP: 0 });
 
-  const getScoreSummary = (breakdown: any) => {
+    const getScoreSummary = (breakdown: any) => {
     if (!breakdown) return "";
     const parts = [];
     if (breakdown.steps_points) parts.push(`+${breakdown.steps_points} steps`);
     if (breakdown.water_points) parts.push(`+${breakdown.water_points} hydration`);
-    if (breakdown.log_bonus) parts.push(`+${breakdown.log_bonus} logs`);
-    if (breakdown.inactivity_penalty) parts.push(`${breakdown.inactivity_penalty} inactivity`);
+    if (breakdown.workout_bonus) parts.push(`+${breakdown.workout_bonus} activity`); // 🧠 Validated Workout Score
+    if (breakdown.log_bonus) parts.push(`+${breakdown.log_bonus} consistency`);
+    if (breakdown.inactivity_penalty) parts.push(`${breakdown.inactivity_penalty} fatigue`);
     return parts.length > 0 ? parts.join(", ") : "No changes yet";
   };
 
