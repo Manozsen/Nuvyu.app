@@ -280,12 +280,6 @@ interface AdaptiveAIContext extends AIContext {
       const { adherence_risk, consistency_flags, motivation_stability, adherence_drop_probability } = predictAdherenceRisk(safeRecScore, safeStreak, consistency);
       const behavioralRoutines = extractBehavioralMemories(pastLogs || []);
       
-      if (aiContext) {
-        aiContext.adherence_risk = adherence_risk;
-        aiContext.consistency_flags = consistency_flags;
-        aiContext.motivation_stability = motivation_stability;
-        aiContext.long_term_memory = longTermMemory;
-        
        if (aiContext) {
         aiContext.adherence_risk = adherence_risk;
         aiContext.consistency_flags = consistency_flags;
