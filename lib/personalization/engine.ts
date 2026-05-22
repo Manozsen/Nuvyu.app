@@ -45,18 +45,24 @@ export function calculateAdvancedCalories(bmr: number, tdee: number, primaryTarg
   return Math.round(targetCalories);
 }
 
-// 🧠 ADAPTIVE GOAL ENGINE 
-// Intelligently adjusts daily targets based on fatigue and recovery data to prevent burnout.
+// 🧠 ADAPTIVE GOAL ENGINE (Recovery-Aware Progression System)
+// Intelligently adjusts daily targets based on fatigue, drift, and recovery data.
 
-// 🧠 RECOVERY ADAPTATION SYSTEM (Supports optional adherence parameters safely backward compatible)
-export function calculateAdaptiveGoals(baseTDEE: number, baseSteps: number, recovery_state: string, burnout_risk: string, adherence_profile: string = "stable") {
+export function calculateAdaptiveGoals(baseTDEE: number, baseSteps: number, recovery_state: string, burnout_risk: string, adherence_profile: string = "stable", behavioral_drift: string = "stable") {
   let adaptive_tdee = baseTDEE || 2000;
   let adaptive_steps = baseSteps || 6000;
   let recommended_water = 3000;
   let workout_intensity = "moderate";
   let recommendation = "maintain";
 
-  // 🧠 Burnout & Recovery Protection Logic
+  // 🧠 Early-Warning Behavioral Drift Protection
+  if (behavioral_drift === 'multi_system_collapse' || behavioral_drift === 'recovery_deterioration') {
+    adaptive_steps = Math.max(4000, baseSteps * 0.8); // Scale back before full burnout
+    workout_intensity = "low_impact_preferred";
+    recommendation = "drift_correction";
+  }
+
+  // 🧠 Burnout & Severe Recovery Protection Logic
   if (burnout_risk === 'high' || recovery_state === 'poor' || recovery_state === 'overtrained') {
     adaptive_steps = Math.max(3000, baseSteps * 0.7); // Safely reduce movement load by 30%
     adaptive_tdee = baseTDEE + 200; // Slight caloric surplus recommended to aid physical recovery
