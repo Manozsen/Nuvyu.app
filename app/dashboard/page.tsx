@@ -192,6 +192,8 @@ interface AdaptiveAIContext extends AIContext {
   dominant_behavioral_trend?: string;
   orchestration?: Record<string, any>;
   behavioral_routines?: any;
+  momentum_score?: number;
+  behavioral_drift?: string;
 }
 
   // 4. AI CONTEXT BUILDER
