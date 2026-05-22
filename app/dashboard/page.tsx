@@ -229,14 +229,14 @@ interface AdaptiveAIContext extends AIContext {
     };
   };
   
-       // 5. AI COACH (TOKEN-AWARE CONTEXT COMPRESSION & ADAPTIVE ROUTING)
+      // 5. AI COACH (TOKEN-AWARE CONTEXT COMPRESSION & ADAPTIVE ROUTING)
   const generateAINudge = async (context: any, tone: string, userId: string) => {
     try {
       // Safely compress payload by omitting heavy arrays and flattening deep objects for LLM efficiency
-      const { long_term_memory, consistency_flags, behavioral_routines, ...compressedContext } = context;
+      const { long_term_memory, consistency_flags, behavioral_routines, behavioral_drift, ...compressedContext } = context;
       
       const memorySummary = long_term_memory?.memory_status === 'active' 
-        ? { trend: long_term_memory.dominant_behavioral_trend, importance: long_term_memory.memory_importance_score, loops: long_term_memory.habit_loops_detected } 
+        ? { trend: long_term_memory.dominant_behavioral_trend, drift: behavioral_drift, importance: long_term_memory.memory_importance_score, loops: long_term_memory.habit_loops_detected } 
         : 'insufficient_history';
         
       const routinesSummary = behavioral_routines?.memory_status === 'tracking_active'
@@ -286,24 +286,35 @@ interface AdaptiveAIContext extends AIContext {
         aiContext.motivation_stability = motivation_stability;
         aiContext.long_term_memory = longTermMemory;
         
+       if (aiContext) {
+        aiContext.adherence_risk = adherence_risk;
+        aiContext.consistency_flags = consistency_flags;
+        aiContext.motivation_stability = motivation_stability;
+        aiContext.long_term_memory = longTermMemory;
+        
         // 🧠 PROFESSIONAL AI ORCHESTRATION LAYER (Signal Weighting Engine)
         let primary_coaching_focus = "general_consistency";
         const hasHabitLoop = longTermMemory?.habit_loops_detected?.length > 0;
         const memoryTrend = longTermMemory?.dominant_behavioral_trend || "stable";
+        const behavioralDrift = longTermMemory?.behavioral_drift || "stable";
 
         // 🧠 1. MULTI-FACTOR AI PRIORITY MATRIX (Adaptive Fusion Weighting)
-        // Dynamically calculates non-linear severity based on interacting variables
-        let weights = { recovery: 0.0, hydration: 0.0, adherence: 0.0, deficit: 0.0, fatigue: 0.0, memory_friction: 0.0 };
+        let weights = { recovery: 0.0, hydration: 0.0, adherence: 0.0, deficit: 0.0, fatigue: 0.0, memory_friction: 0.0, drift: 0.0 };
         
-        const safeDeficit = Math.min(0, metrics.energy_balance);
+        const safeDeficit = Math.min(0, metrics.energy_balance || 0);
+        const safeFatigue = String(metrics.fatigue_risk || "low").toLowerCase();
         
-        // Base Dynamic Calculations
         weights.deficit = safeDeficit < -1000 ? Math.min(1.0, Math.abs(safeDeficit) / 2500) : 0;
         weights.recovery = metrics.burnout_risk === "high" ? 0.95 : Math.max(0, (100 - safeRecScore) / 100);
-        weights.adherence = adherence_risk === "high" ? 0.90 : Math.min(1.0, adherence_drop_probability / 100);
+        weights.adherence = adherence_risk === "high" ? 0.90 : Math.min(1.0, (adherence_drop_probability || 0) / 100);
         weights.hydration = metrics.today_water < 2000 ? Math.min(1.0, (2000 - metrics.today_water) / 2000) : 0;
-        weights.fatigue = metrics.fatigue_risk === "high" ? 0.85 : (metrics.fatigue_risk === "medium" ? 0.5 : 0.1);
+        
+        // TypeScript/Runtime Safe Fatigue Enum Parsing
+        weights.fatigue = (safeFatigue === "high_risk" || safeFatigue === "critical_warning" || safeFatigue === "high") ? 0.85 : 
+                          (safeFatigue === "elevated_risk" || safeFatigue === "medium" || safeFatigue === "moderate") ? 0.5 : 0.1;
+                          
         weights.memory_friction = longTermMemory?.memory_decay_risk === "high_friction" ? 0.80 : 0;
+        weights.drift = behavioralDrift.includes("collapse") || behavioralDrift.includes("deterioration") ? 0.88 : 0;
 
         // Contextual AI Amplifiers (Cross-Signal Interactions)
         if (memoryTrend === "severe_fatigue_clustering") weights.recovery = Math.min(1.0, weights.recovery + 0.3);
@@ -327,6 +338,7 @@ interface AdaptiveAIContext extends AIContext {
           dominantSignal = weights.memory_friction > 0 ? "reactivation" : "activation";
         }
         else if (dominantSignal === "deficit") orchestration = { mode: "nutritional_priority", urgency: "critical", tone: "direct_warning", friction_strategy: "direct_action", behavioral_state: "starvation_risk" };
+        else if (dominantSignal === "drift") orchestration = { mode: "drift_intervention", urgency: "high", tone: "analytical_coach", friction_strategy: "pattern_interrupt", behavioral_state: behavioralDrift };
         else if (dominantSignal === "recovery") orchestration = { mode: "recovery_priority", urgency: "high", tone: "protective", friction_strategy: "rest_enforcement", behavioral_state: "high_burnout_risk" };
         else if (dominantSignal === "adherence") orchestration = { mode: "habit_protection", urgency: "high", tone: "supportive", friction_strategy: "minimal_activation", behavioral_state: "adherence_collapse_risk" };
         else if (hasHabitLoop && highestWeight < 0.8) {
@@ -340,6 +352,7 @@ interface AdaptiveAIContext extends AIContext {
         aiContext.orchestration = { ...orchestration, weights }; // True AI runtime metadata & Signal Matrix
         aiContext.adherence_drop_probability = adherence_drop_probability;
         aiContext.dominant_behavioral_trend = memoryTrend;
+        aiContext.behavioral_drift = behavioralDrift;
         aiContext.behavioral_routines = behavioralRoutines;
       }
 
@@ -528,10 +541,13 @@ interface AdaptiveAIContext extends AIContext {
         fatigue_risk: detectFatiguePattern(recState, sleepHours, safeNumber(energyStats?.activityBurn), safeNumber(energyStats?.energyBalance))
       } : null;
 
-       // 🧠 BURNOUT & ADAPTIVE GOAL ENGINE EXECUTION
+      // 🧠 BURNOUT & ADAPTIVE GOAL ENGINE EXECUTION
       const recentRecScores = (pastLogs || []).filter(l => l.log_type === 'sleep').slice(0, 3).map(l => l.data?.recovery_score || 50);
       const { risk_level: burnoutRisk, recovery_momentum } = detectBurnoutRisk(computedScore, sleepHours, safeNumber(profile.streak_count), safeNumber(energyStats?.deficit), recentRecScores);
-      const adaptiveGoals = calculateAdaptiveGoals(safeNumber(profile.tdee, 2000), 6000, recState, burnoutRisk);
+      
+      // Plumb behavioral drift safely into adaptive goal generation
+      const behavioralDrift = longTermMemory?.behavioral_drift || "stable";
+      const adaptiveGoals = calculateAdaptiveGoals(safeNumber(profile.tdee, 2000), 6000, recState, burnoutRisk, "stable", behavioralDrift);
 
       // EXECUTE FULL ENGINE FLOW (AI Context v2)
       const nudgeResponse = await generateCoachNudge(user.id, profile, logs || [], pastLogs || [], calculatedScore, recoveryData, safeNumber(energyStats?.energyBalance), burnoutRisk, adaptiveGoals);
