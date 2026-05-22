@@ -153,7 +153,7 @@ export function extractLongTermMemory(memory: any[]) {
   else if (habit_loops.includes('chronic_dehydration_loop')) { dominant_behavioral_trend = "hydration_neglect"; memory_importance_score += 25; }
   else if (habit_loops.includes('recovery_collapse_loop')) { dominant_behavioral_trend = "recovery_instability"; memory_importance_score += 35; }
   
-    // Predict memory dropout if they haven't logged recently (mocking decay)
+      // Predict memory dropout if they haven't logged recently (mocking decay)
   if (memory.length > 0) {
     const lastLogDate = new Date(memory[0].date).getTime();
     if ((new Date().getTime() - lastLogDate) > (86400000 * 2)) { memory_decay_risk = "high_friction"; memory_importance_score += 30; }
@@ -169,6 +169,12 @@ export function extractLongTermMemory(memory: any[]) {
     if (memory_importance_score < 20) dominant_behavioral_trend = "recovering_trend";
   }
 
+  // 🧠 BEHAVIORAL DRIFT DETECTION
+  let behavioral_drift = "stable";
+  if (repeated_failures >= 3 && avg_water < 1500) behavioral_drift = "multi_system_collapse";
+  else if (burnout_cycles) behavioral_drift = "recovery_deterioration";
+  else if (dominant_behavioral_trend === "recovering_trend") behavioral_drift = "positive_momentum";
+
   return {
     repeated_failure_count: repeated_failures,
     long_term_hydration_avg: Math.round(avg_water),
@@ -178,6 +184,7 @@ export function extractLongTermMemory(memory: any[]) {
     dominant_behavioral_trend,
     memory_decay_risk,
     memory_importance_score,
+    behavioral_drift,
     memory_status: "active"
   };
 }
