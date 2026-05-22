@@ -539,8 +539,9 @@ interface AdaptiveAIContext extends AIContext {
       const recentRecScores = (pastLogs || []).filter(l => l.log_type === 'sleep').slice(0, 3).map(l => l.data?.recovery_score || 50);
       const { risk_level: burnoutRisk, recovery_momentum } = detectBurnoutRisk(computedScore, sleepHours, safeNumber(profile.streak_count), safeNumber(energyStats?.deficit), recentRecScores);
       
-      // Plumb behavioral drift safely into adaptive goal generation
-      const behavioralDrift = longTermMemory?.behavioral_drift || "stable";
+      // 🧠 Plumb behavioral drift safely into adaptive goal generation
+      // Extract drift from the processed longTermMemory within the same async scope
+      const behavioralDrift = longTermMemory?.dominant_behavioral_trend || "stable";
       const adaptiveGoals = calculateAdaptiveGoals(safeNumber(profile.tdee, 2000), 6000, recState, burnoutRisk, "stable", behavioralDrift);
 
       // EXECUTE FULL ENGINE FLOW (AI Context v2)
