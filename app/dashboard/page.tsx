@@ -542,11 +542,9 @@ interface AdaptiveAIContext extends AIContext {
       // 🧠 Safe Behavioral Drift Extraction (Scope-safe, Runtime-safe)
       const behavioralMemory = extractBehavioralMemories(pastLogs || []);
 
-      const behavioralDrift =
-       behavioralMemory?.behavioral_drift ||
-       behavioralMemory?.drift_state ||
-      "stable";
-
+      // 🧠 Drift Engine Placeholder (Future-ready, Type-safe)
+      const behavioralDrift = "stable";
+      
       const adaptiveGoals = calculateAdaptiveGoals(
       safeNumber(profile.tdee, 2000),
       6000,
