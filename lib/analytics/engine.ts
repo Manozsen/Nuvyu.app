@@ -202,7 +202,7 @@ export function buildAIAnalyticsContext(analytics: any) {
     else if (day1 < day2 && day2 < day3) behavior_insights.push("multi_day_recovery_rebound");
   }
   
-  if (avg_sleep > 0 && avg_sleep < 6) {
+    if (avg_sleep > 0 && avg_sleep < 6) {
     behavior_insights.push("chronic_sleep_debt");
   }
 
@@ -212,6 +212,25 @@ export function buildAIAnalyticsContext(analytics: any) {
 
   if (recentWater > 0 && recentWater < 1500) {
     behavior_insights.push("hydration_inconsistency");
+  }
+
+  // 🧠 ENERGY-AWARE LIFELOAD INTELLIGENCE
+  const avg_screen = validDays.length > 0 ? validDays.reduce((a:any, b:any) => a + (b.screen || 0), 0) / validDays.length : 0;
+  let cognitive_load = "optimal";
+  let lifeload_score = 100;
+
+  if (avg_sleep < 6) lifeload_score -= 30;
+  if (avg_screen > 6) lifeload_score -= 20;
+  if (avg_screen > 8 && avg_sleep < 5) lifeload_score -= 40; // Critical nervous system overload
+  
+  if (lifeload_score <= 30) {
+    cognitive_load = "severe_overload";
+    behavior_insights.push("nervous_system_overload", "high_screen_fatigue");
+  } else if (lifeload_score <= 60) {
+    cognitive_load = "high_strain";
+    behavior_insights.push("elevated_cognitive_load");
+  } else if (lifeload_score <= 80) {
+    cognitive_load = "moderate_strain";
   }
 
   let streak_risk = "low";
