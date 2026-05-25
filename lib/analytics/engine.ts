@@ -214,8 +214,18 @@ export function buildAIAnalyticsContext(analytics: any) {
     behavior_insights.push("hydration_inconsistency");
   }
 
-  // 🧠 ENERGY-AWARE LIFELOAD INTELLIGENCE
-  const avg_screen = validDays.length > 0 ? validDays.reduce((a:any, b:any) => a + (b.screen || 0), 0) / validDays.length : 0;
+// 🧠 ENERGY-AWARE LIFELOAD INTELLIGENCE
+const validScreen = analytics.dailyData.filter(
+  (d: any) => Number(d.screen || 0) > 0
+);
+
+const avg_screen =
+  validScreen.length > 0
+    ? validScreen.reduce(
+        (a: number, b: any) => a + Number(b.screen || 0),
+        0
+      ) / validScreen.length
+    : 0
   let cognitive_load = "optimal";
   let lifeload_score = 100;
 
