@@ -250,8 +250,11 @@ export function buildAIAnalyticsContext(analytics: any) {
   const aiContext = {
     avg_sleep: Math.round(avg_sleep * 10) / 10,
     avg_steps: Math.round(avg_steps),
+    avg_screen: Math.round(avg_screen * 10) / 10,
     recent_water_avg: Math.round(recentWater),
     streak_risk,
+    cognitive_load,
+    lifeload_score,
     behavior_insights,
     adherence_score,
     consistency_profile,
