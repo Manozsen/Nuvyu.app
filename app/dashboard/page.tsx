@@ -194,6 +194,8 @@ interface AdaptiveAIContext extends AIContext {
   behavioral_routines?: any;
   momentum_score?: number;
   behavioral_drift?: string;
+  cognitive_load?: string;
+  lifeload_score?: number;
 }
 
   // 4. AI CONTEXT BUILDER
@@ -293,15 +295,19 @@ interface AdaptiveAIContext extends AIContext {
         const behavioralDrift = longTermMemory?.behavioral_drift || "stable";
 
         // 🧠 1. MULTI-FACTOR AI PRIORITY MATRIX (Adaptive Fusion Weighting)
-        let weights = { recovery: 0.0, hydration: 0.0, adherence: 0.0, deficit: 0.0, fatigue: 0.0, memory_friction: 0.0, drift: 0.0 };
+        let weights = { recovery: 0.0, hydration: 0.0, adherence: 0.0, deficit: 0.0, fatigue: 0.0, memory_friction: 0.0, drift: 0.0, lifeload: 0.0 };
         
         const safeDeficit = Math.min(0, metrics.energy_balance || 0);
         const safeFatigue = String(metrics.fatigue_risk || "low").toLowerCase();
+        const safeCognitiveLoad = (metrics as any).cognitive_load || "optimal"; // Safely fetched from extended analytics payload
         
         weights.deficit = safeDeficit < -1000 ? Math.min(1.0, Math.abs(safeDeficit) / 2500) : 0;
         weights.recovery = metrics.burnout_risk === "high" ? 0.95 : Math.max(0, (100 - safeRecScore) / 100);
         weights.adherence = adherence_risk === "high" ? 0.90 : Math.min(1.0, (adherence_drop_probability || 0) / 100);
         weights.hydration = metrics.today_water < 2000 ? Math.min(1.0, (2000 - metrics.today_water) / 2000) : 0;
+        
+        // 🧠 Energy-Aware Lifeload Detection
+        weights.lifeload = safeCognitiveLoad === "severe_overload" ? 0.92 : (safeCognitiveLoad === "high_strain" ? 0.70 : 0);
         
         // TypeScript/Runtime Safe Fatigue Enum Parsing
         weights.fatigue = (safeFatigue === "high_risk" || safeFatigue === "critical_warning" || safeFatigue === "high") ? 0.85 : 
@@ -314,6 +320,7 @@ interface AdaptiveAIContext extends AIContext {
         if (memoryTrend === "severe_fatigue_clustering") weights.recovery = Math.min(1.0, weights.recovery + 0.3);
         if (behavioralRoutines?.night_eating_frequency > 1) weights.fatigue = Math.min(1.0, weights.fatigue + 0.2);
         if (adherence_drop_probability > 60 && weights.fatigue > 0.6) weights.adherence = Math.min(1.0, weights.adherence + 0.25);
+        if (weights.lifeload > 0.8 && weights.fatigue > 0.6) weights.recovery = Math.min(1.0, weights.recovery + 0.35); // Critical crash protection
 
         // 🧠 2. Determine Dominant Priority Signal
         let highestWeight = 0;
@@ -331,6 +338,7 @@ interface AdaptiveAIContext extends AIContext {
             : { mode: "activation", urgency: "medium", tone: "encouraging", friction_strategy: "minimal", behavioral_state: "empty_state" };
           dominantSignal = weights.memory_friction > 0 ? "reactivation" : "activation";
         }
+        else if (dominantSignal === "lifeload") orchestration = { mode: "cognitive_decompression", urgency: "critical", tone: "protective_empathy", friction_strategy: "rest_enforcement", behavioral_state: "nervous_system_overload" };
         else if (dominantSignal === "deficit") orchestration = { mode: "nutritional_priority", urgency: "critical", tone: "direct_warning", friction_strategy: "direct_action", behavioral_state: "starvation_risk" };
         else if (dominantSignal === "drift") orchestration = { mode: "drift_intervention", urgency: "high", tone: "analytical_coach", friction_strategy: "pattern_interrupt", behavioral_state: behavioralDrift };
         else if (dominantSignal === "recovery") orchestration = { mode: "recovery_priority", urgency: "high", tone: "protective", friction_strategy: "rest_enforcement", behavioral_state: "high_burnout_risk" };
