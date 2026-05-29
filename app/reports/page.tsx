@@ -15,8 +15,24 @@ export default function InsightsPage() {
   const [loading, setLoading] = useState(true);
   const [range, setRange] = useState<'7d' | '30d'>('7d');
   
-  // Insights State
+    // Insights State
   const [insights, setInsights] = useState<any>(null);
+  
+  // 🧠 RUNTIME HARDENING: Normalization Layers for UI Rendering
+  const safeInsights = useMemo(() => {
+    if (!insights) return null;
+    return {
+      ...insights,
+      advancedAnalytics: {
+        ...insights.advancedAnalytics,
+        dailyData: Array.isArray(insights.advancedAnalytics?.dailyData) ? insights.advancedAnalytics.dailyData : [],
+      },
+      actionable: {
+        ...insights.actionable,
+        actions: Array.isArray(insights.actionable?.actions) ? insights.actionable.actions : ["Log consistently to generate insights."],
+      }
+    };
+  }, [insights]);
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
