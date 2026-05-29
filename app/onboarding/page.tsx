@@ -124,10 +124,10 @@ export default function Onboarding() {
     setLoading(true);
     setSubmitError(null);
 
-    try {
-      const weight = parseFloat(formData.weight) || 0;
-      const height = parseFloat(formData.height) || 0;
-      const age = parseInt(formData.age) || 0;
+      try {
+      const weight = Math.max(20, parseFloat(formData.weight) || 70);
+      const height = Math.max(100, parseFloat(formData.height) || 170);
+      const age = Math.max(12, parseInt(formData.age) || 25);
 
       let calculatedBMR = 0;
       if (formData.gender === 'Female') {
