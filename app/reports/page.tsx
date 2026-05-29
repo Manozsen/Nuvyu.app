@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { LineChart, Line, XAxis, Tooltip, ResponsiveContainer, YAxis, AreaChart, Area, BarChart, Bar, Legend } from 'recharts';
 import { getAnalytics, buildAIAnalyticsContext } from '../../lib/analytics/engine';
+import React, { useEffect, useState, useMemo } from 'react';
 
 export default function InsightsPage() {
   const router = useRouter();
@@ -363,7 +364,7 @@ const aiAnalyticsContext = buildAIAnalyticsContext(
                    <span className="text-[10px] font-bold uppercase tracking-widest text-white/30">{insights?.advancedAnalytics?.stats?.calorieBurnTrend || 'stable'}</span>
                  </div>
                  <div className="h-40 w-full">
-                    {(insights?.advancedAnalytics?.dailyData || []).filter((d:any) => (d?.calorie_burn || 0) > 0).length > 0 ?
+                    {(insights?.advancedAnalytics?.dailyData || []).filter((d:any) => (d?.calorie_burn || 0) > 0).length > 0 ? (
                       <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={insights.advancedAnalytics.dailyData}>
                           <defs>
@@ -396,7 +397,7 @@ const aiAnalyticsContext = buildAIAnalyticsContext(
                   <span className="text-[10px] font-bold uppercase tracking-widest text-white/30">{insights?.advancedAnalytics?.stats?.recoveryTrend || 'stable'}</span>
                  </div>
                  <div className="h-40 w-full">
-                    {(insights?.advancedAnalytics?.dailyData || []).filter((d:any) => (d?.recovery_score || 0) > 0 || (d?.sleep_hours || 0) > 0).length > 0 ?
+                    {(insights?.advancedAnalytics?.dailyData || []).filter((d:any) => (d?.recovery_score || 0) > 0 || (d?.sleep_hours || 0) > 0).length > 0 ? (
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={insights.advancedAnalytics.dailyData}>
                           <XAxis dataKey="date" stroke="rgba(255,255,255,0.2)" fontSize={10} tickLine={false} axisLine={false} />
@@ -422,7 +423,7 @@ const aiAnalyticsContext = buildAIAnalyticsContext(
                   <span className="text-[10px] font-bold uppercase tracking-widest text-white/30">{insights?.advancedAnalytics?.stats?.stepsTrend || 'stable'}</span>
                  </div>
                  <div className="h-40 w-full">
-                    {(insights?.advancedAnalytics?.dailyData || []).filter((d:any) => (d?.steps || 0) > 0).length > 0 ?
+                    {(insights?.advancedAnalytics?.dailyData || []).filter((d:any) => (d?.steps || 0) > 0).length > 0 ? (
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={insights.advancedAnalytics.dailyData}>
                           <XAxis dataKey="date" stroke="rgba(255,255,255,0.2)" fontSize={10} tickLine={false} axisLine={false} />
@@ -446,7 +447,7 @@ const aiAnalyticsContext = buildAIAnalyticsContext(
                   <span className="text-[10px] font-bold uppercase tracking-widest text-white/30">{insights?.advancedAnalytics?.stats?.waterTrend || 'stable'}</span>
                  </div>
                  <div className="h-40 w-full">
-                    {(insights?.advancedAnalytics?.dailyData || []).filter((d:any) => (d?.water || 0) > 0).length > 0 ?
+                    {(insights?.advancedAnalytics?.dailyData || []).filter((d:any) => (d?.water || 0) > 0).length > 0 ? (
                       <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={insights.advancedAnalytics.dailyData}>
                           <defs>
@@ -475,7 +476,7 @@ const aiAnalyticsContext = buildAIAnalyticsContext(
               </div>
             </div>
             <div className="h-40 w-full">
-              {(insights?.advancedAnalytics?.dailyData || []).filter((d:any) => (d?.calories_in || 0) > 0).length > 0 ?
+              {(insights?.advancedAnalytics?.dailyData || []).filter((d:any) => (d?.calories_in || 0) > 0).length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={insights.advancedAnalytics.dailyData}>
                     <XAxis dataKey="date" stroke="rgba(255,255,255,0.2)" fontSize={10} tickLine={false} axisLine={false} />
@@ -498,7 +499,7 @@ const aiAnalyticsContext = buildAIAnalyticsContext(
               </div>
             </div>
               <div className="h-40 w-full">
-               {(insights?.advancedAnalytics?.dailyData || []).filter((d:any) => (d?.screen || 0) > 0).length > 0 ?
+               {(insights?.advancedAnalytics?.dailyData || []).filter((d:any) => (d?.screen || 0) > 0).length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={insights.advancedAnalytics.dailyData}>
                     <defs>
