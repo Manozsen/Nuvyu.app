@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Loader2, Brain, Activity, TrendingUp, TrendingDown, Calendar, Zap, LayoutDashboard, Settings, Plus, BarChart2, AlertTriangle, Flame, Footprints, Droplets, Utensils } from 'lucide-react';
 import { createBrowserClient } from '@supabase/ssr';
@@ -8,7 +8,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { LineChart, Line, XAxis, Tooltip, ResponsiveContainer, YAxis, AreaChart, Area, BarChart, Bar, Legend } from 'recharts';
 import { getAnalytics, buildAIAnalyticsContext } from '../../lib/analytics/engine';
-import React, { useEffect, useState, useMemo } from 'react';
 
 export default function InsightsPage() {
   const router = useRouter();
