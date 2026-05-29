@@ -94,30 +94,33 @@ const aiAnalyticsContext = buildAIAnalyticsContext(
         return;
       }
 
+      // 🧠 SAFE NORMALIZATION LAYER
+      const safeData = Array.isArray(data) ? data : [];
+      const safeSleepData = Array.isArray(sleepData) ? sleepData : [];
+
       // Format Data for Graph
-      const chartData = data.map(d => ({
+      const chartData = safeData.map(d => ({
         date: new Date(d.date).toLocaleDateString('en-US', { weekday: 'short' }),
-        score: d.final_score
+        score: d.final_score || 0
       }));
 
       // 🧠 PART 2: TREND ENGINE
-      const scores = data.map(d => d.final_score);
-      const avg_score = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
-      const highest_score = Math.max(...scores);
-      const lowest_score = Math.min(...scores);
+      const scores = safeData.map(d => d.final_score || 0);
+      const avg_score = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
+      const highest_score = scores.length > 0 ? Math.max(...scores) : 0;
+      const lowest_score = scores.length > 0 ? Math.min(...scores) : 0;
       const score_change = scores.length > 1 ? scores[scores.length - 1] - scores[0] : 0;
-      
-      const variance = scores.reduce((a, b) => a + Math.pow(b - avg_score, 2), 0) / scores.length;
+      const variance = scores.length > 0 ? scores.reduce((a, b) => a + Math.pow(b - avg_score, 2), 0) / scores.length : 0;
       const consistency_score = Math.max(0, Math.round(100 - Math.sqrt(variance) * 2));
 
-            // 🧠 PART 3: BREAKDOWN INTELLIGENCE
+      // 🧠 PART 3: BREAKDOWN INTELLIGENCE
       let total_steps_points = 0;
       let total_water_points = 0;
       let total_penalties = 0;
       let total_log_bonus = 0;
       let total_workout_bonus = 0;
-
-      data.forEach(d => {
+      
+      safeData.forEach(d => {
         total_steps_points += d.breakdown?.steps_points || 0;
         total_water_points += d.breakdown?.water_points || 0;
         total_penalties += d.breakdown?.inactivity_penalty || 0;
@@ -125,7 +128,6 @@ const aiAnalyticsContext = buildAIAnalyticsContext(
         total_workout_bonus += d.breakdown?.workout_bonus || 0;
       });
 
-      // Synchronize with Central Score Engine breakdown structure
       const factors: Record<string, number> = { 
         Steps: total_steps_points, 
         Water: total_water_points, 
@@ -133,7 +135,7 @@ const aiAnalyticsContext = buildAIAnalyticsContext(
         Workouts: total_workout_bonus
       };
       
-      const biggest_positive_factor = Object.keys(factors).reduce((a, b) => factors[a] > factors[b] ? a : b);
+      const biggest_positive_factor = Object.keys(factors).reduce((a, b) => factors[a] > factors[b] ? a : b, 'Consistency');
       const biggest_negative_factor = total_penalties < -20 ? 'Inactivity' : 'None';
       const dominant_behavior = factors[biggest_positive_factor] > (days * 10) ? `${biggest_positive_factor} Strong` : 'Needs Focus';
 
@@ -161,49 +163,67 @@ const aiAnalyticsContext = buildAIAnalyticsContext(
         summary = "Progress stable hai. Consistency is key, daily goals hit karte raho.";
       }
 
-     // ACTIONABLE INSIGHTS ENGINE
+      // ACTIONABLE INSIGHTS ENGINE
       const generateWhyExplanation = (latestBreakdown: any) => {
-        if (!latestBreakdown) return "Data is still syncing.";
+        if (!latestBreakdown || Object.keys(latestBreakdown).length === 0) return "Data is still syncing.";
         let exp = [];
         if ((latestBreakdown.steps_points || 0) < 20) exp.push("Full step bonus was not applied.");
         if ((latestBreakdown.water_points || 0) < 15) exp.push("Optimal hydration score not reached.");
         if ((latestBreakdown.inactivity_penalty || 0) < 0) exp.push("Inactivity penalty reduced your score.");
         return exp.length > 0 ? exp.join(" ") : "Perfect score! All daily targets achieved.";
       };
-
+      
       const generateNextActions = (latestBreakdown: any) => {
-        if (!latestBreakdown) return ["Log activity to generate actions."];
+        if (!latestBreakdown || Object.keys(latestBreakdown).length === 0) return ["Log activity to generate actions."];
         let actions = [];
         if ((latestBreakdown.steps_points || 0) < 20) actions.push("Walk more to maximize step bonus (+10 to +20 pts).");
         if ((latestBreakdown.water_points || 0) < 15) actions.push("Drink water to reach the 2000ml target (+8 to +15 pts).");
         if (actions.length === 0) actions.push("Maintain current activity momentum.");
         return actions;
       };
-
+      
       const detectMissedOpportunities = (latestBreakdown: any) => {
-        if (!latestBreakdown) return null;
+        if (!latestBreakdown || Object.keys(latestBreakdown).length === 0) return null;
         if (latestBreakdown.steps_points === 10) return "You were close to the 6000 steps maximum bonus!";
         if (latestBreakdown.water_points === 8) return "You almost hit optimal hydration (2000ml)!";
         return null;
       };
-
-      const latest_bd = data[data.length - 1]?.breakdown || {};
+      
+      const latest_bd = safeData.length > 0 ? (safeData[safeData.length - 1]?.breakdown || {}) : {};
 
       setInsights({
-        trend: { avg_score, highest_score, lowest_score, score_change, consistency_score },
-        breakdown: { biggest_positive_factor, biggest_negative_factor, dominant_behavior },
-        summary,
-        patterns: { streak_days, drop_pattern, plateau },
+        trend: { 
+          avg_score: avg_score || 0, 
+          highest_score: highest_score || 0, 
+          lowest_score: lowest_score || 0, 
+          score_change: score_change || 0, 
+          consistency_score: consistency_score || 0 
+        },
+        breakdown: { 
+          biggest_positive_factor: biggest_positive_factor || 'None', 
+          biggest_negative_factor: biggest_negative_factor || 'None', 
+          dominant_behavior: dominant_behavior || 'stable' 
+        },
+        summary: summary || "Progress tracking is active.",
+        patterns: { 
+          streak_days: streak_days || 0, 
+          drop_pattern: !!drop_pattern, 
+          plateau: !!plateau 
+        },
         latest_breakdown: latest_bd,
         actionable: {
           why: generateWhyExplanation(latest_bd),
           actions: generateNextActions(latest_bd),
           missed: detectMissedOpportunities(latest_bd)
         },
-           chartData,
-        sleepTrends: sleepData || [],
-        advancedAnalytics,
-        aiAnalyticsContext
+        chartData: chartData || [],
+        sleepTrends: safeSleepData,
+        advancedAnalytics: {
+          ...advancedAnalytics,
+          dailyData: Array.isArray(advancedAnalytics?.dailyData) ? advancedAnalytics.dailyData : [],
+          stats: advancedAnalytics?.stats || {}
+        },
+        aiAnalyticsContext: aiAnalyticsContext || {}
       });
 
       setLoading(false);
@@ -215,13 +235,13 @@ const aiAnalyticsContext = buildAIAnalyticsContext(
 
   if (!mounted) return null;
 
-  // Custom Recharts Tooltip styled for Cyber-Zen
+    // Custom Recharts Tooltip styled for Cyber-Zen
   const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
+    if (active && Array.isArray(payload) && payload.length > 0 && payload[0]) {
       return (
         <div className="bg-[#0A0A0A]/90 backdrop-blur-md border border-white/10 rounded-xl p-3 shadow-xl">
-          <p className="text-white/50 text-[10px] uppercase font-bold tracking-widest mb-1">{label}</p>
-          <p className="text-[#00FFA3] font-black text-lg">{payload[0].value} pts</p>
+          <p className="text-white/50 text-[10px] uppercase font-bold tracking-widest mb-1">{label || 'Metric'}</p>
+          <p className="text-[#00FFA3] font-black text-lg">{payload[0].value || 0}</p>
         </div>
       );
     }
@@ -340,10 +360,10 @@ const aiAnalyticsContext = buildAIAnalyticsContext(
                       <Flame size={16} className="text-orange-500" />
                       <span className="text-white/50 text-[10px] font-bold uppercase tracking-widest">Energy Balance</span>
                     </div>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-white/30">{insights.advancedAnalytics?.stats?.calorieBurnTrend || 'stable'}</span>
+                   <span className="text-[10px] font-bold uppercase tracking-widest text-white/30">{insights?.advancedAnalytics?.stats?.calorieBurnTrend || 'stable'}</span>
                  </div>
                  <div className="h-40 w-full">
-                    {insights.advancedAnalytics?.dailyData?.filter((d:any) => d.calorie_burn > 0).length > 0 ? (
+                    {(insights?.advancedAnalytics?.dailyData || []).filter((d:any) => (d?.calorie_burn || 0) > 0).length > 0 ?
                       <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={insights.advancedAnalytics.dailyData}>
                           <defs>
@@ -373,10 +393,10 @@ const aiAnalyticsContext = buildAIAnalyticsContext(
                       <Activity size={16} className="text-indigo-400" />
                       <span className="text-white/50 text-[10px] font-bold uppercase tracking-widest">Recovery & Sleep</span>
                     </div>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-white/30">{insights.advancedAnalytics?.stats?.recoveryTrend || 'stable'}</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-white/30">{insights?.advancedAnalytics?.stats?.recoveryTrend || 'stable'}</span>
                  </div>
                  <div className="h-40 w-full">
-                    {insights.advancedAnalytics?.dailyData?.filter((d:any) => d.recovery_score > 0 || d.sleep_hours > 0).length > 0 ? (
+                    {(insights?.advancedAnalytics?.dailyData || []).filter((d:any) => (d?.recovery_score || 0) > 0 || (d?.sleep_hours || 0) > 0).length > 0 ?
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={insights.advancedAnalytics.dailyData}>
                           <XAxis dataKey="date" stroke="rgba(255,255,255,0.2)" fontSize={10} tickLine={false} axisLine={false} />
@@ -399,10 +419,10 @@ const aiAnalyticsContext = buildAIAnalyticsContext(
                       <Footprints size={16} className="text-[#00FFA3]" />
                       <span className="text-white/50 text-[10px] font-bold uppercase tracking-widest">Movement Pattern</span>
                     </div>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-white/30">{insights.advancedAnalytics?.stats?.stepsTrend || 'stable'}</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-white/30">{insights?.advancedAnalytics?.stats?.stepsTrend || 'stable'}</span>
                  </div>
                  <div className="h-40 w-full">
-                    {insights.advancedAnalytics?.dailyData?.filter((d:any) => d.steps > 0).length > 0 ? (
+                    {(insights?.advancedAnalytics?.dailyData || []).filter((d:any) => (d?.steps || 0) > 0).length > 0 ?
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={insights.advancedAnalytics.dailyData}>
                           <XAxis dataKey="date" stroke="rgba(255,255,255,0.2)" fontSize={10} tickLine={false} axisLine={false} />
@@ -423,10 +443,10 @@ const aiAnalyticsContext = buildAIAnalyticsContext(
                       <Droplets size={16} className="text-blue-400" />
                       <span className="text-white/50 text-[10px] font-bold uppercase tracking-widest">Hydration Consistency</span>
                     </div>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-white/30">{insights.advancedAnalytics?.stats?.waterTrend || 'stable'}</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-white/30">{insights?.advancedAnalytics?.stats?.waterTrend || 'stable'}</span>
                  </div>
                  <div className="h-40 w-full">
-                    {insights.advancedAnalytics?.dailyData?.filter((d:any) => d.water > 0).length > 0 ? (
+                    {(insights?.advancedAnalytics?.dailyData || []).filter((d:any) => (d?.water || 0) > 0).length > 0 ?
                       <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={insights.advancedAnalytics.dailyData}>
                           <defs>
@@ -455,7 +475,7 @@ const aiAnalyticsContext = buildAIAnalyticsContext(
               </div>
             </div>
             <div className="h-40 w-full">
-              {insights.advancedAnalytics?.dailyData?.filter((d:any) => d.calories_in > 0).length > 0 ? (
+              {(insights?.advancedAnalytics?.dailyData || []).filter((d:any) => (d?.calories_in || 0) > 0).length > 0 ?
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={insights.advancedAnalytics.dailyData}>
                     <XAxis dataKey="date" stroke="rgba(255,255,255,0.2)" fontSize={10} tickLine={false} axisLine={false} />
@@ -477,8 +497,8 @@ const aiAnalyticsContext = buildAIAnalyticsContext(
                 <span className="text-white/50 text-[10px] font-bold uppercase tracking-widest">Screen Fatigue Trend</span>
               </div>
             </div>
-            <div className="h-40 w-full">
-              {insights.advancedAnalytics?.dailyData?.filter((d:any) => d.screen > 0).length > 0 ? (
+              <div className="h-40 w-full">
+               {(insights?.advancedAnalytics?.dailyData || []).filter((d:any) => (d?.screen || 0) > 0).length > 0 ?
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={insights.advancedAnalytics.dailyData}>
                     <defs>
