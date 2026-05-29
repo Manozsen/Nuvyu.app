@@ -587,21 +587,22 @@ interface AdaptiveAIContext extends AIContext {
         steps: totalSteps,
         water: totalWater,
         logsCount: logsCount,
-        energy_burned: energyBurned,
-        energy_intake: safeEnergyIntake,
-        energy_stats: energyStats ? safeEnergyStats(energyStats) : null,
-        energy_balance: safeNumber(energyStats?.energyBalance),
-        sleep_hours: safeNumber(recoveryData?.sleep_hours),
-        recovery_score: safeNumber(recoveryData?.recovery_score),
-        recovery_state: safeRecoveryState(recoveryData?.recovery_state),
-        fatigue_risk: safeFatigueRisk(recoveryData?.fatigue_risk),
-        score_summary: getScoreSummary(explData?.breakdown || scoreBreakdown),
-        streak_count: safeNumber(habitData.streak_count),
-        best_streak: safeNumber(habitData.best_streak),
-        reward_message: String(habitData.reward_message || ""),
-        xp: safeNumber(profile.xp),
-        level: safeNumber(profile.level, 1)
-      });
+        energy_burned: energyStats?.totalBurn || 0,
+        energy_intake: energyStats?.intakeCalories || 0,
+        energy_stats: energyStats,
+        energy_balance: energyStats?.energyBalance || 0,
+        sleep_hours: sleepHours,
+        recovery_score: computedScore,
+        recovery_state: recState as any,
+        fatigue_risk: detectFatiguePattern(recState, sleepHours, safeNumber(energyStats?.activityBurn), safeNumber(energyStats?.energyBalance)) as any,
+        score_summary: getScoreSummary(scoreBreakdown),
+        streak_count: safeNumber(habitData?.streak_count),
+        best_streak: safeNumber(habitData?.best_streak),
+        reward_message: String(habitData?.reward_message || ""),
+        xp: safeNumber(profile?.xp),
+        level: safeNumber(profile?.level, 1),
+        burnout_risk: burnoutRisk
+      } as any);
 
             // 🧠 PART 3 & 8: CALCULATE TODAY XP (No extra DB calls, reusing existing data)
       const todayXP = (() => {
