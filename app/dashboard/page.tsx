@@ -290,7 +290,7 @@ interface AdaptiveAIContext extends AIContext {
         
         // 🧠 PROFESSIONAL AI ORCHESTRATION LAYER (Signal Weighting Engine)
         let primary_coaching_focus = "general_consistency";
-        const hasHabitLoop = longTermMemory?.habit_loops_detected?.length > 0;
+        const hasHabitLoop = (longTermMemory?.habit_loops_detected?.length || 0) > 0;
         const memoryTrend = longTermMemory?.dominant_behavioral_trend || "stable";
         const behavioralDrift = longTermMemory?.behavioral_drift || "stable";
 
@@ -319,7 +319,7 @@ interface AdaptiveAIContext extends AIContext {
         // Contextual AI Amplifiers (Cross-Signal Interactions)
         if (memoryTrend === "severe_fatigue_clustering") weights.recovery = Math.min(1.0, weights.recovery + 0.3);
         if (behavioralRoutines?.night_eating_frequency > 1) weights.fatigue = Math.min(1.0, weights.fatigue + 0.2);
-        if (adherence_drop_probability > 60 && weights.fatigue > 0.6) weights.adherence = Math.min(1.0, weights.adherence + 0.25);
+        if ((adherence_drop_probability || 0) > 60 && weights.fatigue > 0.6) weights.adherence = Math.min(1.0, weights.adherence + 0.25);
         if (weights.lifeload > 0.8 && weights.fatigue > 0.6) weights.recovery = Math.min(1.0, weights.recovery + 0.35); // Critical crash protection
 
         // 🧠 2. Determine Dominant Priority Signal
@@ -344,7 +344,7 @@ interface AdaptiveAIContext extends AIContext {
         else if (dominantSignal === "recovery") orchestration = { mode: "recovery_priority", urgency: "high", tone: "protective", friction_strategy: "rest_enforcement", behavioral_state: "high_burnout_risk" };
         else if (dominantSignal === "adherence") orchestration = { mode: "habit_protection", urgency: "high", tone: "supportive", friction_strategy: "minimal_activation", behavioral_state: "adherence_collapse_risk" };
         else if (hasHabitLoop && highestWeight < 0.8) {
-          orchestration = { mode: "pattern_interrupt", urgency: "medium", tone: "analytical_coach", friction_strategy: "targeted_action", behavioral_state: longTermMemory.habit_loops_detected[0] };
+          orchestration = { mode: "pattern_interrupt", urgency: "medium", tone: "analytical_coach", friction_strategy: "targeted_action", behavioral_state: longTermMemory?.habit_loops_detected?.[0] || "pattern_interrupt" };
           dominantSignal = "behavioral_loop_intervention";
         }
         else if (dominantSignal === "hydration") orchestration = { mode: "hydration_priority", urgency: "high", tone: "urgent_reminder", friction_strategy: "immediate_action", behavioral_state: "dehydrated" };
@@ -646,10 +646,10 @@ interface AdaptiveAIContext extends AIContext {
 
    if (!mounted || !userProfile) return null;
 
-    // 🧠 ADAPTIVE BEHAVIOR OS: Dynamically adjust UI targets based on recovery & adherence
+  // 🧠 ADAPTIVE BEHAVIOR OS: Dynamically adjust UI targets based on recovery & adherence
   const baseTDEE = userProfile.target_calories || userProfile.tdee || 2000;
-  const { risk_level: currentBurnoutRisk } = detectBurnoutRisk(metrics.recovery_score, metrics.sleep_hours, metrics.streak_count, Math.abs(Math.min(0, metrics.energy_balance)));
-  const { recommended_calories: targetCalories, recommended_steps: targetSteps, recommended_water: targetWater, adaptation_mode } = calculateAdaptiveGoals(baseTDEE, 6000, metrics.recovery_state, currentBurnoutRisk);
+  const { risk_level: currentBurnoutRisk } = detectBurnoutRisk(metrics.recovery_score, metrics.sleep_hours, metrics.streak_count, Math.abs(Math.min(0, metrics.energy_balance)), []);
+  const { recommended_calories: targetCalories, recommended_steps: targetSteps, recommended_water: targetWater, adaptation_mode } = calculateAdaptiveGoals(baseTDEE, 6000, metrics.recovery_state, currentBurnoutRisk, "stable", "stable");
 
   let energyColorClass = "text-[#00FFA3]";
   if (metrics.energy_intake > 0) {
