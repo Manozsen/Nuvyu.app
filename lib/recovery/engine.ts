@@ -58,11 +58,21 @@ export function detectBurnoutRisk(recovery_score: number, sleepHours: number, co
     if (recentRecoveryScores[0] > recentRecoveryScores[1] + 10) recovery_momentum = "improving";
   }
 
+  // 🧠 PHASE 5: BURNOUT ESCALATION MODEL
+  let burnout_trajectory = "recovery_phase";
+  if (burnout_risk === "high" && recovery_momentum === "declining") burnout_trajectory = "severe_burnout";
+  else if (burnout_risk === "high") burnout_trajectory = "moderate_burnout";
+  else if (burnout_risk === "medium") burnout_trajectory = "early_burnout";
+
   return { 
     risk_level: burnout_risk, 
     signals, 
     burnout_probability,
-    recovery_momentum 
+    recovery_momentum,
+    burnout_trajectory_packet: {
+      trajectory: burnout_trajectory,
+      escalation_speed: recovery_momentum === "declining" ? "fast" : "stable"
+    }
   };
 }
 
@@ -123,6 +133,32 @@ export function calculateResilienceScore(recentScores: number[]) {
   resilience += (rebounds * 15);
   
   return Math.max(0, Math.min(100, Math.round(resilience)));
+}
+
+// 🧠 PHASE 3: RECOVERY RESILIENCE INTELLIGENCE v2
+export function calculateResiliencePacket(recentScores: number[]) {
+  const score = calculateResilienceScore(recentScores);
+  return {
+    resilience_score: score,
+    resilience_trend: recentScores.length >= 2 ? (recentScores[0] > recentScores[1] ? "improving" : "degrading") : "stable",
+    bounce_back_speed: score > 70 ? "fast" : score > 40 ? "moderate" : "slow",
+    resilience_degradation: score < 40,
+    recovery_adaptability: score > 60 ? "high" : "low",
+    resilience_confidence: recentScores.length >= 3 ? "high" : "low"
+  };
+}
+
+// 🧠 PHASE 1: BEHAVIORAL FORECASTING ENGINE
+export function generateForecastPacket(recentScores: number[], adherence_risk: string, resilience_packet: any) {
+  const scoreTrend = recentScores.length >= 2 ? recentScores[0] - recentScores[1] : 0;
+  
+  return {
+    adherence_risk_3d: adherence_risk === "high" ? "high" : adherence_risk === "medium" ? "moderate" : "low",
+    recovery_decline_risk_3d: scoreTrend < -10 ? "high" : "low",
+    hydration_decline_risk_3d: "low", // Dynamically synced down the pipeline
+    burnout_escalation_risk_3d: (adherence_risk === "high" && resilience_packet.resilience_score < 40) ? "high" : "low",
+    inactivity_risk_3d: scoreTrend < -15 ? "high" : "low"
+  };
 }
 
 
