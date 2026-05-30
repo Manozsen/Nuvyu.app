@@ -7,8 +7,8 @@ import { createBrowserClient } from '@supabase/ssr';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 // Using relative paths to bypass Next.js alias resolution errors
-import { getRecentMemory, saveCoachMemory, detectUserPattern, calculateConsistency, extractLongTermMemory } from '../../lib/coach/memory';
-import { predictAdherenceRisk } from '../../lib/recovery/engine';
+import { getRecentMemory, saveCoachMemory, detectUserPattern, calculateConsistency, extractLongTermMemory, determineBehavioralState, calculateFrictionProfile } from '../../lib/coach/memory';
+import { predictAdherenceRisk, calculateRecoveryDebt, calculateResilienceScore } from '../../lib/recovery/engine';
 import { extractBehavioralMemories } from '../../lib/memory/engine';
 import { calculateDailyScore } from '../../lib/score/engine';
 import { calculateRecoveryScore } from '../../lib/recovery/engine';
@@ -196,6 +196,11 @@ interface AdaptiveAIContext extends AIContext {
   behavioral_drift?: string;
   cognitive_load?: string;
   lifeload_score?: number;
+  priority_metadata?: any;
+  recovery_debt?: any;
+  behavioral_state_metadata?: string;
+  friction_profile?: any;
+  resilience_score?: number;
 }
 
   // 4. AI CONTEXT BUILDER
@@ -281,7 +286,17 @@ interface AdaptiveAIContext extends AIContext {
       const safeStreak = Number(profile?.streak_count) || 0;
       const { adherence_risk, consistency_flags, motivation_stability, adherence_drop_probability } = predictAdherenceRisk(safeRecScore, safeStreak, consistency);
       const behavioralRoutines = extractBehavioralMemories(pastLogs || []);
-      
+
+      // 🧠 PHASE 2 & 6: RECOVERY DEBT & RESILIENCE
+      const recentRecScores = (pastLogs || []).filter(l => l.log_type === 'sleep').slice(0, 3).map(l => l.data?.recovery_score || 50);
+      const recentSleepHours = (pastLogs || []).filter(l => l.log_type === 'sleep').slice(0, 3).map(l => l.data?.sleep_hours || 0);
+      const recovery_debt_packet = calculateRecoveryDebt(recentSleepHours, recentRecScores);
+      const resilience_score = calculateResilienceScore(recentRecScores);
+
+      // 🧠 PHASE 3 & 4: BEHAVIORAL STATE & FRICTION
+      const behavioral_state_metadata = determineBehavioralState(memoryData || [], burnoutRisk);
+      const friction_profile = calculateFrictionProfile(memoryData || [], metrics.hoursSinceLastLog);
+
        if (aiContext) {
         aiContext.adherence_risk = adherence_risk;
         aiContext.consistency_flags = consistency_flags;
@@ -350,12 +365,28 @@ interface AdaptiveAIContext extends AIContext {
         else if (dominantSignal === "hydration") orchestration = { mode: "hydration_priority", urgency: "high", tone: "urgent_reminder", friction_strategy: "immediate_action", behavioral_state: "dehydrated" };
         else if (dominantSignal === "fatigue") orchestration = { mode: "recovery_priority", urgency: "medium", tone: "cautious", friction_strategy: "low_impact", behavioral_state: "acute_fatigue" };
 
+        // 🧠 PHASE 1: DAILY PRIORITY ENGINE
+        const priority_engine = {
+          primary_focus: dominantSignal,
+          urgency: orchestration.urgency,
+          recovery_weight: weights.recovery,
+          behavior_weight: weights.adherence,
+          confidence: friction_profile.friction_confidence === "high" ? 0.9 : 0.6
+        };
+
         aiContext.primary_coaching_focus = dominantSignal; // Transitional compatibility
         aiContext.orchestration = { ...orchestration, weights }; // True AI runtime metadata & Signal Matrix
         aiContext.adherence_drop_probability = adherence_drop_probability;
         aiContext.dominant_behavioral_trend = memoryTrend;
         aiContext.behavioral_drift = behavioralDrift;
         aiContext.behavioral_routines = behavioralRoutines;
+        
+        // 🧠 PHASE 8: AI CONTEXT EVOLUTION
+        aiContext.priority_metadata = priority_engine;
+        aiContext.recovery_debt = recovery_debt_packet;
+        aiContext.behavioral_state_metadata = behavioral_state_metadata;
+        aiContext.friction_profile = friction_profile;
+        aiContext.resilience_score = resilience_score;
       }
 
     // Rate Limiting System (Monetization Check)
