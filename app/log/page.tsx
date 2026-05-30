@@ -327,7 +327,7 @@ export default function LogsPage() {
              }
              if (log.log_type === 'workout') { 
                Icon = Dumbbell; color = "text-purple-400"; 
-               content = log.data?.exercise ? `${log.data.exercise} - ${safeNumber(log.data.sets)}x${safeNumber(log.data.reps)}` : `Workout complete`; 
+               content = log.data?.exercise ? `${log.data?.exercise} - ${safeNumber(log.data?.sets)}x${safeNumber(log.data?.reps)}` : `Workout complete`; 
              }
              if (log.log_type === 'activity') { 
                Icon = Zap; color = "text-yellow-400"; 
