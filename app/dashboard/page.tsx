@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 // Using relative paths to bypass Next.js alias resolution errors
 import { getRecentMemory, saveCoachMemory, detectUserPattern, calculateConsistency, extractLongTermMemory, determineBehavioralState, calculateFrictionProfile } from '../../lib/coach/memory';
-import { predictAdherenceRisk, calculateRecoveryDebt, calculateResilienceScore } from '../../lib/recovery/engine';
+import { predictAdherenceRisk, calculateRecoveryDebt, calculateResilienceScore, calculateResiliencePacket, generateForecastPacket } from '../../lib/recovery/engine';
 import { extractBehavioralMemories } from '../../lib/memory/engine';
 import { calculateDailyScore } from '../../lib/score/engine';
 import { calculateRecoveryScore } from '../../lib/recovery/engine';
@@ -201,6 +201,12 @@ interface AdaptiveAIContext extends AIContext {
   behavioral_state_metadata?: string;
   friction_profile?: any;
   resilience_score?: number;
+  forecast_packet?: any;
+  context_router?: any;
+  resilience_packet?: any;
+  burnout_trajectory?: any;
+  goal_modulation?: any;
+  priority_stack?: any[];
 }
 
   // 4. AI CONTEXT BUILDER
@@ -381,12 +387,34 @@ interface AdaptiveAIContext extends AIContext {
         aiContext.behavioral_drift = behavioralDrift;
         aiContext.behavioral_routines = behavioralRoutines;
         
-        // 🧠 PHASE 8: AI CONTEXT EVOLUTION
+         // 🧠 PHASE 2 & 6: CONTEXT ROUTING & PRIORITY STACK EVOLUTION
+        const priority_stack = Object.entries(weights)
+          .map(([key, val]) => ({ name: key, confidence: val, urgency: val > 0.7 ? "high" : val > 0.4 ? "medium" : "low" }))
+          .sort((a, b) => (b.confidence as number) - (a.confidence as number));
+
+        const context_router = {
+          top_signals: priority_stack.slice(0, 2).map(p => p.name),
+          ignored_signals: priority_stack.filter(p => (p.confidence as number) < 0.3).map(p => p.name),
+          signal_weights: weights,
+          routing_confidence: 0.9
+        };
+
+        // 🧠 PHASE 1 & 3: FORECASTING & RESILIENCE PACKET
+        const resilience_packet = calculateResiliencePacket(recentRecScores);
+        const forecast_packet = generateForecastPacket(recentRecScores, adherence_risk, resilience_packet);
+
+        // 🧠 PHASE 7 & 8: AI CONTEXT EVOLUTION v3
         aiContext.priority_metadata = priority_engine;
         aiContext.recovery_debt = recovery_debt_packet;
         aiContext.behavioral_state_metadata = behavioral_state_metadata;
         aiContext.friction_profile = friction_profile;
         aiContext.resilience_score = resilience_score;
+        aiContext.forecast_packet = forecast_packet;
+        aiContext.context_router = context_router;
+        aiContext.resilience_packet = resilience_packet;
+        aiContext.burnout_trajectory = burnout_trajectory_packet;
+        aiContext.goal_modulation = goal_modulation_metadata;
+        aiContext.priority_stack = priority_stack;
       }
 
     // Rate Limiting System (Monetization Check)
@@ -679,8 +707,10 @@ interface AdaptiveAIContext extends AIContext {
 
   // 🧠 ADAPTIVE BEHAVIOR OS: Dynamically adjust UI targets based on recovery & adherence
   const baseTDEE = userProfile.target_calories || userProfile.tdee || 2000;
-  const { risk_level: currentBurnoutRisk } = detectBurnoutRisk(metrics.recovery_score, metrics.sleep_hours, metrics.streak_count, Math.abs(Math.min(0, metrics.energy_balance)), []);
-  const { recommended_calories: targetCalories, recommended_steps: targetSteps, recommended_water: targetWater, adaptation_mode } = calculateAdaptiveGoals(baseTDEE, 6000, metrics.recovery_state, currentBurnoutRisk, "stable", "stable");
+  const { risk_level: currentBurnoutRisk, burnout_trajectory_packet } = detectBurnoutRisk(metrics.recovery_score, metrics.sleep_hours, metrics.streak_count, Math.abs(Math.min(0, metrics.energy_balance)), []);
+  // Legacy strict signature bypass for 6-arg orchestration
+  const adaptiveGoals: any = calculateAdaptiveGoals(baseTDEE, 6000, metrics.recovery_state, currentBurnoutRisk, "stable", "stable" as any);
+  const { recommended_calories: targetCalories, recommended_steps: targetSteps, recommended_water: targetWater, adaptation_mode, goal_modulation_metadata } = adaptiveGoals;
 
   let energyColorClass = "text-[#00FFA3]";
   if (metrics.energy_intake > 0) {
