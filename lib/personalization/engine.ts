@@ -83,12 +83,21 @@ export function calculateAdaptiveGoals(baseTDEE: number, baseSteps: number, reco
     recommendation = "habit_rebuilding";
   }
 
+    // 🧠 PHASE 4: AUTONOMOUS GOAL MODULATION
+  const goal_modulation_metadata = {
+    hydration_adjusted: recommended_water !== 3000,
+    activity_adjusted: adaptive_steps !== baseSteps,
+    recovery_focused: recommendation === "recovery_focus",
+    modulation_confidence: 0.85
+  };
+
   return {
     recommended_steps: Math.round(adaptive_steps),
     recommended_calories: Math.round(adaptive_tdee),
     recommended_water,
     workout_intensity,
-    adaptation_mode: recommendation
+    adaptation_mode: recommendation,
+    goal_modulation_metadata
   };
 }
 
