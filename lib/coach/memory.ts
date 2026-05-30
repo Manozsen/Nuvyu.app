@@ -200,3 +200,42 @@ export function calculateConsistency(memory: any[]) {
   if (daysWithLogs >= 2) return "medium";
   return "low";
 }
+
+// 🧠 PHASE 3: BEHAVIORAL STATE MACHINE
+export function determineBehavioralState(memory: any[], burnoutRisk: string) {
+  if (!memory || memory.length < 2) return "reactivation_phase";
+  
+  const recentScore = memory[0].score || 0;
+  const prevScore = memory[1].score || 0;
+  
+  if (burnoutRisk === "high") return "burnout_drift";
+  if (recentScore < 40 && prevScore < 40) return "recovery_deficit";
+  if (recentScore >= 80 && prevScore >= 80) return "high_performance";
+  if (recentScore > prevScore && prevScore < 50) return "recovery_rebuild";
+  if (recentScore < prevScore && recentScore < 60) return "habit_fragility";
+  
+  return "stable_momentum";
+}
+
+// 🧠 PHASE 4: FRICTION INTELLIGENCE LAYER
+export function calculateFrictionProfile(memory: any[], hoursSinceLastLog: number) {
+  let dominant_friction = "none";
+  let friction_score = 0;
+  
+  if (hoursSinceLastLog > 24) {
+    dominant_friction = "logging_abandonment";
+    friction_score = Math.min(100, hoursSinceLastLog * 2);
+  } else if (memory[0] && memory[0].water < 1000) {
+    dominant_friction = "hydration_friction";
+    friction_score = 60;
+  } else if (memory[0] && memory[0].steps < 3000) {
+    dominant_friction = "inactivity_friction";
+    friction_score = 70;
+  }
+
+  return {
+    dominant_friction,
+    friction_score,
+    friction_confidence: memory.length >= 3 ? "high" : "low"
+  };
+}
