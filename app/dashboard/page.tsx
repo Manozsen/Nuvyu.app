@@ -525,8 +525,8 @@ interface AdaptiveAIContext extends AIContext {
 
       // 1. REAL BODY ENERGY INTELLIGENCE SYSTEM
       const energyStats = calculateEnergyBalance(profile, logs || []);
-      const energyBurned = energyStats.totalBurn;
-      const safeEnergyIntake = energyStats.intakeCalories;
+      const energyBurned = energyStats?.totalBurn || 0;
+      const safeEnergyIntake = energyStats?.intakeCalories || 0;
 
       // 2. Central Source of Truth Score Calculation
       const baseScore = profile.onboarding_score || 50;
