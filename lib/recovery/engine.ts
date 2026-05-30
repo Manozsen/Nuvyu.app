@@ -92,5 +92,38 @@ export function predictAdherenceRisk(recoveryScore: number, streakCount: number,
   };
 }
 
+// 🧠 PHASE 2: RECOVERY DEBT ACCUMULATOR
+export function calculateRecoveryDebt(recentSleep: number[], recentScores: number[]) {
+  const sleep_debt = recentSleep.reduce((acc, hrs) => acc + Math.max(0, 8 - hrs), 0);
+  const score_debt = recentScores.reduce((acc, score) => acc + Math.max(0, 80 - score), 0);
+  
+  return {
+    sleep_debt_accumulation: Math.round(sleep_debt * 10) / 10,
+    fatigue_accumulation: Math.round(score_debt),
+    burnout_accumulation: score_debt > 60 && sleep_debt > 6 ? "critical" : score_debt > 30 ? "elevated" : "stable"
+  };
+}
+
+// 🧠 PHASE 6: RECOVERY RESILIENCE SCORE
+export function calculateResilienceScore(recentScores: number[]) {
+  if (!recentScores || recentScores.length < 3) return 50;
+  
+  let resilience = 50;
+  let drops = 0;
+  let rebounds = 0;
+
+  for (let i = 0; i < recentScores.length - 1; i++) {
+    const current = recentScores[i];
+    const next = recentScores[i+1];
+    if (next < current - 15) drops++;
+    if (next > current + 15) rebounds++;
+  }
+
+  resilience -= (drops * 10);
+  resilience += (rebounds * 15);
+  
+  return Math.max(0, Math.min(100, Math.round(resilience)));
+}
+
 
 
