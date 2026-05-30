@@ -632,6 +632,35 @@ const aiAnalyticsContext = buildAIAnalyticsContext(
                  </div>
               </div>
 
+              {/* 🧠 PHASE 8: FORECASTING & TRAJECTORY INTELLIGENCE */}
+              <div className="bg-[#0A0A0A]/90 backdrop-blur-2xl border border-white/10 rounded-[1.5rem] p-6 shadow-xl space-y-4 mt-6">
+                 <div className="flex items-center justify-between mb-4">
+                   <h3 className="text-white/90 font-black text-lg flex items-center gap-2">
+                     <Brain size={20} className="text-[#00FFA3]" /> AI Behavioral Forecast
+                   </h3>
+                   <span className="text-[10px] uppercase tracking-widest text-white/40 font-bold px-3 py-1 bg-white/5 rounded-full">3-Day Projection</span>
+                 </div>
+                 
+                 <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 bg-white/5 rounded-xl border border-white/5">
+                      <span className="text-white/40 text-[10px] font-bold uppercase tracking-widest block mb-1">Burnout Trajectory</span>
+                      <span className="text-white font-black text-sm capitalize">{safeInsights.advancedAnalytics?.streak_risk === "high" ? "Escalating" : "Stable"}</span>
+                    </div>
+                    <div className="p-4 bg-white/5 rounded-xl border border-white/5">
+                      <span className="text-white/40 text-[10px] font-bold uppercase tracking-widest block mb-1">Cognitive Load</span>
+                      <span className="text-white font-black text-sm capitalize">{safeInsights.advancedAnalytics?.cognitive_load?.replace('_', ' ') || "Stable"}</span>
+                    </div>
+                    <div className="p-4 bg-white/5 rounded-xl border border-white/5">
+                      <span className="text-white/40 text-[10px] font-bold uppercase tracking-widest block mb-1">Adherence Forecast</span>
+                      <span className="text-white font-black text-sm">{safeInsights.actionable?.adherence_risk === "high" ? "Decline Risk" : "Stable Momentum"}</span>
+                    </div>
+                    <div className="p-4 bg-white/5 rounded-xl border border-white/5">
+                      <span className="text-white/40 text-[10px] font-bold uppercase tracking-widest block mb-1">Resilience Adapt</span>
+                      <span className="text-white font-black text-sm">Adaptive Mode</span>
+                    </div>
+                 </div>
+              </div>
+
             </motion.div>
           </AnimatePresence>
         )}
