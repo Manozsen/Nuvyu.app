@@ -461,14 +461,15 @@ interface AdaptiveAIContext extends AIContext {
     return { message: ruleNudge, type: "rule" };
   };
 
-  useEffect(() => {
+    useEffect(() => {
     const fetchDashboardData = async () => {
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      
-      if (authError || !user) {
-        router.push('/login');
-        return;
-      }
+      try {
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        
+        if (authError || !user) {
+          router.push('/login');
+          return;
+        }
 
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
@@ -675,15 +676,19 @@ interface AdaptiveAIContext extends AIContext {
         return Math.min(xp, 50);
       })();
 
-      // Safely bind retention metrics with fallbacks
+       // Safely bind retention metrics with fallbacks
       setRetention({
         xp: profile.xp || 0,
         level: profile.level || 1,
         todayXP
       });
-
-      setMounted(true);
-      setIsCheckingAuth(false);
+      
+      } catch (error) {
+        console.error("Dashboard Engine Crash:", error);
+      } finally {
+        setMounted(true);
+        setIsCheckingAuth(false);
+      }
     }; // <-- THIS CLOSES THE ASYNC FUNCTION (Fixes 'await' error)
 
     fetchDashboardData();
