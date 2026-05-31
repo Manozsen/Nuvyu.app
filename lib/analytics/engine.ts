@@ -293,61 +293,30 @@ const avg_screen =
         (a: number, b: any) => a + Number(b.screen || 0),
         0
       ) / validScreen.length
-    : 0
-  let cognitive_load = "optimal";
-  let lifeload_score = 100;
+    : 0;
 
-  if (avg_sleep < 6) lifeload_score -= 30;
-  if (avg_screen > 6) lifeload_score -= 20;
-  if (avg_screen > 8 && avg_sleep < 5) lifeload_score -= 40; // Critical nervous system overload
+  // 🧠 ABOS PHASE 10: Extracted Pure Function Execution
+  const { lifeload_score, cognitive_load, lifeload_packet } = calculateLifeload(avg_sleep, avg_screen);
   
-  if (lifeload_score <= 30) {
-    cognitive_load = "severe_overload";
-    behavior_insights.push("nervous_system_overload", "high_screen_fatigue");
-  } else if (lifeload_score <= 60) {
-    cognitive_load = "high_strain";
-    behavior_insights.push("elevated_cognitive_load");
-  } else if (lifeload_score <= 80) {
-    cognitive_load = "moderate_strain";
-  }
+  if (lifeload_score <= 30) behavior_insights.push("nervous_system_overload", "high_screen_fatigue");
+  else if (lifeload_score <= 60) behavior_insights.push("elevated_cognitive_load");
 
   let streak_risk = "low";
 
-        if (
-        analytics.stats?.scoreTrend === 'declining' ||
-        (
-          recentDays.length > 0 &&
-          recentDays[recentDays.length - 1]?.score < 40
-        )
-      ) {
-        streak_risk = "high";
-        behavior_insights.push("streak_drop_risk");
-      }
-  
+  if (
+    analytics.stats?.scoreTrend === 'declining' ||
+    (
+      recentDays.length > 0 &&
+      recentDays[recentDays.length - 1]?.score < 40
+    )
+  ) {
+    streak_risk = "high";
+    behavior_insights.push("streak_drop_risk");
+  }
+
   // 🧠 PHASE 2, 3, & 4: ADVANCED LOAD INTELLIGENCE
-  const decision_fatigue = (recentDays.length > 0 && lifeload_score < 50 && adherence_score < 50) ? "high" : "low";
-  
-  const lifeload_packet = {
-    lifeload_score,
-    lifeload_level: lifeload_score > 80 ? "optimal" : lifeload_score > 50 ? "manageable" : "overloaded",
-    lifeload_confidence: analytics.dailyData.length >= 3 ? "high" : "low",
-    dominant_load_driver: avg_screen > 6 ? "screen_fatigue" : avg_sleep < 6 ? "sleep_debt" : "behavioral_friction"
-  };
-
-  const cognitive_energy_packet = {
-    cognitive_freshness: avg_sleep >= 7 && avg_screen < 4 ? "high" : "low",
-    cognitive_fatigue: avg_sleep < 6 || avg_screen > 7 ? "elevated" : "baseline",
-    mental_recovery: avg_sleep >= 7 ? "active" : "stalled",
-    attention_capacity: lifeload_score > 60 ? "available" : "depleted",
-    mental_load: cognitive_load
-  };
-
-    const decision_fatigue_packet = {
-    fatigue_score: decision_fatigue === "high" ? 85 : 20,
-    fatigue_level: decision_fatigue,
-    overload_source: lifeload_packet.dominant_load_driver,
-    confidence: "high"
-  };
+  const cognitive_energy_packet = calculateCognitiveEnergy(avg_sleep, avg_screen, cognitive_load);
+  const decision_fatigue_packet = calculateDecisionFatigue(lifeload_score, adherence_score, lifeload_packet.dominant_load_driver);
 
   // 🧠 ABOS PHASE 10: ANALYTICS INTEGRATION
   const leverage_engine = detectBehavioralLeverage(lifeload_score, avg_sleep, adherence_score);
