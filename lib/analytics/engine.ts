@@ -1,5 +1,47 @@
-// 🧠 PHASE 10B: BEHAVIORAL LEVERAGE ENGINE
-export function detectBehavioralLeverage(lifeload_score: number, avg_sleep: number, adherence_score: number) {
+// 🧠 ABOS PHASE 10: PURE FUNCTION EXTRACTION (Engine Ownership Enforcement)
+export function calculateLifeload(avg_sleep: number, avg_screen: number) {
+  let lifeload_score = 100;
+  if (avg_sleep < 6) lifeload_score -= 30;
+  if (avg_screen > 6) lifeload_score -= 20;
+  if (avg_screen > 8 && avg_sleep < 5) lifeload_score -= 40; // Critical nervous system overload
+
+  let cognitive_load = "optimal";
+  if (lifeload_score <= 30) cognitive_load = "severe_overload";
+  else if (lifeload_score <= 60) cognitive_load = "high_strain";
+  else if (lifeload_score <= 80) cognitive_load = "moderate_strain";
+
+  return {
+    lifeload_score,
+    cognitive_load,
+    lifeload_packet: {
+      lifeload_score,
+      lifeload_level: lifeload_score > 80 ? "optimal" : lifeload_score > 50 ? "manageable" : "overloaded",
+      lifeload_confidence: "high",
+      dominant_load_driver: avg_screen > 6 ? "screen_fatigue" : avg_sleep < 6 ? "sleep_debt" : "behavioral_friction"
+    }
+  };
+}
+
+export function calculateCognitiveEnergy(avg_sleep: number, avg_screen: number, cognitive_load: string) {
+  return {
+    cognitive_freshness: avg_sleep >= 7 && avg_screen < 4 ? "high" : "low",
+    cognitive_fatigue: avg_sleep < 6 || avg_screen > 7 ? "elevated" : "baseline",
+    mental_recovery: avg_sleep >= 7 ? "active" : "stalled",
+    attention_capacity: cognitive_load === "severe_overload" ? "depleted" : "available",
+    mental_load: cognitive_load
+  };
+}
+
+export function calculateDecisionFatigue(lifeload_score: number, adherence_score: number, dominant_load_driver: string) {
+  const decision_fatigue = (lifeload_score < 50 && adherence_score < 50) ? "high" : "low";
+  return {
+    fatigue_score: decision_fatigue === "high" ? 85 : 20,
+    fatigue_level: decision_fatigue,
+    overload_source: dominant_load_driver,
+    confidence: "high"
+  };
+}
+
   let leverage_behavior = "Sleep Consistency";
   if (lifeload_score > 70) leverage_behavior = "Screen Time Reduction";
   else if (adherence_score < 50) leverage_behavior = "Morning Hydration";
