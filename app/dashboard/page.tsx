@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 // Using relative paths to bypass Next.js alias resolution errors
 import { getRecentMemory, saveCoachMemory, detectUserPattern, calculateConsistency, extractLongTermMemory, determineBehavioralState, calculateFrictionProfile } from '../../lib/coach/memory';
-import { predictAdherenceRisk, calculateRecoveryDebt, calculateResilienceScore, calculateResiliencePacket, generateForecastPacket } from '../../lib/recovery/engine';
+import { predictAdherenceRisk, calculateRecoveryDebt, calculateResilienceScore, calculateResiliencePacket, generateForecastPacket, buildRecoveryDigitalTwin } from '../../lib/recovery/engine';
 import { extractBehavioralMemories } from '../../lib/memory/engine';
 import { calculateDailyScore } from '../../lib/score/engine';
 import { calculateRecoveryScore } from '../../lib/recovery/engine';
@@ -207,6 +207,12 @@ interface AdaptiveAIContext extends AIContext {
   burnout_trajectory?: any;
   goal_modulation?: any;
   priority_stack?: any[];
+  digital_twin_packet?: any;
+  lifeload_packet?: any;
+  cognitive_energy_packet?: any;
+  decision_fatigue_packet?: any;
+  capacity_packet?: any;
+  capacity_budget?: any;
 }
 
   // 4. AI CONTEXT BUILDER
@@ -402,8 +408,9 @@ interface AdaptiveAIContext extends AIContext {
         // 🧠 PHASE 1 & 3: FORECASTING & RESILIENCE PACKET
         const resilience_packet = calculateResiliencePacket(recentRecScores);
         const forecast_packet = generateForecastPacket(recentRecScores, adherence_risk, resilience_packet);
+        const digital_twin_packet = buildRecoveryDigitalTwin(recentRecScores, recovery_debt_packet.sleep_debt_accumulation, metrics.fatigue_risk, adherence_risk);
 
-        // 🧠 PHASE 7 & 8: AI CONTEXT EVOLUTION v3
+        // 🧠 PHASE 7 & 8: AI CONTEXT EVOLUTION v4
         aiContext.priority_metadata = priority_engine;
         aiContext.recovery_debt = recovery_debt_packet;
         aiContext.behavioral_state_metadata = behavioral_state_metadata;
