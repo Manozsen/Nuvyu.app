@@ -1,3 +1,43 @@
+// 🧠 PHASE 10H: OPERATING STATE ENGINE
+export function determineOperatingState(burnout_risk: string, adherence_profile: string) {
+  let operating_state = "growth";
+  if (burnout_risk === "high") operating_state = "burnout_protection";
+  else if (adherence_profile === "struggling") operating_state = "rebuild";
+  else if (burnout_risk === "medium") operating_state = "recovery";
+
+  return {
+    operating_state,
+    operating_confidence: 0.9,
+    state_reason: `Triggered by burnout risk: ${burnout_risk} & adherence: ${adherence_profile}`
+  };
+}
+
+// 🧠 PHASE 10A: ADAPTIVE INTERVENTION ENGINE
+export function determineInterventionMode(operating_state: string) {
+  let intervention_mode = "momentum_push";
+  if (operating_state === "burnout_protection") intervention_mode = "recovery_enforcement";
+  else if (operating_state === "rebuild") intervention_mode = "friction_reduction";
+  else if (operating_state === "recovery") intervention_mode = "consistency_stabilization";
+
+  return {
+    intervention_mode,
+    intervention_confidence: 0.85,
+    intervention_reason: `Aligned with operating state: ${operating_state}`,
+    intervention_priority: "high"
+  };
+}
+
+// 🧠 PHASE 10F: AUTONOMOUS PRIORITY STACK
+export function buildAutonomousPriorityStack(intervention_mode: string) {
+  if (intervention_mode === "recovery_enforcement") {
+    return { priority_1: "Sleep Optimization", priority_2: "Cognitive Rest", priority_3: "Hydration", priority_4: "Light Mobility", priority_reasoning: "System overload detected." };
+  }
+  if (intervention_mode === "friction_reduction") {
+    return { priority_1: "Micro-Habits", priority_2: "Hydration", priority_3: "Sleep", priority_4: "Diet Maintenance", priority_reasoning: "Adherence is fragile." };
+  }
+  return { priority_1: "Progressive Overload", priority_2: "Dietary Adherence", priority_3: "Sleep", priority_4: "Activity Targets", priority_reasoning: "Stable momentum." };
+}
+
 // 🧠 BEHAVIOR PRIORITY ENGINE
 export function getBehaviorPriority(target: string, timeline: string) {
   const t = (target || 'healthy_lifestyle').toLowerCase();
