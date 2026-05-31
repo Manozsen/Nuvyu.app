@@ -300,16 +300,31 @@ const avg_screen =
     mental_load: cognitive_load
   };
 
-  const decision_fatigue_packet = {
+    const decision_fatigue_packet = {
     fatigue_score: decision_fatigue === "high" ? 85 : 20,
     fatigue_level: decision_fatigue,
     overload_source: lifeload_packet.dominant_load_driver,
     confidence: "high"
   };
 
+  // 🧠 ABOS PHASE 10: ANALYTICS INTEGRATION
+  const leverage_engine = detectBehavioralLeverage(lifeload_score, avg_sleep, adherence_score);
+  const scenario_simulator = simulateBehavioralScenario(streak_risk, lifeload_score);
+
   // 🧠 BYPASS EXCESS PROPERTY CHECK: Safely package all AI intelligence
   const aiContext = {
     avg_sleep: Math.round(avg_sleep * 10) / 10,
+    avg_steps: Math.round(avg_steps),
+    avg_screen: Math.round(avg_screen * 10) / 10,
+    recent_water_avg: Math.round(recentWater),
+    streak_risk,
+    cognitive_load,
+    lifeload_score,
+    lifeload_packet,
+    cognitive_energy_packet,
+    decision_fatigue_packet,
+    leverage_engine,
+    scenario_simulator,
     avg_steps: Math.round(avg_steps),
     avg_screen: Math.round(avg_screen * 10) / 10,
     recent_water_avg: Math.round(recentWater),
