@@ -42,9 +42,18 @@ export function calculateDecisionFatigue(lifeload_score: number, adherence_score
   };
 }
 
+  // 🧠 PHASE 10D: BEHAVIORAL LEVERAGE ENGINE
+export function detectBehavioralLeverage(
+  lifeload_score: number,
+  adherence_score: number
+) {
   let leverage_behavior = "Sleep Consistency";
-  if (lifeload_score > 70) leverage_behavior = "Screen Time Reduction";
-  else if (adherence_score < 50) leverage_behavior = "Morning Hydration";
+
+  if (lifeload_score > 70) {
+    leverage_behavior = "Screen Time Reduction";
+  } else if (adherence_score < 50) {
+    leverage_behavior = "Morning Hydration";
+  }
 
   return {
     leverage_behavior,
