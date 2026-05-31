@@ -20,4 +20,10 @@ export interface DashboardMetrics {
   reward_message: string;
   xp: number;
   level: number;
+
+  // 🧠 ABOS DYNAMIC LOAD EXPOSURE
+  lifeload_packet?: { lifeload_score: number; lifeload_level: string; lifeload_confidence: string; dominant_load_driver: string; };
+  cognitive_energy_packet?: { cognitive_freshness: string; cognitive_fatigue: string; mental_recovery: string; attention_capacity: string; mental_load: string; };
+  decision_fatigue_packet?: { fatigue_score: number; fatigue_level: string; overload_source: string; confidence: string; };
 }
+
