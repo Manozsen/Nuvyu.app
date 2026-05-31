@@ -688,7 +688,7 @@ const aiAnalyticsContext = buildAIAnalyticsContext(
                  </div>
               </div>
               
-              {/* 🧠 PHASE 10: AUTONOMOUS BEHAVIORAL OS DASHBOARD */}
+            {/* 🧠 PHASE 10: AUTONOMOUS BEHAVIORAL OS DASHBOARD */}
               <div className="bg-[#0A0A0A]/90 backdrop-blur-2xl border border-white/10 rounded-[1.5rem] p-6 shadow-xl space-y-4 mt-6 mb-8">
                  <div className="flex items-center justify-between mb-4">
                    <h3 className="text-white/90 font-black text-lg flex items-center gap-2">
@@ -699,16 +699,16 @@ const aiAnalyticsContext = buildAIAnalyticsContext(
                  
                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="p-4 bg-white/5 rounded-xl border border-white/5">
-                      <span className="text-white/40 text-[10px] font-bold uppercase tracking-widest block mb-1">Operating State</span>
-                      <span className="text-white font-black text-sm capitalize">Growth Phase</span>
+                      <span className="text-white/40 text-[10px] font-bold uppercase tracking-widest block mb-1">Scenario Projection</span>
+                      <span className="text-white font-black text-sm capitalize">{safeInsights.aiAnalyticsContext?.scenario_simulator?.scenario_projection || "Stable"}</span>
                     </div>
                     <div className="p-4 bg-white/5 rounded-xl border border-white/5">
-                      <span className="text-white/40 text-[10px] font-bold uppercase tracking-widest block mb-1">Intervention</span>
-                      <span className="text-[#00FFA3] font-black text-sm capitalize">Momentum Push</span>
+                      <span className="text-white/40 text-[10px] font-bold uppercase tracking-widest block mb-1">Burnout Risk</span>
+                      <span className="text-[#00FFA3] font-black text-sm capitalize">{safeInsights.aiAnalyticsContext?.scenario_simulator?.burnout_projection || "Stable"}</span>
                     </div>
                     <div className="col-span-2 p-4 bg-white/5 rounded-xl border border-white/5">
-                      <span className="text-white/40 text-[10px] font-bold uppercase tracking-widest block mb-1">Recovery ROI Priority</span>
-                      <span className="text-white font-bold text-sm">Sleep Optimization</span>
+                      <span className="text-white/40 text-[10px] font-bold uppercase tracking-widest block mb-1">Highest Leverage Behavior</span>
+                      <span className="text-white font-bold text-sm">{safeInsights.aiAnalyticsContext?.leverage_engine?.leverage_behavior || "Consistency"}</span>
                     </div>
                  </div>
               </div>
