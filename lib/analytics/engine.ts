@@ -256,7 +256,32 @@ const avg_screen =
         behavior_insights.push("streak_drop_risk");
       }
   
-// 🧠 BYPASS EXCESS PROPERTY CHECK: Safely package all AI intelligence
+  // 🧠 PHASE 2, 3, & 4: ADVANCED LOAD INTELLIGENCE
+  const decision_fatigue = (recentDays.length > 0 && lifeload_score < 50 && adherence_score < 50) ? "high" : "low";
+  
+  const lifeload_packet = {
+    lifeload_score,
+    lifeload_level: lifeload_score > 80 ? "optimal" : lifeload_score > 50 ? "manageable" : "overloaded",
+    lifeload_confidence: analytics.dailyData.length >= 3 ? "high" : "low",
+    dominant_load_driver: avg_screen > 6 ? "screen_fatigue" : avg_sleep < 6 ? "sleep_debt" : "behavioral_friction"
+  };
+
+  const cognitive_energy_packet = {
+    cognitive_freshness: avg_sleep >= 7 && avg_screen < 4 ? "high" : "low",
+    cognitive_fatigue: avg_sleep < 6 || avg_screen > 7 ? "elevated" : "baseline",
+    mental_recovery: avg_sleep >= 7 ? "active" : "stalled",
+    attention_capacity: lifeload_score > 60 ? "available" : "depleted",
+    mental_load: cognitive_load
+  };
+
+  const decision_fatigue_packet = {
+    fatigue_score: decision_fatigue === "high" ? 85 : 20,
+    fatigue_level: decision_fatigue,
+    overload_source: lifeload_packet.dominant_load_driver,
+    confidence: "high"
+  };
+
+  // 🧠 BYPASS EXCESS PROPERTY CHECK: Safely package all AI intelligence
   const aiContext = {
     avg_sleep: Math.round(avg_sleep * 10) / 10,
     avg_steps: Math.round(avg_steps),
@@ -265,6 +290,9 @@ const avg_screen =
     streak_risk,
     cognitive_load,
     lifeload_score,
+    lifeload_packet,
+    cognitive_energy_packet,
+    decision_fatigue_packet,
     behavior_insights,
     adherence_score,
     consistency_profile,
