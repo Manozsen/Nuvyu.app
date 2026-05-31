@@ -450,7 +450,7 @@ interface AdaptiveAIContext extends AIContext {
         const safe_lifeload = calculateLifeload(avg_sleep, avg_screen);
         const safe_cognitive = calculateCognitiveEnergy(avg_sleep, avg_screen, safe_lifeload.cognitive_load);
         const safe_decision_fatigue = calculateDecisionFatigue(safe_lifeload.lifeload_score, local_adherence, safe_lifeload.lifeload_packet.dominant_load_driver);
-        const safe_leverage = detectBehavioralLeverage(safe_lifeload.lifeload_score, avg_sleep, local_adherence);
+        const safe_leverage = detectBehavioralLeverage(safe_lifeload.lifeload_score, local_adherence);
         const safe_scenario = simulateBehavioralScenario(metrics.fatigue_risk, safe_lifeload.lifeload_score);
 
         // Dynamic Load Contexts
