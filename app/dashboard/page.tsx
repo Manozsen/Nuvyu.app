@@ -422,6 +422,14 @@ interface AdaptiveAIContext extends AIContext {
         aiContext.burnout_trajectory = burnout_trajectory_packet;
         aiContext.goal_modulation = goal_modulation_metadata;
         aiContext.priority_stack = priority_stack;
+        
+        // Dynamic Load Contexts
+        aiContext.digital_twin_packet = digital_twin_packet;
+        aiContext.lifeload_packet = (metrics as any).lifeload_packet; // Sourced dynamically from analytics
+        aiContext.cognitive_energy_packet = (metrics as any).cognitive_energy_packet;
+        aiContext.decision_fatigue_packet = (metrics as any).decision_fatigue_packet;
+        aiContext.capacity_packet = capacity_packet;
+        aiContext.capacity_budget = capacity_budget;
       }
 
     // Rate Limiting System (Monetization Check)
