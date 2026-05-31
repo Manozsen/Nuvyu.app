@@ -1,3 +1,29 @@
+// 🧠 PHASE 10B: BEHAVIORAL LEVERAGE ENGINE
+export function detectBehavioralLeverage(lifeload_score: number, avg_sleep: number, adherence_score: number) {
+  let leverage_behavior = "Sleep Consistency";
+  if (lifeload_score > 70) leverage_behavior = "Screen Time Reduction";
+  else if (adherence_score < 50) leverage_behavior = "Morning Hydration";
+
+  return {
+    leverage_behavior,
+    leverage_confidence: 0.85,
+    leverage_reason: "Directly impacts limiting factor",
+    secondary_leverage: "Active Recovery"
+  };
+}
+
+// 🧠 PHASE 10E: BEHAVIORAL SCENARIO SIMULATOR
+export function simulateBehavioralScenario(streak_risk: string, lifeload_score: number) {
+  const trajectory = streak_risk === "high" ? "declining" : "improving";
+  return {
+    scenario_projection: trajectory,
+    burnout_projection: lifeload_score > 80 ? "escalating" : "stable",
+    recovery_projection: trajectory === "declining" ? "deteriorating" : "optimizing",
+    adherence_projection: trajectory,
+    stability_projection: trajectory === "improving" ? "high" : "fragile"
+  };
+}
+
 // 🧠 PART 8: AUTO ACTIVITY DETECTION PREP
 // Prepare scalable structure for future wearable/device integration
 export function calculateDynamicCalories(profile: any, totalSteps: number, workoutLogsCount: number, detectedBurn: number = 0) {
