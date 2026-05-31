@@ -513,14 +513,14 @@ interface AdaptiveAIContext extends AIContext {
         message: aiNudge, 
         type: "ai",
         abos_metrics: {
-          lifeload_packet: safe_lifeload.lifeload_packet,
-          cognitive_energy_packet: safe_cognitive,
-          decision_fatigue_packet: safe_decision_fatigue
-        }
+           lifeload_packet: (metrics as any).lifeload_packet,
+           cognitive_energy_packet: (metrics as any).cognitive_energy_packet,
+           decision_fatigue_packet: (metrics as any).decision_fatigue_packet
+          }
+        };
       };
-    }
-
-        // 🧠 ABOS FALLBACK DERIVATION: Safely compute packets when AI is not triggered to prevent UI state loss
+      
+    // 🧠 ABOS FALLBACK DERIVATION: Safely compute packets when AI is not triggered to prevent UI state loss
     const fb_screen_logs = (pastLogs || []).filter((l: any) => l.log_type === 'screen').slice(0, 3).map((l: any) => l.data?.amount || 0);
     const fb_screen = fb_screen_logs.length > 0 ? fb_screen_logs.reduce((a: any, b: any) => Number(a) + Number(b), 0) / fb_screen_logs.length : 0;
     
