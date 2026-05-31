@@ -520,14 +520,27 @@ interface AdaptiveAIContext extends AIContext {
       };
     }
 
+        // 🧠 ABOS FALLBACK DERIVATION: Safely compute packets when AI is not triggered to prevent UI state loss
+    const fb_screen_logs = (pastLogs || []).filter((l: any) => l.log_type === 'screen').slice(0, 3).map((l: any) => l.data?.amount || 0);
+    const fb_screen = fb_screen_logs.length > 0 ? fb_screen_logs.reduce((a: any, b: any) => Number(a) + Number(b), 0) / fb_screen_logs.length : 0;
+    
+    const fb_sleep_logs = (pastLogs || []).filter((l: any) => l.log_type === 'sleep').slice(0, 3).map((l: any) => l.data?.sleep_hours || 0);
+    const fb_sleep = fb_sleep_logs.length > 0 ? fb_sleep_logs.reduce((a: any, b: any) => Number(a) + Number(b), 0) / fb_sleep_logs.length : 0;
+    
+    const fb_adherence = (metrics.streak_count || 0) > 3 ? 90 : (metrics.streak_count || 0) > 0 ? 60 : 30;
+
+    const fb_lifeload = calculateLifeload(fb_sleep, fb_screen);
+    const fb_cognitive = calculateCognitiveEnergy(fb_sleep, fb_screen, fb_lifeload.cognitive_load);
+    const fb_fatigue = calculateDecisionFatigue(fb_lifeload.lifeload_score, fb_adherence, fb_lifeload.lifeload_packet.dominant_load_driver);
+
     saveCoachMemory(supabase, userId, metrics, behavior, ruleNudge, "rule");
     return { 
       message: ruleNudge, 
       type: "rule",
       abos_metrics: {
-        lifeload_packet: safe_lifeload.lifeload_packet,
-        cognitive_energy_packet: safe_cognitive,
-        decision_fatigue_packet: safe_decision_fatigue
+        lifeload_packet: fb_lifeload.lifeload_packet,
+        cognitive_energy_packet: fb_cognitive,
+        decision_fatigue_packet: fb_fatigue
       }
     };
   };
