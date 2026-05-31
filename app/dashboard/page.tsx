@@ -527,7 +527,7 @@ interface AdaptiveAIContext extends AIContext {
     const fb_sleep_logs = (pastLogs || []).filter((l: any) => l.log_type === 'sleep').slice(0, 3).map((l: any) => l.data?.sleep_hours || 0);
     const fb_sleep = fb_sleep_logs.length > 0 ? fb_sleep_logs.reduce((a: any, b: any) => Number(a) + Number(b), 0) / fb_sleep_logs.length : 0;
     
-    const fb_adherence = (metrics.streak_count || 0) > 3 ? 90 : (metrics.streak_count || 0) > 0 ? 60 : 30;
+    const fb_adherence = (profile?.streak_count || 0) > 3 ? 90 : (profile?.streak_count || 0) > 0 ? 60 : 30;
 
     const fb_lifeload = calculateLifeload(fb_sleep, fb_screen);
     const fb_cognitive = calculateCognitiveEnergy(fb_sleep, fb_screen, fb_lifeload.cognitive_load);
