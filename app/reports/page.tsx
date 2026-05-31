@@ -661,10 +661,35 @@ const aiAnalyticsContext = buildAIAnalyticsContext(
                  </div>
               </div>
 
+              {/* 🧠 PHASE 8: EXECUTIVE RECOVERY DASHBOARD */}
+              <div className="bg-[#0A0A0A]/90 backdrop-blur-2xl border border-white/10 rounded-[1.5rem] p-6 shadow-xl space-y-4 mt-6 mb-8">
+                 <div className="flex items-center justify-between mb-4">
+                   <h3 className="text-white/90 font-black text-lg flex items-center gap-2">
+                     <Zap size={20} className="text-[#00FFA3]" /> Lifeload & Capacity
+                   </h3>
+                   <span className="text-[10px] uppercase tracking-widest text-white/40 font-bold px-3 py-1 bg-white/5 rounded-full">Executive Summary</span>
+                 </div>
+                 
+                 <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 bg-white/5 rounded-xl border border-white/5">
+                      <span className="text-white/40 text-[10px] font-bold uppercase tracking-widest block mb-1">Lifeload Score</span>
+                      <span className="text-white font-black text-xl">{safeInsights.aiAnalyticsContext?.lifeload_packet?.lifeload_score || 100}</span>
+                      <span className="text-white/60 text-xs font-bold block mt-1 capitalize">{safeInsights.aiAnalyticsContext?.lifeload_packet?.lifeload_level || "Optimal"}</span>
+                    </div>
+                    <div className="p-4 bg-white/5 rounded-xl border border-white/5">
+                      <span className="text-white/40 text-[10px] font-bold uppercase tracking-widest block mb-1">Cognitive Freshness</span>
+                      <span className="text-[#00FFA3] font-black text-xl capitalize">{safeInsights.aiAnalyticsContext?.cognitive_energy_packet?.cognitive_freshness || "Stable"}</span>
+                      <span className="text-white/60 text-xs font-bold block mt-1">Energy Model</span>
+                    </div>
+                    <div className="col-span-2 p-4 bg-[#00FFA3]/10 rounded-xl border border-[#00FFA3]/20">
+                      <span className="text-[#00FFA3]/60 text-[10px] font-bold uppercase tracking-widest block mb-1">Dominant Load Driver</span>
+                      <span className="text-white font-bold text-sm capitalize">{(safeInsights.aiAnalyticsContext?.lifeload_packet?.dominant_load_driver || "None").replace('_', ' ')}</span>
+                    </div>
+                 </div>
+              </div>
+
             </motion.div>
           </AnimatePresence>
-        )}
-      </main>
 
       {/* FIXED BOTTOM NAVIGATION */}
       <div className="fixed bottom-6 left-6 right-6 flex justify-center z-40">
