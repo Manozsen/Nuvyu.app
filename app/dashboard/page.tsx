@@ -17,6 +17,7 @@ import { calculateEnergyBalance, getLocalDateString, calculateRecoveryState, det
 import { DashboardMetrics } from '../../lib/types/dashboard';
 import { detectBurnoutRisk } from '../../lib/recovery/engine';
 import { calculateAdaptiveGoals, getDynamicGreeting, determineOperatingState, determineInterventionMode, buildAutonomousPriorityStack } from '../../lib/personalization/engine';
+import { calculateLifeload, calculateCognitiveEnergy, calculateDecisionFatigue, detectBehavioralLeverage, simulateBehavioralScenario } from '../../lib/analytics/engine';
 import { AIContext } from '../../lib/types/ai';
 import { safeSleepHours, safeSleepQuality, safeRecoveryScore } from '../../lib/utils/sleep';
 import { safeNumber, safeRecoveryState, safeFatigueRisk, safeEnergyStats } from '../../lib/utils/safe';
@@ -440,14 +441,28 @@ interface AdaptiveAIContext extends AIContext {
         aiContext.goal_modulation = goal_modulation_metadata;
         aiContext.priority_stack = priority_stack;
         
+        // 🧠 ABOS SAFE LOCAL DERIVATIONS (Replacing dangerous unsafe casts)
+        const recentScreenHours = (pastLogs || []).filter(l => l.log_type === 'screen').slice(0, 3).map(l => l.data?.amount || 0);
+        const avg_screen = recentScreenHours.length > 0 ? recentScreenHours.reduce((a, b) => Number(a) + Number(b), 0) / recentScreenHours.length : 0;
+        const avg_sleep = recentSleepHours.length > 0 ? recentSleepHours.reduce((a, b) => Number(a) + Number(b), 0) / recentSleepHours.length : 0;
+        const local_adherence = consistency === "high" ? 90 : consistency === "medium" ? 60 : 30;
+
+        const safe_lifeload = calculateLifeload(avg_sleep, avg_screen);
+        const safe_cognitive = calculateCognitiveEnergy(avg_sleep, avg_screen, safe_lifeload.cognitive_load);
+        const safe_decision_fatigue = calculateDecisionFatigue(safe_lifeload.lifeload_score, local_adherence, safe_lifeload.lifeload_packet.dominant_load_driver);
+        const safe_leverage = detectBehavioralLeverage(safe_lifeload.lifeload_score, avg_sleep, local_adherence);
+        const safe_scenario = simulateBehavioralScenario(metrics.fatigue_risk, safe_lifeload.lifeload_score);
+
         // Dynamic Load Contexts
         aiContext.digital_twin_packet = digital_twin_packet;
-        aiContext.lifeload_packet = (metrics as any).lifeload_packet; // Sourced dynamically from analytics
-        aiContext.cognitive_energy_packet = (metrics as any).cognitive_energy_packet;
-        aiContext.decision_fatigue_packet = (metrics as any).decision_fatigue_packet;
+        aiContext.lifeload_packet = safe_lifeload.lifeload_packet;
+        aiContext.cognitive_energy_packet = safe_cognitive;
+        aiContext.decision_fatigue_packet = safe_decision_fatigue;
+        aiContext.leverage_engine = safe_leverage;
+        aiContext.scenario_simulator = safe_scenario;
         aiContext.capacity_packet = capacity_packet;
         aiContext.capacity_budget = capacity_budget;
-        
+
         // 🧠 ABOS PHASE 10: CONTEXT
         aiContext.operating_state = operating_state_engine;
         aiContext.intervention_engine = intervention_engine;
