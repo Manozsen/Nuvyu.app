@@ -1,3 +1,47 @@
+// 🧠 PHASE 10D: RECOVERY ROI ENGINE
+export function calculateRecoveryROI(sleepDebt: number, fatigueRisk: string, adherenceRisk: string) {
+  let roi_action = "Sleep Optimization";
+  let roi_score = 85;
+  let expected_recovery_gain = "High";
+  let expected_adherence_gain = "Moderate";
+
+  if (sleepDebt > 8) {
+    roi_action = "+60min Sleep Extension";
+    roi_score = 95;
+    expected_recovery_gain = "Critical";
+    expected_adherence_gain = "High";
+  } else if (fatigueRisk === "high") {
+    roi_action = "Active Recovery (Mobility/Walking)";
+    roi_score = 90;
+    expected_recovery_gain = "High";
+    expected_adherence_gain = "Stable";
+  } else if (adherenceRisk === "high") {
+    roi_action = "Frictionless Micro-Habit (Hydration)";
+    roi_score = 88;
+    expected_recovery_gain = "Moderate";
+    expected_adherence_gain = "Critical";
+  }
+
+  return { roi_action, roi_score, expected_recovery_gain, expected_adherence_gain };
+}
+
+// 🧠 PHASE 10G: HUMAN ENERGY ALLOCATION ENGINE
+export function calculateEnergyAllocation(sleepDebt: number, fatigueRisk: string, cognitiveFreshness: string) {
+  let physical_energy = 100 - (fatigueRisk === "high" ? 60 : fatigueRisk === "moderate" ? 30 : 10);
+  let cognitive_energy = 100 - (sleepDebt * 5) - (cognitiveFreshness === "low" ? 30 : 0);
+  let emotional_energy = (physical_energy + cognitive_energy) / 2;
+
+  let recommended_focus = "Physical Progression";
+  if (physical_energy < 40) recommended_focus = "Physical Recovery";
+  else if (cognitive_energy < 40) recommended_focus = "Cognitive Rest";
+
+  return {
+    energy_distribution: { physical: physical_energy, cognitive: cognitive_energy, emotional: emotional_energy },
+    energy_load: (100 - emotional_energy) > 60 ? "high" : "manageable",
+    recommended_focus
+  };
+}
+
 export function calculateRecoveryScore(sleepHours: number, sleepQuality: string, screenHours: number = 0) {
   let score = 50; // Base score
 
