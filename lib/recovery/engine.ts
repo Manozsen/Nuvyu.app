@@ -161,5 +161,31 @@ export function generateForecastPacket(recentScores: number[], adherence_risk: s
   };
 }
 
+// 🧠 PHASE 1: RECOVERY DIGITAL TWIN
+export function buildRecoveryDigitalTwin(recentScores: number[], sleepDebt: number, fatigueRisk: string, adherenceRisk: string) {
+  const avgScore = recentScores.length > 0 ? recentScores.reduce((a, b) => a + b, 0) / recentScores.length : 50;
+  
+  let physical_recovery = "optimal";
+  if (fatigueRisk === "high") physical_recovery = "depleted";
+  else if (avgScore < 50) physical_recovery = "strained";
+  
+  let behavioral_recovery = "stable";
+  if (adherenceRisk === "high") behavioral_recovery = "fragile";
+  
+  let mental_recovery = "optimal";
+  if (sleepDebt > 5) mental_recovery = "foggy";
+  else if (sleepDebt > 10) mental_recovery = "exhausted";
+
+  return {
+    physical_recovery,
+    behavioral_recovery,
+    mental_recovery,
+    recovery_confidence: recentScores.length >= 3 ? 0.9 : 0.4,
+    recovery_divergence: Math.abs(recentScores[0] - avgScore) > 20,
+    recovery_consistency: recentScores.length >= 2 ? (Math.abs(recentScores[0] - recentScores[1]) < 10) : false,
+    recovery_trajectory: recentScores.length >= 2 ? (recentScores[0] > recentScores[1] ? "upward" : "downward") : "stable"
+  };
+}
+
 
 
