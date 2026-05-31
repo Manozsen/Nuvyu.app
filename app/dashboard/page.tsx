@@ -715,7 +715,7 @@ interface AdaptiveAIContext extends AIContext {
   const { risk_level: currentBurnoutRisk, burnout_trajectory_packet } = detectBurnoutRisk(metrics.recovery_score, metrics.sleep_hours, metrics.streak_count, Math.abs(Math.min(0, metrics.energy_balance)), []);
   // Legacy strict signature bypass for 6-arg orchestration
   const adaptiveGoals: any = calculateAdaptiveGoals(baseTDEE, 6000, metrics.recovery_state, currentBurnoutRisk, "stable", "stable" as any);
-  const { recommended_calories: targetCalories, recommended_steps: targetSteps, recommended_water: targetWater, adaptation_mode, goal_modulation_metadata } = adaptiveGoals;
+  const { recommended_calories: targetCalories, recommended_steps: targetSteps, recommended_water: targetWater, adaptation_mode, goal_modulation_metadata, capacity_packet, capacity_budget } = adaptiveGoals;
 
   let energyColorClass = "text-[#00FFA3]";
   if (metrics.energy_intake > 0) {
