@@ -687,6 +687,31 @@ const aiAnalyticsContext = buildAIAnalyticsContext(
                     </div>
                  </div>
               </div>
+              
+              {/* 🧠 PHASE 10: AUTONOMOUS BEHAVIORAL OS DASHBOARD */}
+              <div className="bg-[#0A0A0A]/90 backdrop-blur-2xl border border-white/10 rounded-[1.5rem] p-6 shadow-xl space-y-4 mt-6 mb-8">
+                 <div className="flex items-center justify-between mb-4">
+                   <h3 className="text-white/90 font-black text-lg flex items-center gap-2">
+                     <Brain size={20} className="text-[#00FFA3]" /> Autonomous ABOS State
+                   </h3>
+                   <span className="text-[10px] uppercase tracking-widest text-white/40 font-bold px-3 py-1 bg-white/5 rounded-full">System Active</span>
+                 </div>
+                 
+                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="p-4 bg-white/5 rounded-xl border border-white/5">
+                      <span className="text-white/40 text-[10px] font-bold uppercase tracking-widest block mb-1">Operating State</span>
+                      <span className="text-white font-black text-sm capitalize">Growth Phase</span>
+                    </div>
+                    <div className="p-4 bg-white/5 rounded-xl border border-white/5">
+                      <span className="text-white/40 text-[10px] font-bold uppercase tracking-widest block mb-1">Intervention</span>
+                      <span className="text-[#00FFA3] font-black text-sm capitalize">Momentum Push</span>
+                    </div>
+                    <div className="col-span-2 p-4 bg-white/5 rounded-xl border border-white/5">
+                      <span className="text-white/40 text-[10px] font-bold uppercase tracking-widest block mb-1">Recovery ROI Priority</span>
+                      <span className="text-white font-bold text-sm">Sleep Optimization</span>
+                    </div>
+                 </div>
+              </div>
 
             </motion.div>
           </AnimatePresence>
