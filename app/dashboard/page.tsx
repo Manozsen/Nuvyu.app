@@ -534,7 +534,6 @@ interface AdaptiveAIContext extends AIContext {
     const fb_fatigue = calculateDecisionFatigue(fb_lifeload.lifeload_score, fb_adherence, fb_lifeload.lifeload_packet.dominant_load_driver);
 
     saveCoachMemory(supabase, userId, metrics, behavior, ruleNudge, "rule");
-        saveCoachMemory(supabase, userId, metrics, behavior, ruleNudge, "rule");
     return { 
       message: ruleNudge, 
       type: "rule",
