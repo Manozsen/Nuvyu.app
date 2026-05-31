@@ -418,6 +418,15 @@ interface AdaptiveAIContext extends AIContext {
         const forecast_packet = generateForecastPacket(recentRecScores, adherence_risk, resilience_packet);
         const digital_twin_packet = buildRecoveryDigitalTwin(recentRecScores, recovery_debt_packet.sleep_debt_accumulation, metrics.fatigue_risk, adherence_risk);
 
+        // 🧠 ABOS PHASE 10: CORE ENGINES (PROPER SCOPE INTEGRATION)
+        const operating_state_engine = determineOperatingState(burnoutRisk, consistency);
+        const intervention_engine = determineInterventionMode(operating_state_engine.operating_state);
+        const autonomous_priority = buildAutonomousPriorityStack(intervention_engine.intervention_mode);
+        const recovery_roi = calculateRecoveryROI(recovery_debt_packet.sleep_debt_accumulation, metrics.fatigue_risk, adherence_risk);
+        const cognitiveFreshness = metrics.sleep_average >= 7 && metrics.hoursSinceLastLog < 8 ? "high" : "low";
+        const energy_allocation = calculateEnergyAllocation(recovery_debt_packet.sleep_debt_accumulation, metrics.fatigue_risk, cognitiveFreshness);
+        const compound_engine = detectHabitCompounds(behavioralRoutines.preferred_workout_hour || null, behavioralRoutines.night_eating_frequency || 0);
+
         // 🧠 PHASE 7 & 8: AI CONTEXT EVOLUTION v4
         aiContext.priority_metadata = priority_engine;
         aiContext.recovery_debt = recovery_debt_packet;
@@ -748,13 +757,15 @@ interface AdaptiveAIContext extends AIContext {
   const adaptiveGoals: any = calculateAdaptiveGoals(baseTDEE, 6000, metrics.recovery_state, currentBurnoutRisk, "stable", "stable" as any);
   const { recommended_calories: targetCalories, recommended_steps: targetSteps, recommended_water: targetWater, adaptation_mode, goal_modulation_metadata, capacity_packet, capacity_budget } = adaptiveGoals;
 
-  // 🧠 ABOS PHASE 10: CORE ENGINES
-  const operating_state_engine = determineOperatingState(currentBurnoutRisk, adherence_profile || "stable");
+  // 🧠 SAFE ABOS PHASE 10: UI DERIVATION
+  const safe_consistency = metrics.streak_count > 3 ? "highly_adherent" : metrics.streak_count > 0 ? "stable" : "struggling";
+  const safe_adherence_risk = metrics.streak_count === 0 ? "high" : "low";
+  const estimated_sleep_debt = Math.max(0, 8 - (metrics.sleep_hours || 0));
+  
+  const operating_state_engine = determineOperatingState(currentBurnoutRisk, safe_consistency);
   const intervention_engine = determineInterventionMode(operating_state_engine.operating_state);
-  const autonomous_priority = buildAutonomousPriorityStack(intervention_engine.intervention_mode);
-  const recovery_roi = calculateRecoveryROI(recovery_debt_packet.sleep_debt_accumulation, metrics.fatigue_risk, adherence_risk);
-  const energy_allocation = calculateEnergyAllocation(recovery_debt_packet.sleep_debt_accumulation, metrics.fatigue_risk, "baseline");
-  const compound_engine = detectHabitCompounds(null, behavioralRoutines.night_eating_frequency || 0);
+  const recovery_roi = calculateRecoveryROI(estimated_sleep_debt, metrics.fatigue_risk, safe_adherence_risk);
+  const energy_allocation = calculateEnergyAllocation(estimated_sleep_debt, metrics.fatigue_risk, (metrics.sleep_hours || 0) >= 7 ? "high" : "low");
 
   let energyColorClass = "text-[#00FFA3]";
   if (metrics.energy_intake > 0) {
@@ -940,10 +951,38 @@ interface AdaptiveAIContext extends AIContext {
           
          <BentoCard icon={Droplets} label="Water" value={metrics.water} target={`/ ${targetWater} ml`} color="text-blue-400" delay={0.4} />
             
-          {/* Recovery & Sleep Integrations */}
+        {/* Recovery & Sleep Integrations */}
           <BentoCard icon={Moon} label="Sleep" value={metrics.sleep_hours || 0} target="hrs" color="text-indigo-400" delay={0.45} />
           <BentoCard icon={Activity} label="Recovery" value={`${metrics.recovery_score || 0}%`} target="score" color="text-purple-400" delay={0.5} />
         </section>
+
+        {/* 🧠 ABOS EXECUTIVE SUMMARY */}
+        <motion.section 
+          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}
+          className="bg-[#0A0A0A] border border-white/10 rounded-[1.5rem] p-5 shadow-xl mt-4"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Brain size={16} className="text-[#00FFA3]" />
+              <span className="text-white/50 text-[10px] font-bold uppercase tracking-widest">ABOS Operating State</span>
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-[#00FFA3] bg-[#00FFA3]/10 px-2 py-1 rounded-md">{operating_state_engine.operating_state.replace('_', ' ')}</span>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-white/5 rounded-xl p-3 border border-white/5">
+              <span className="text-white/40 text-[9px] font-bold uppercase tracking-widest block mb-1">Intervention</span>
+              <span className="text-white text-xs font-bold capitalize">{intervention_engine.intervention_mode.replace('_', ' ')}</span>
+            </div>
+            <div className="bg-white/5 rounded-xl p-3 border border-white/5">
+              <span className="text-white/40 text-[9px] font-bold uppercase tracking-widest block mb-1">Energy Focus</span>
+              <span className="text-white text-xs font-bold capitalize">{energy_allocation.recommended_focus}</span>
+            </div>
+            <div className="col-span-2 bg-[#00FFA3]/5 rounded-xl p-3 border border-[#00FFA3]/10">
+              <span className="text-[#00FFA3]/60 text-[9px] font-bold uppercase tracking-widest block mb-1">Highest Recovery ROI</span>
+              <span className="text-white text-xs font-bold">{recovery_roi.roi_action}</span>
+            </div>
+          </div>
+        </motion.section>
         
       </main>
 
