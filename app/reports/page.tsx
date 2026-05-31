@@ -690,7 +690,8 @@ const aiAnalyticsContext = buildAIAnalyticsContext(
 
             </motion.div>
           </AnimatePresence>
-
+         )}
+        
       {/* FIXED BOTTOM NAVIGATION */}
       <div className="fixed bottom-6 left-6 right-6 flex justify-center z-40">
         <nav className="bg-[#0A0A0A]/80 backdrop-blur-xl border border-white/10 rounded-full px-6 py-4 flex items-center gap-12 shadow-[0_10px_40px_rgba(0,0,0,0.8)]">
