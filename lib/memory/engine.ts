@@ -33,3 +33,24 @@ export function extractBehavioralMemories(logs: any[]) {
     memory_status: "tracking_active"
   };
 }
+
+// 🧠 PHASE 10C: HABIT COMPOUND ENGINE
+export function detectHabitCompounds(preferred_workout_hour: number | null, night_eating_frequency: number) {
+  let compound_chain = "baseline -> adherence";
+  let keystone_behavior = "morning_hydration";
+  
+  if (night_eating_frequency > 1) {
+    compound_chain = "late_eating -> poor_sleep -> skipped_workout";
+    keystone_behavior = "evening_cutoff";
+  } else if (preferred_workout_hour && preferred_workout_hour < 10) {
+    compound_chain = "early_workout -> high_energy -> consistent_nutrition";
+    keystone_behavior = "morning_workout";
+  }
+
+  return {
+    compound_chain,
+    keystone_behavior,
+    compound_strength: night_eating_frequency > 1 ? "high_negative" : "high_positive",
+    compound_risk: night_eating_frequency > 1 ? "high" : "low"
+  };
+}
