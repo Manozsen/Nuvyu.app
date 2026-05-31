@@ -114,14 +114,7 @@ export function calculateDailyScore(logs: any[], onboardingScore: number = 50) {
   }
 }
 
-// FUTURE PREP: SLEEP & RECOVERY (Lightweight Architecture)
-export function calculateRecoveryScore(sleepHours: number, sleepQuality: string) {
-  let recoveryScore = 50; // Base
-  if (sleepHours >= 7) recoveryScore += 30;
-  else if (sleepHours >= 5) recoveryScore += 10;
-  
-  if (sleepQuality === 'Excellent') recoveryScore += 20;
-  if (sleepQuality === 'Poor') recoveryScore -= 10;
-  
-  return Math.max(0, Math.min(100, recoveryScore));
-}
+// 🧠 ABOS ENFORCEMENT: 
+// calculateRecoveryScore removed from score engine to enforce strict ownership by lib/recovery/engine.ts
+// Do not implement parallel scoring systems.
+
