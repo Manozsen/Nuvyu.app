@@ -509,11 +509,27 @@ interface AdaptiveAIContext extends AIContext {
       }).eq('id', userId);
 
       saveCoachMemory(supabase, userId, metrics, behavior, aiNudge, "ai");
-      return { message: aiNudge, type: "ai" };
+      return { 
+        message: aiNudge, 
+        type: "ai",
+        abos_metrics: {
+          lifeload_packet: safe_lifeload.lifeload_packet,
+          cognitive_energy_packet: safe_cognitive,
+          decision_fatigue_packet: safe_decision_fatigue
+        }
+      };
     }
 
     saveCoachMemory(supabase, userId, metrics, behavior, ruleNudge, "rule");
-    return { message: ruleNudge, type: "rule" };
+    return { 
+      message: ruleNudge, 
+      type: "rule",
+      abos_metrics: {
+        lifeload_packet: safe_lifeload.lifeload_packet,
+        cognitive_energy_packet: safe_cognitive,
+        decision_fatigue_packet: safe_decision_fatigue
+      }
+    };
   };
 
     useEffect(() => {
@@ -716,7 +732,10 @@ interface AdaptiveAIContext extends AIContext {
         reward_message: String(habitData?.reward_message || ""),
         xp: safeNumber(profile?.xp),
         level: safeNumber(profile?.level, 1),
-        burnout_risk: burnoutRisk
+        burnout_risk: burnoutRisk,
+        lifeload_packet: nudgeResponse.abos_metrics?.lifeload_packet,
+        cognitive_energy_packet: nudgeResponse.abos_metrics?.cognitive_energy_packet,
+        decision_fatigue_packet: nudgeResponse.abos_metrics?.decision_fatigue_packet
       } as any);
 
             // 🧠 PART 3 & 8: CALCULATE TODAY XP (No extra DB calls, reusing existing data)
