@@ -8,15 +8,15 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 // Using relative paths to bypass Next.js alias resolution errors
 import { getRecentMemory, saveCoachMemory, detectUserPattern, calculateConsistency, extractLongTermMemory, determineBehavioralState, calculateFrictionProfile } from '../../lib/coach/memory';
-import { predictAdherenceRisk, calculateRecoveryDebt, calculateResilienceScore, calculateResiliencePacket, generateForecastPacket, buildRecoveryDigitalTwin } from '../../lib/recovery/engine';
-import { extractBehavioralMemories } from '../../lib/memory/engine';
+import { predictAdherenceRisk, calculateRecoveryDebt, calculateResilienceScore, calculateResiliencePacket, generateForecastPacket, buildRecoveryDigitalTwin, calculateRecoveryROI, calculateEnergyAllocation } from '../../lib/recovery/engine';
+import { extractBehavioralMemories, detectHabitCompounds } from '../../lib/memory/engine';
 import { calculateDailyScore } from '../../lib/score/engine';
 import { calculateRecoveryScore } from '../../lib/recovery/engine';
 import { updateHabit } from '../../lib/habit/engine';
 import { calculateEnergyBalance, getLocalDateString, calculateRecoveryState, detectFatiguePattern } from '../../lib/calories/energyEngine';
 import { DashboardMetrics } from '../../lib/types/dashboard';
 import { detectBurnoutRisk } from '../../lib/recovery/engine';
-import { calculateAdaptiveGoals, getDynamicGreeting } from '../../lib/personalization/engine';
+import { calculateAdaptiveGoals, getDynamicGreeting, determineOperatingState, determineInterventionMode, buildAutonomousPriorityStack } from '../../lib/personalization/engine';
 import { AIContext } from '../../lib/types/ai';
 import { safeSleepHours, safeSleepQuality, safeRecoveryScore } from '../../lib/utils/sleep';
 import { safeNumber, safeRecoveryState, safeFatigueRisk, safeEnergyStats } from '../../lib/utils/safe';
@@ -213,6 +213,14 @@ interface AdaptiveAIContext extends AIContext {
   decision_fatigue_packet?: any;
   capacity_packet?: any;
   capacity_budget?: any;
+  intervention_engine?: any;
+  leverage_engine?: any;
+  compound_engine?: any;
+  recovery_roi?: any;
+  scenario_simulator?: any;
+  autonomous_priority?: any;
+  energy_allocation?: any;
+  operating_state?: any;
 }
 
   // 4. AI CONTEXT BUILDER
@@ -430,6 +438,14 @@ interface AdaptiveAIContext extends AIContext {
         aiContext.decision_fatigue_packet = (metrics as any).decision_fatigue_packet;
         aiContext.capacity_packet = capacity_packet;
         aiContext.capacity_budget = capacity_budget;
+        
+        // 🧠 ABOS PHASE 10: CONTEXT
+        aiContext.operating_state = operating_state_engine;
+        aiContext.intervention_engine = intervention_engine;
+        aiContext.autonomous_priority = autonomous_priority;
+        aiContext.recovery_roi = recovery_roi;
+        aiContext.energy_allocation = energy_allocation;
+        aiContext.compound_engine = compound_engine;
       }
 
     // Rate Limiting System (Monetization Check)
@@ -731,6 +747,14 @@ interface AdaptiveAIContext extends AIContext {
   // Legacy strict signature bypass for 6-arg orchestration
   const adaptiveGoals: any = calculateAdaptiveGoals(baseTDEE, 6000, metrics.recovery_state, currentBurnoutRisk, "stable", "stable" as any);
   const { recommended_calories: targetCalories, recommended_steps: targetSteps, recommended_water: targetWater, adaptation_mode, goal_modulation_metadata, capacity_packet, capacity_budget } = adaptiveGoals;
+
+  // 🧠 ABOS PHASE 10: CORE ENGINES
+  const operating_state_engine = determineOperatingState(currentBurnoutRisk, adherence_profile || "stable");
+  const intervention_engine = determineInterventionMode(operating_state_engine.operating_state);
+  const autonomous_priority = buildAutonomousPriorityStack(intervention_engine.intervention_mode);
+  const recovery_roi = calculateRecoveryROI(recovery_debt_packet.sleep_debt_accumulation, metrics.fatigue_risk, adherence_risk);
+  const energy_allocation = calculateEnergyAllocation(recovery_debt_packet.sleep_debt_accumulation, metrics.fatigue_risk, "baseline");
+  const compound_engine = detectHabitCompounds(null, behavioralRoutines.night_eating_frequency || 0);
 
   let energyColorClass = "text-[#00FFA3]";
   if (metrics.energy_intake > 0) {
