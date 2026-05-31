@@ -714,6 +714,7 @@ const aiAnalyticsContext = buildAIAnalyticsContext(
         </nav>
       </div>
 
+     </main>
     </div>
   );
 }
