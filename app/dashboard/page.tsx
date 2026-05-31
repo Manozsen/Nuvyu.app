@@ -441,7 +441,7 @@ interface AdaptiveAIContext extends AIContext {
         aiContext.goal_modulation = goal_modulation_metadata;
         aiContext.priority_stack = priority_stack;
         
-        // 🧠 ABOS SAFE LOCAL DERIVATIONS (Replacing dangerous unsafe casts)
+        // 🧠 ABOS SAFE LOCAL DERIVATIONS (Fixes undefined context leakage)
         const recentScreenHours = (pastLogs || []).filter(l => l.log_type === 'screen').slice(0, 3).map(l => l.data?.amount || 0);
         const avg_screen = recentScreenHours.length > 0 ? recentScreenHours.reduce((a, b) => Number(a) + Number(b), 0) / recentScreenHours.length : 0;
         const avg_sleep = recentSleepHours.length > 0 ? recentSleepHours.reduce((a, b) => Number(a) + Number(b), 0) / recentSleepHours.length : 0;
@@ -450,7 +450,7 @@ interface AdaptiveAIContext extends AIContext {
         const safe_lifeload = calculateLifeload(avg_sleep, avg_screen);
         const safe_cognitive = calculateCognitiveEnergy(avg_sleep, avg_screen, safe_lifeload.cognitive_load);
         const safe_decision_fatigue = calculateDecisionFatigue(safe_lifeload.lifeload_score, local_adherence, safe_lifeload.lifeload_packet.dominant_load_driver);
-        const safe_leverage = detectBehavioralLeverage(safe_lifeload.lifeload_score, local_adherence);
+        const safe_leverage = detectBehavioralLeverage(safe_lifeload.lifeload_score, avg_sleep, local_adherence);
         const safe_scenario = simulateBehavioralScenario(metrics.fatigue_risk, safe_lifeload.lifeload_score);
 
         // Dynamic Load Contexts
