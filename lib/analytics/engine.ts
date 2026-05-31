@@ -328,7 +328,7 @@ const avg_screen =
   const decision_fatigue_packet = calculateDecisionFatigue(lifeload_score, adherence_score, lifeload_packet.dominant_load_driver);
 
   // 🧠 ABOS PHASE 10: ANALYTICS INTEGRATION
-  const leverage_engine = detectBehavioralLeverage(lifeload_score, avg_sleep, adherence_score);
+  const leverage_engine = detectBehavioralLeverage(lifeload_score, adherence_score);
   const scenario_simulator = simulateBehavioralScenario(streak_risk, lifeload_score);
 
   // 🧠 BYPASS EXCESS PROPERTY CHECK: Safely package all AI intelligence
