@@ -83,12 +83,28 @@ export function calculateAdaptiveGoals(baseTDEE: number, baseSteps: number, reco
     recommendation = "habit_rebuilding";
   }
 
-    // 🧠 PHASE 4: AUTONOMOUS GOAL MODULATION
+  // 🧠 PHASE 4 & 6: AUTONOMOUS GOAL MODULATION & BEHAVIORAL CAPACITY BUDGET
   const goal_modulation_metadata = {
     hydration_adjusted: recommended_water !== 3000,
     activity_adjusted: adaptive_steps !== baseSteps,
     recovery_focused: recommendation === "recovery_focus",
     modulation_confidence: 0.85
+  };
+
+  let capacity_score = 100;
+  if (burnout_risk === "high") capacity_score -= 50;
+  if (adherence_profile === "struggling") capacity_score -= 30;
+
+  const capacity_packet = {
+    capacity_score,
+    capacity_level: capacity_score > 70 ? "high" : capacity_score > 40 ? "moderate" : "low",
+    capacity_confidence: "high",
+    limiting_factor: burnout_risk === "high" ? "physiological_debt" : adherence_profile === "struggling" ? "behavioral_friction" : "none"
+  };
+
+  const capacity_budget = {
+    available_effort_units: Math.round(capacity_score / 10),
+    max_friction_tolerance: capacity_score > 60 ? "high" : "low"
   };
 
   return {
@@ -97,7 +113,9 @@ export function calculateAdaptiveGoals(baseTDEE: number, baseSteps: number, reco
     recommended_water,
     workout_intensity,
     adaptation_mode: recommendation,
-    goal_modulation_metadata
+    goal_modulation_metadata,
+    capacity_packet,
+    capacity_budget
   };
 }
 
