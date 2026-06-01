@@ -30,13 +30,14 @@ export function estimateActivityCalories(activityType: string, durationMins: num
 }
 
 // FUTURE ARCHITECTURE PLACEHOLDERS
-export function parseWorkoutString(workoutText: string) {
+/* export function parseWorkoutString(workoutText: string) {
   // Prep for future NLP/Gemini workout parsing
   return {
     raw: workoutText,
     detected_exercises: []
   };
 }
+*/
 
 // 🧠 CENTRALIZED DYNAMIC CALORIE ENGINE (FULL AGGREGATION)
 export function calculateDynamicBurn(profile: any, logs: any[]) {
