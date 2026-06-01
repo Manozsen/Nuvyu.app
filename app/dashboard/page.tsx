@@ -803,7 +803,7 @@ interface AdaptiveAIContext extends AIContext {
   const intervention_engine = determineInterventionMode(operating_state_engine.operating_state);
   const recovery_roi = calculateRecoveryROI(estimated_sleep_debt, metrics?.fatigue_risk || "low", safe_adherence_risk);
   const energy_allocation = calculateEnergyAllocation(estimated_sleep_debt, metrics?.fatigue_risk || "low", (metrics?.sleep_hours || 0) >= 7 ? "high" : "low");
-  const safeBehavioralRoutines = extractBehavioralMemories(dailyLogsData || []);
+  const safeBehavioralRoutines = extractBehavioralMemories([]);
   const compound_engine = detectHabitCompounds(safeBehavioralRoutines.preferred_workout_hour || null, safeBehavioralRoutines.night_eating_frequency || 0);
 
   let energyColorClass = "text-[#00FFA3]";
