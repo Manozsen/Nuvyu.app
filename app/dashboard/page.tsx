@@ -448,10 +448,12 @@ interface AdaptiveAIContext extends AIContext {
         aiContext.forecast_packet = forecast_packet;
         aiContext.context_router = context_router;
         aiContext.resilience_packet = resilience_packet;
-        aiContext.burnout_trajectory = burnout_trajectory_packet;
-        aiContext.goal_modulation = goal_modulation_metadata;
-        aiContext.priority_stack = priority_stack;
         
+        // 🧠 Safely evaluate local burnout trajectory to prevent scope ReferenceError
+        const { burnout_trajectory_packet } = detectBurnoutRisk(safeRecScore, safeNumber(recoveryData?.sleep_hours), safeStreak, safeDeficit, recentRecScores);
+        aiContext.burnout_trajectory = burnout_trajectory_packet;
+        aiContext.goal_modulation = adaptiveGoals?.goal_modulation_metadata;
+        aiContext.priority_stack = priority_stack;
         // 🧠 ABOS SAFE LOCAL DERIVATIONS (Scope Hoisted Context Injection)
         const safe_leverage = detectBehavioralLeverage(safe_lifeload.lifeload_score, local_adherence);
         const safe_scenario = simulateBehavioralScenario(adherence_risk, safe_lifeload.lifeload_score);
@@ -463,8 +465,8 @@ interface AdaptiveAIContext extends AIContext {
         aiContext.decision_fatigue_packet = safe_decision_fatigue;
         aiContext.leverage_engine = safe_leverage;
         aiContext.scenario_simulator = safe_scenario;
-        aiContext.capacity_packet = capacity_packet;
-        aiContext.capacity_budget = capacity_budget;
+        aiContext.capacity_packet = adaptiveGoals?.capacity_packet;
+        aiContext.capacity_budget = adaptiveGoals?.capacity_budget;
 
         // 🧠 ABOS PHASE 10: CONTEXT
         aiContext.operating_state = operating_state_engine;
