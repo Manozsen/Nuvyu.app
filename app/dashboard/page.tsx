@@ -308,6 +308,17 @@ interface AdaptiveAIContext extends AIContext {
       const { adherence_risk, consistency_flags, motivation_stability, adherence_drop_probability } = predictAdherenceRisk(safeRecScore, safeStreak, consistency);
       const behavioralRoutines = extractBehavioralMemories(pastLogs || []);
 
+      // 🧠 ABOS SAFE LOCAL DERIVATIONS (Scope Hoisted for UI Delivery)
+      const recentScreenHours = (pastLogs || []).filter(l => l.log_type === 'screen').slice(0, 3).map(l => l.data?.amount || 0);
+      const avg_screen = recentScreenHours.length > 0 ? recentScreenHours.reduce((a, b) => Number(a) + Number(b), 0) / recentScreenHours.length : 0;
+      const recentSleepHours_fb = (pastLogs || []).filter(l => l.log_type === 'sleep').slice(0, 3).map(l => l.data?.sleep_hours || 0);
+      const avg_sleep = recentSleepHours_fb.length > 0 ? recentSleepHours_fb.reduce((a, b) => Number(a) + Number(b), 0) / recentSleepHours_fb.length : 0;
+      const local_adherence = consistency === "high" ? 90 : consistency === "medium" ? 60 : 30;
+
+      const safe_lifeload = calculateLifeload(avg_sleep, avg_screen);
+      const safe_cognitive = calculateCognitiveEnergy(avg_sleep, avg_screen, safe_lifeload.cognitive_load);
+      const safe_decision_fatigue = calculateDecisionFatigue(safe_lifeload.lifeload_score, local_adherence, safe_lifeload.lifeload_packet.dominant_load_driver);
+
       // 🧠 PHASE 2 & 6: RECOVERY DEBT & RESILIENCE
       const recentRecScores = (pastLogs || []).filter(l => l.log_type === 'sleep').slice(0, 3).map(l => l.data?.recovery_score || 50);
       const recentSleepHours = (pastLogs || []).filter(l => l.log_type === 'sleep').slice(0, 3).map(l => l.data?.sleep_hours || 0);
@@ -441,15 +452,7 @@ interface AdaptiveAIContext extends AIContext {
         aiContext.goal_modulation = goal_modulation_metadata;
         aiContext.priority_stack = priority_stack;
         
-        // 🧠 ABOS SAFE LOCAL DERIVATIONS (Fixes undefined context leakage)
-        const recentScreenHours = (pastLogs || []).filter(l => l.log_type === 'screen').slice(0, 3).map(l => l.data?.amount || 0);
-        const avg_screen = recentScreenHours.length > 0 ? recentScreenHours.reduce((a, b) => Number(a) + Number(b), 0) / recentScreenHours.length : 0;
-        const avg_sleep = recentSleepHours.length > 0 ? recentSleepHours.reduce((a, b) => Number(a) + Number(b), 0) / recentSleepHours.length : 0;
-        const local_adherence = consistency === "high" ? 90 : consistency === "medium" ? 60 : 30;
-
-        const safe_lifeload = calculateLifeload(avg_sleep, avg_screen);
-        const safe_cognitive = calculateCognitiveEnergy(avg_sleep, avg_screen, safe_lifeload.cognitive_load);
-        const safe_decision_fatigue = calculateDecisionFatigue(safe_lifeload.lifeload_score, local_adherence, safe_lifeload.lifeload_packet.dominant_load_driver);
+        // 🧠 ABOS SAFE LOCAL DERIVATIONS (Scope Hoisted Context Injection)
         const safe_leverage = detectBehavioralLeverage(safe_lifeload.lifeload_score, local_adherence);
         const safe_scenario = simulateBehavioralScenario(metrics.fatigue_risk, safe_lifeload.lifeload_score);
 
@@ -508,39 +511,26 @@ interface AdaptiveAIContext extends AIContext {
         last_reset_date: todayDate
       }).eq('id', userId);
 
-      saveCoachMemory(supabase, userId, metrics, behavior, aiNudge, "ai");
+    saveCoachMemory(supabase, userId, metrics, behavior, aiNudge, "ai");
       return { 
         message: aiNudge, 
         type: "ai",
         abos_metrics: {
-           lifeload_packet: (metrics as any).lifeload_packet,
-           cognitive_energy_packet: (metrics as any).cognitive_energy_packet,
-           decision_fatigue_packet: (metrics as any).decision_fatigue_packet
+           lifeload_packet: safe_lifeload.lifeload_packet,
+           cognitive_energy_packet: safe_cognitive,
+           decision_fatigue_packet: safe_decision_fatigue
           }
         };
-      };
-      
-    // 🧠 ABOS FALLBACK DERIVATION: Safely compute packets when AI is not triggered to prevent UI state loss
-    const fb_screen_logs = (pastLogs || []).filter((l: any) => l.log_type === 'screen').slice(0, 3).map((l: any) => l.data?.amount || 0);
-    const fb_screen = fb_screen_logs.length > 0 ? fb_screen_logs.reduce((a: any, b: any) => Number(a) + Number(b), 0) / fb_screen_logs.length : 0;
-    
-    const fb_sleep_logs = (pastLogs || []).filter((l: any) => l.log_type === 'sleep').slice(0, 3).map((l: any) => l.data?.sleep_hours || 0);
-    const fb_sleep = fb_sleep_logs.length > 0 ? fb_sleep_logs.reduce((a: any, b: any) => Number(a) + Number(b), 0) / fb_sleep_logs.length : 0;
-    
-    const fb_adherence = (profile?.streak_count || 0) > 3 ? 90 : (profile?.streak_count || 0) > 0 ? 60 : 30;
-
-    const fb_lifeload = calculateLifeload(fb_sleep, fb_screen);
-    const fb_cognitive = calculateCognitiveEnergy(fb_sleep, fb_screen, fb_lifeload.cognitive_load);
-    const fb_fatigue = calculateDecisionFatigue(fb_lifeload.lifeload_score, fb_adherence, fb_lifeload.lifeload_packet.dominant_load_driver);
+      }
 
     saveCoachMemory(supabase, userId, metrics, behavior, ruleNudge, "rule");
     return { 
       message: ruleNudge, 
       type: "rule",
       abos_metrics: {
-        lifeload_packet: undefined,
-        cognitive_energy_packet: undefined,
-        decision_fatigue_packet: undefined
+        lifeload_packet: safe_lifeload.lifeload_packet,
+        cognitive_energy_packet: safe_cognitive,
+        decision_fatigue_packet: safe_decision_fatigue
       }
     };
   };
@@ -779,7 +769,7 @@ interface AdaptiveAIContext extends AIContext {
     }; // <-- THIS CLOSES THE ASYNC FUNCTION (Fixes 'await' error)
 
     fetchDashboardData();
-  }, [supabase.auth, router]);
+  }, [router]);
 
     const handleLogout = async () => {
     setIsLoggingOut(true);
