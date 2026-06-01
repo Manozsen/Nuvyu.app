@@ -18,11 +18,16 @@ export default function InsightsPage() {
     // Insights State
   const [insights, setInsights] = useState<any>(null);
   
-  // 🧠 RUNTIME HARDENING: Normalization Layers for UI Rendering
+    // 🧠 RUNTIME HARDENING: Normalization Layers for UI Rendering
   const safeInsights = useMemo(() => {
     if (!insights) return null;
+    
+    // Natively build the ABOS analytics context to feed the Executive UI
+    const aiContextData = buildAIAnalyticsContext(insights);
+    
     return {
       ...insights,
+      aiAnalyticsContext: aiContextData,
       advancedAnalytics: {
         ...insights.advancedAnalytics,
         dailyData: Array.isArray(insights.advancedAnalytics?.dailyData) ? insights.advancedAnalytics.dailyData : [],
