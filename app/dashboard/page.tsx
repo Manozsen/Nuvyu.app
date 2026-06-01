@@ -454,7 +454,7 @@ interface AdaptiveAIContext extends AIContext {
         
         // 🧠 ABOS SAFE LOCAL DERIVATIONS (Scope Hoisted Context Injection)
         const safe_leverage = detectBehavioralLeverage(safe_lifeload.lifeload_score, local_adherence);
-        const safe_scenario = simulateBehavioralScenario(metrics.fatigue_risk, safe_lifeload.lifeload_score);
+        const safe_scenario = simulateBehavioralScenario(adherence_risk, safe_lifeload.lifeload_score);
 
         // Dynamic Load Contexts
         aiContext.digital_twin_packet = digital_twin_packet;
@@ -794,15 +794,15 @@ interface AdaptiveAIContext extends AIContext {
   const adaptiveGoals: any = calculateAdaptiveGoals(baseTDEE, 6000, metrics.recovery_state, currentBurnoutRisk, "stable", "stable" as any);
   const { recommended_calories: targetCalories, recommended_steps: targetSteps, recommended_water: targetWater, adaptation_mode, goal_modulation_metadata, capacity_packet, capacity_budget } = adaptiveGoals;
 
-  // 🧠 SAFE ABOS PHASE 10: UI DERIVATION
-  const safe_consistency = metrics.streak_count > 3 ? "highly_adherent" : metrics.streak_count > 0 ? "stable" : "struggling";
-  const safe_adherence_risk = metrics.streak_count === 0 ? "high" : "low";
-  const estimated_sleep_debt = Math.max(0, 8 - (metrics.sleep_hours || 0));
-  
-  const operating_state_engine = determineOperatingState(currentBurnoutRisk, safe_consistency);
+  // 🧠 SAFE ABOS PHASE 10: UI DERIVATION (Null-Safe)
+  const safe_consistency = (metrics?.streak_count || 0) > 3 ? "highly_adherent" : (metrics?.streak_count || 0) > 0 ? "stable" : "struggling";
+  const safe_adherence_risk = (metrics?.streak_count || 0) === 0 ? "high" : "low";
+  const estimated_sleep_debt = Math.max(0, 8 - (metrics?.sleep_hours || 0));
+
+  const operating_state_engine = determineOperatingState(currentBurnoutRisk || "low", safe_consistency);
   const intervention_engine = determineInterventionMode(operating_state_engine.operating_state);
-  const recovery_roi = calculateRecoveryROI(estimated_sleep_debt, metrics.fatigue_risk, safe_adherence_risk);
-  const energy_allocation = calculateEnergyAllocation(estimated_sleep_debt, metrics.fatigue_risk, (metrics.sleep_hours || 0) >= 7 ? "high" : "low");
+  const recovery_roi = calculateRecoveryROI(estimated_sleep_debt, metrics?.fatigue_risk || "low", safe_adherence_risk);
+  const energy_allocation = calculateEnergyAllocation(estimated_sleep_debt, metrics?.fatigue_risk || "low", (metrics?.sleep_hours || 0) >= 7 ? "high" : "low");
 
   let energyColorClass = "text-[#00FFA3]";
   if (metrics.energy_intake > 0) {
