@@ -38,6 +38,13 @@ export interface AIContext {
   decision_fatigue_packet?: { fatigue_score: number; fatigue_level: string; overload_source: string; confidence: string; };
   digital_twin_packet?: { physical_recovery: string; behavioral_recovery: string; mental_recovery: string; recovery_confidence: number; recovery_divergence: boolean; recovery_consistency: boolean; recovery_trajectory: string; };
   capacity_budget?: { available_effort_units: number; max_friction_tolerance: string; };
-  forecast_packet?: { adherence_risk_3d: string; recovery_decline_risk_3d: string; hydration_decline_risk_3d: string; burnout_escalation_risk_3d: string; inactivity_risk_3d: string; };
+  forecast_packet?: { adherence_risk_3d: string; recovery_decline_risk_3d: string; hydration_decline_risk_3d: string; burnout_escalation_risk_3d: string; inactivity_risk_3d: string; projected_recovery_score?: number; projected_burnout_state?: string; transition_text?: string; };
+  
+  // 🧠 ABOS PHASE 11: AUTONOMOUS COACH INTELLIGENCE (ACI)
+  behavioral_memory_packet?: { adherence_drift: string; hydration_behavior: string; sleep_behavior: string; memory_confidence: number; };
+  intervention_packet?: { primary_intervention: string; expected_benefit: string; friction_level: string; };
+  coach_action_packet?: { todays_priority: string; actionable_metric: string; confidence_score: number; };
+  habit_prescription_packet?: { micro_habit: string; difficulty: string; impact: string; timing: string; };
+  coach_context_packet?: { serialized_state: string; priority_directive: string; llm_routing_flag: boolean; };
 }
 
