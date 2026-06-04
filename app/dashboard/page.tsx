@@ -508,12 +508,17 @@ interface AdaptiveAIContext extends AIContext {
       lastReset = todayDate;
     }
 
-    if (currentCount >= limit) {
+        if (currentCount >= limit) {
       saveCoachMemory(supabase, userId, metrics, behavior, ruleNudge, "rule");
       return { 
         message: ruleNudge, 
         type: "rule", 
-        meta: { ai_limit_hit: true } 
+        meta: { ai_limit_hit: true },
+        abos_metrics: {
+          lifeload_packet: safe_lifeload.lifeload_packet,
+          cognitive_energy_packet: safe_cognitive,
+          decision_fatigue_packet: safe_decision_fatigue
+        }
       };
     }
 
@@ -723,7 +728,7 @@ interface AdaptiveAIContext extends AIContext {
       // FIX: Added 'as "ai" | "rule"' to satisfy TypeScript's strict type checking
       setCoachType(nudgeResponse.type as "ai" | "rule");
       
-      if (nudgeResponse.meta?.ai_limit_hit) {
+      if ((nudgeResponse as any).meta?.ai_limit_hit) {
         setAiLimitHit(true);
         console.log("AI limit reached, basic coaching active"); // Metadata flag processed but UI stays untouched
       }
