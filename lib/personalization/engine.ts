@@ -168,3 +168,64 @@ export function getDynamicGreeting() {
   return "Good Night";
 }
 
+// 🧠 PHASE 11 MODULE 2: INTERVENTION RECOMMENDATION ENGINE
+export function generateInterventionPacket(lifeload_score: number, burnout_risk: string, adherence_score: number) {
+  let primary_intervention = "Maintain Momentum";
+  let expected_benefit = "+5 Daily Score";
+  let friction_level = "Low";
+
+  if (burnout_risk === "high" || lifeload_score < 40) {
+    primary_intervention = "Reduce training volume 20% & enforce sleep before 11 PM";
+    expected_benefit = "+15 Recovery Score";
+    friction_level = "High";
+  } else if (adherence_score < 50) {
+    primary_intervention = "Increase morning hydration by 500ml to rebuild habit loop";
+    expected_benefit = "+10 Consistency";
+    friction_level = "Low";
+  }
+
+  return { primary_intervention, expected_benefit, friction_level };
+}
+
+// 🧠 PHASE 11 MODULE 3: AUTONOMOUS COACH ENGINE
+export function generateCoachActionPacket(operating_state: string, intervention_packet: any, behavioral_memory: any) {
+  let todays_priority = "Progressive Overload";
+  let actionable_metric = "Steps > 8000";
+  let confidence_score = 80;
+
+  if (operating_state === "burnout_protection" || behavioral_memory.sleep_behavior === "sleep_deprived") {
+    todays_priority = "Sleep Optimization";
+    actionable_metric = "In bed by 10:30 PM";
+    confidence_score = 92;
+  } else if (operating_state === "rebuild" || behavioral_memory.hydration_behavior === "chronically_dehydrated") {
+    todays_priority = "Hydration Recovery";
+    actionable_metric = "Water > 2500ml";
+    confidence_score = 88;
+  }
+
+  return { todays_priority, actionable_metric, confidence_score };
+}
+
+// 🧠 PHASE 11 MODULE 4: HABIT PRESCRIPTION ENGINE
+export function generateHabitPrescription(fatigue_risk: string, intervention_packet: any) {
+  let micro_habit = "Walk 1500 steps after dinner";
+  let difficulty = "Low";
+  let impact = "High";
+  let timing = "Evening";
+
+  if (fatigue_risk === "high") {
+    micro_habit = "5-minute deep breathing before sleep";
+    difficulty = "Ultra Low";
+    impact = "Critical";
+    timing = "Pre-sleep";
+  } else if (intervention_packet.friction_level === "Low") {
+    micro_habit = "Drink 1 glass of water upon waking";
+    difficulty = "Low";
+    impact = "High";
+    timing = "Morning";
+  }
+
+  return { micro_habit, difficulty, impact, timing };
+}
+
+
