@@ -331,6 +331,29 @@ const avg_screen =
   const leverage_engine = detectBehavioralLeverage(lifeload_score, adherence_score);
   const scenario_simulator = simulateBehavioralScenario(streak_risk, lifeload_score);
 
+  // 🧠 PHASE 11 MODULE 6: LLM READY CONTEXT BUILDER
+export function buildCoachContextPacket(aiContext: any) {
+  if (!aiContext) return { serialized_state: "{}", priority_directive: "None", llm_routing_flag: false };
+
+  const priority = aiContext.coach_action_packet?.todays_priority || "Consistency";
+  const directive = aiContext.intervention_packet?.primary_intervention || "Maintain current trajectory";
+  
+  // Create a minimal serialized payload to save LLM tokens while preserving strict ABOS context
+  const minimalPayload = {
+    state: aiContext.operating_state?.operating_state,
+    lifeload: aiContext.lifeload_packet?.lifeload_level,
+    fatigue: aiContext.decision_fatigue_packet?.fatigue_level,
+    drift: aiContext.behavioral_memory_packet?.adherence_drift,
+    habit_rx: aiContext.habit_prescription_packet?.micro_habit
+  };
+
+  return {
+    serialized_state: JSON.stringify(minimalPayload),
+    priority_directive: `FOCUS: ${priority}. DIRECTIVE: ${directive}`,
+    llm_routing_flag: true
+  };
+}
+ 
   // 🧠 BYPASS EXCESS PROPERTY CHECK: Safely package all AI intelligence
   const aiContext = {
     avg_sleep: Math.round(avg_sleep * 10) / 10,
