@@ -9,15 +9,15 @@ import { useRouter } from 'next/navigation';
 // Using relative paths to bypass Next.js alias resolution errors
 import { getRecentMemory, saveCoachMemory, detectUserPattern, calculateConsistency, extractLongTermMemory, determineBehavioralState, calculateFrictionProfile } from '../../lib/coach/memory';
 import { predictAdherenceRisk, calculateRecoveryDebt, calculateResilienceScore, calculateResiliencePacket, generateForecastPacket, buildRecoveryDigitalTwin, calculateRecoveryROI, calculateEnergyAllocation } from '../../lib/recovery/engine';
-import { extractBehavioralMemories, detectHabitCompounds } from '../../lib/memory/engine';
+import { extractBehavioralMemories, detectHabitCompounds, buildBehavioralMemoryPacket } from '../../lib/memory/engine';
 import { calculateDailyScore } from '../../lib/score/engine';
 import { calculateRecoveryScore } from '../../lib/recovery/engine';
 import { updateHabit } from '../../lib/habit/engine';
 import { calculateEnergyBalance, getLocalDateString, calculateRecoveryState, detectFatiguePattern } from '../../lib/calories/energyEngine';
 import { DashboardMetrics } from '../../lib/types/dashboard';
 import { detectBurnoutRisk } from '../../lib/recovery/engine';
-import { calculateAdaptiveGoals, getDynamicGreeting, determineOperatingState, determineInterventionMode, buildAutonomousPriorityStack } from '../../lib/personalization/engine';
-import { calculateLifeload, calculateCognitiveEnergy, calculateDecisionFatigue, detectBehavioralLeverage, simulateBehavioralScenario } from '../../lib/analytics/engine';
+import { calculateAdaptiveGoals, getDynamicGreeting, determineOperatingState, determineInterventionMode, buildAutonomousPriorityStack, generateInterventionPacket, generateCoachActionPacket, generateHabitPrescription } from '../../lib/personalization/engine';
+import { calculateLifeload, calculateCognitiveEnergy, calculateDecisionFatigue, detectBehavioralLeverage, simulateBehavioralScenario, buildCoachContextPacket } from '../../lib/analytics/engine';
 import { AIContext } from '../../lib/types/ai';
 import { safeSleepHours, safeSleepQuality, safeRecoveryScore } from '../../lib/utils/sleep';
 import { safeNumber, safeRecoveryState, safeFatigueRisk, safeEnergyStats } from '../../lib/utils/safe';
@@ -222,6 +222,12 @@ interface AdaptiveAIContext extends AIContext {
   autonomous_priority?: any;
   energy_allocation?: any;
   operating_state?: any;
+  // 🧠 PHASE 11 ACI PACKETS
+  behavioral_memory_packet?: any;
+  intervention_packet?: any;
+  coach_action_packet?: any;
+  habit_prescription_packet?: any;
+  coach_context_packet?: any;
 }
 
   // 4. AI CONTEXT BUILDER
@@ -465,8 +471,8 @@ interface AdaptiveAIContext extends AIContext {
         aiContext.decision_fatigue_packet = safe_decision_fatigue;
         aiContext.leverage_engine = safe_leverage;
         aiContext.scenario_simulator = safe_scenario;
-        aiContext.capacity_packet = adaptiveGoals?.capacity_packet;
-        aiContext.capacity_budget = adaptiveGoals?.capacity_budget;
+        aiContext.capacity_packet = capacity_packet;
+        aiContext.capacity_budget = capacity_budget;
 
         // 🧠 ABOS PHASE 10: CONTEXT
         aiContext.operating_state = operating_state_engine;
@@ -475,6 +481,19 @@ interface AdaptiveAIContext extends AIContext {
         aiContext.recovery_roi = recovery_roi;
         aiContext.energy_allocation = energy_allocation;
         aiContext.compound_engine = compound_engine;
+
+        // 🧠 ABOS PHASE 11: AUTONOMOUS COACH INTELLIGENCE (ACI)
+        const recentWater_fb = (pastLogs || []).filter(l => l.log_type === 'water').slice(0, 3).map(l => Number(l.data?.amount) || 0);
+        const mem_packet = buildBehavioralMemoryPacket(recentRecScores, recentSleepHours_fb, recentWater_fb);
+        const int_packet = generateInterventionPacket(safe_lifeload.lifeload_score, burnoutRisk, local_adherence);
+        const action_packet = generateCoachActionPacket(operating_state_engine.operating_state, int_packet, mem_packet);
+        const habit_rx_packet = generateHabitPrescription(metrics?.fatigue_risk || "low", int_packet);
+
+        aiContext.behavioral_memory_packet = mem_packet;
+        aiContext.intervention_packet = int_packet;
+        aiContext.coach_action_packet = action_packet;
+        aiContext.habit_prescription_packet = habit_rx_packet;
+        aiContext.coach_context_packet = buildCoachContextPacket(aiContext);
       }
 
     // Rate Limiting System (Monetization Check)
