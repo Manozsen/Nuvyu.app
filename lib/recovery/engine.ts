@@ -192,16 +192,26 @@ export function calculateResiliencePacket(recentScores: number[]) {
   };
 }
 
-// 🧠 PHASE 1: BEHAVIORAL FORECASTING ENGINE
+// 🧠 PHASE 1 & 11: BEHAVIORAL FORECASTING ENGINE (Upgraded ACI Prediction)
 export function generateForecastPacket(recentScores: number[], adherence_risk: string, resilience_packet: any) {
   const scoreTrend = recentScores.length >= 2 ? recentScores[0] - recentScores[1] : 0;
+  const current_score = recentScores.length > 0 ? recentScores[0] : 50;
   
+  // Phase 11 Projections
+  const projected_recovery_score = Math.max(0, Math.min(100, Math.round(current_score + (scoreTrend * 1.5))));
+  const burnout_escalation = (adherence_risk === "high" && resilience_packet.resilience_score < 40);
+  const projected_burnout_state = burnout_escalation ? "High" : scoreTrend < -5 ? "Medium" : "Low";
+  const transition_text = burnout_escalation ? "Critical fatigue cascade predicted within 72h if pattern holds." : scoreTrend > 5 ? "Recovery momentum stabilizing." : "Stable trajectory.";
+
   return {
     adherence_risk_3d: adherence_risk === "high" ? "high" : adherence_risk === "medium" ? "moderate" : "low",
     recovery_decline_risk_3d: scoreTrend < -10 ? "high" : "low",
     hydration_decline_risk_3d: "low", // Dynamically synced down the pipeline
-    burnout_escalation_risk_3d: (adherence_risk === "high" && resilience_packet.resilience_score < 40) ? "high" : "low",
-    inactivity_risk_3d: scoreTrend < -15 ? "high" : "low"
+    burnout_escalation_risk_3d: burnout_escalation ? "high" : "low",
+    inactivity_risk_3d: scoreTrend < -15 ? "high" : "low",
+    projected_recovery_score,
+    projected_burnout_state,
+    transition_text
   };
 }
 
