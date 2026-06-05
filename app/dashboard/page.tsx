@@ -687,17 +687,22 @@ interface AdaptiveAIContext extends AIContext {
       // 🚀 FUTURE-PROOF ARCHITECTURE UPGRADE:
       // Commit React State HERE before ANY complex AI/ABOS logic executes.
       // This guarantees the Dashboard UI will NEVER show 0s, even if an AI fetch fails.
-      setMetrics({
+      // 🧠 BUG FIX: Use prev state & 'as any' to bypass Vercel strict union type errors.
+      setMetrics(prev => ({
+        ...prev,
         score: calculatedScore,
         steps: totalSteps,
         water: totalWater,
+        logsCount: logsCount,
         xp: profile.xp || 0,
         streak_count: profile.streak_count || 0,
         level: profile.level || 1,
         sleep_hours: sleepHours,
         recovery_score: computedScore,
-        fatigue_risk: burnoutRisk
-      });
+        recovery_state: recState as any,
+        fatigue_risk: detectFatiguePattern(recState, sleepHours, safeNumber(energyStats?.activityBurn), safeNumber(energyStats?.energyBalance)) as any,
+        burnout_risk: burnoutRisk
+      } as any));
 
       // Safe Upsert Explanation (Avoids duplicate writes)
       await supabase.from('score_explanations').upsert({
