@@ -677,11 +677,12 @@ interface AdaptiveAIContext extends AIContext {
       // and prevent runtime ReferenceErrors that cause the dummy 0-data UI crash.
       const { finalScore: calculatedScore, breakdown: scoreBreakdown, totals } = calculateDailyScore(logs || [], scoreConfig);
       
-      // Re-establish local variables for downstream AI and console logs
-      const totalSteps = totals?.totalSteps || 0;
-      const totalWater = totals?.totalWater || 0;
-      const logsCount = totals?.logsCount || 0;
-      const workoutLogsCount = totals?.workoutLogsCount || 0;
+      // 🧠 BUG FIX: Re-assign existing local variables WITHOUT re-declaring them.
+      // (They are already declared as 'let' at the top of fetchDashboardData)
+      totalSteps = totals?.totalSteps || totalSteps;
+      totalWater = totals?.totalWater || totalWater;
+      logsCount = totals?.logsCount || logsCount;
+      workoutLogsCount = totals?.workoutLogsCount || workoutLogsCount;
 
       // 🚀 FUTURE-PROOF ARCHITECTURE UPGRADE:
       // Commit React State HERE before ANY complex AI/ABOS logic executes.
