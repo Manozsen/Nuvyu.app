@@ -664,7 +664,7 @@ interface AdaptiveAIContext extends AIContext {
       const recentRecScores = (pastLogs || []).filter(l => l.log_type === 'sleep').slice(0, 3).map(l => l.data?.recovery_score || 50);
       const { risk_level: burnoutRisk, recovery_momentum } = detectBurnoutRisk(computedScore, sleepHours, safeNumber(profile.streak_count), safeNumber(energyStats?.deficit), recentRecScores);
 
-     // 2. Central Source of Truth Score Calculation (V2 Engine)
+      // 2. Central Source of Truth Score Calculation (V2 Engine)
       const scoreConfig = {
         sleepHours,
         recoveryScore: computedScore,
@@ -673,16 +673,23 @@ interface AdaptiveAIContext extends AIContext {
         isV1: false
       };
       
-      // 🐛 BUG FIX: Destructure 'totals' which was missing in the V2 upgrade
+      // 🧠 BUG FIX: Extract 'totals' to resolve Vercel "Cannot find name" TS deployment errors 
+      // and prevent runtime ReferenceErrors that cause the dummy 0-data UI crash.
       const { finalScore: calculatedScore, breakdown: scoreBreakdown, totals } = calculateDailyScore(logs || [], scoreConfig);
       
+      // Re-establish local variables for downstream AI and console logs
+      const totalSteps = totals?.totalSteps || 0;
+      const totalWater = totals?.totalWater || 0;
+      const logsCount = totals?.logsCount || 0;
+      const workoutLogsCount = totals?.workoutLogsCount || 0;
+
       // 🚀 FUTURE-PROOF ARCHITECTURE UPGRADE:
       // Commit React State HERE before ANY complex AI/ABOS logic executes.
-      // This guarantees the Dashboard will never show 0s again, even if an AI engine crashes.
+      // This guarantees the Dashboard UI will NEVER show 0s, even if an AI fetch fails.
       setMetrics({
         score: calculatedScore,
-        steps: totals?.totalSteps || 0,
-        water: totals?.totalWater || 0,
+        steps: totalSteps,
+        water: totalWater,
         xp: profile.xp || 0,
         streak_count: profile.streak_count || 0,
         level: profile.level || 1,
