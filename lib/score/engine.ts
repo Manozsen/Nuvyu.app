@@ -37,70 +37,72 @@ export function calculateDailyScore(logs: any[], config: any = {}) {
       }
     });
 
-    // 1. Behavior Variables
-    const effectiveSteps = Math.min(totalSteps, 12000);
-    let steps_points = 0;
-    let water_points = 0;
-    let log_bonus = 0;
-    let workout_bonus = 0;
-    let inactivity_penalty = 0;
+    const totals = { totalSteps, totalWater, workoutLogsCount, logsCount, lastLogTime };
 
-    // 2. Score Rules
-    if (effectiveSteps >= 10000) steps_points = 25;
-    else if (effectiveSteps >= 6000) steps_points = 20;
-    else if (effectiveSteps >= 3000) steps_points = 10;
+    // 🧠 FALLBACK: Legacy V1 Logic (Prevents breaking the Logs Page saves)
+    if (typeof config === 'number' || config.isV1 || Object.keys(config).length === 0) {
+      const baseScore = typeof config === 'number' ? config : (config.onboardingScore || 50);
+      const effectiveSteps = Math.min(totalSteps, 12000);
+      let steps_points = effectiveSteps >= 10000 ? 25 : effectiveSteps >= 6000 ? 20 : effectiveSteps >= 3000 ? 10 : 0;
+      let water_points = totalWater >= 3000 ? 20 : totalWater >= 2000 ? 15 : totalWater >= 1000 ? 8 : 0;
+      let log_bonus = new Set(logs.map(log => log.log_type)).size >= 2 ? 5 : 0;
+      let workout_bonus = Math.min(workoutLogsCount * 5, 10);
+      let inactivity_penalty = 0;
 
-    if (totalWater >= 3000) water_points = 20; // 🧠 Hydration Adherence Scoring
-    else if (totalWater >= 2000) water_points = 15;
-    else if (totalWater >= 1000) water_points = 8;
+      if (screenHours >= 8) inactivity_penalty -= 15;
+      else if (screenHours >= 5) inactivity_penalty -= 5;
 
-    if (workoutLogsCount >= 1) workout_bonus = 15;
-    if (validLogsCount > 0) log_bonus = 5; // Must be authentic valid log
-    
-    // 🧠 Screen Fatigue Penalties
-    if (screenHours >= 8) inactivity_penalty -= 15;
-    else if (screenHours >= 5) inactivity_penalty -= 5;
+      const currentHour = new Date().getHours();
+      if (currentHour >= 14) {
+        if (logsCount === 0) inactivity_penalty -= (currentHour >= 18 ? 10 : 5);
+        else {
+          const hoursSinceLast = (Date.now() - lastLogTime) / (1000 * 60 * 60);
+          if (hoursSinceLast >= 6) inactivity_penalty -= 10;
+          else if (hoursSinceLast >= 4) inactivity_penalty -= 5;
+        }
+      }
 
-    // Fix 1: Anti-spam Log Bonus (Count UNIQUE log types only)
-    const uniqueLogTypes = new Set(logs.map(log => log.log_type));
-    if (uniqueLogTypes.size >= 2) log_bonus = 5;
-    
-    // Fix 2: Anti-spam Workout Bonus (Capped at 10 max)
-    if (workoutLogsCount > 0) workout_bonus = Math.min(workoutLogsCount * 5, 10);
-
-    // 3. Penalty Engine (Fix 3: Fair Timing)
-    const currentHour = new Date().getHours();
-    
-    // Do not punish users too early in the day
-    if (currentHour < 14) {
-      inactivity_penalty = 0;
-    } else if (logsCount === 0) {
-      // Time-aware penalty: Less aggressive timing for 0 logs
-      if (currentHour >= 18) inactivity_penalty = -10;
-      else if (currentHour >= 14) inactivity_penalty = -5;
-    } else {
-      // Existing decay penalty applies, but only activates after 2 PM
-      const hoursSinceLast = (Date.now() - lastLogTime) / (1000 * 60 * 60);
-      if (hoursSinceLast >= 6) inactivity_penalty = -10;
-      else if (hoursSinceLast >= 4) inactivity_penalty = -5;
+      let finalScore = Math.max(0, Math.min(100, Math.floor(baseScore + steps_points + water_points + log_bonus + workout_bonus + inactivity_penalty)));
+      return { finalScore, breakdown: { steps_points, water_points, log_bonus, workout_bonus, inactivity_penalty }, totals };
     }
 
-    // 4. Final Calculation & Clamp
-    let finalScore = onboardingScore + steps_points + water_points + log_bonus + workout_bonus + inactivity_penalty;
-    finalScore = Math.max(0, Math.min(100, Math.floor(finalScore)));
+    // 🧠 SCORE ENGINE V2: Absolute Weighted Behavioral Matrix (0-100)
+    const { sleepHours = 0, recoveryScore = 0, streakCount = 0, burnoutRisk = 'low' } = config;
 
-    // Development Debug Safety
-    if (process.env.NODE_ENV === 'development') {
-      console.log("=== SCORE ENGINE DEBUG ===", {
-        baseScore: onboardingScore, steps_points, water_points, log_bonus, workout_bonus, inactivity_penalty, finalScore
-      });
-    }
+    // 1. Movement Base (30%)
+    const stepsPoints = Math.min((totalSteps / 10000) * 15, 15);
+    const workoutPoints = workoutLogsCount > 0 ? 15 : 0;
+    const movement_score = stepsPoints + workoutPoints;
+
+    // 2. Physiological Base (30%)
+    const sleepPoints = Math.min((sleepHours / 8) * 15, 15);
+    const recPoints = (recoveryScore / 100) * 15;
+    const physiological_score = sleepPoints + recPoints;
+
+    // 3. Nutrition Base (20%)
+    const waterPoints = Math.min((totalWater / 3000) * 10, 10);
+    const foodLogged = logs.some(log => log.log_type === 'food');
+    const nutrition_score = waterPoints + (foodLogged ? 10 : 0);
+
+    // 4. Consistency Base (20%)
+    const consistency_score = Math.min((streakCount / 7) * 20, 20);
+
+    let base_score = movement_score + physiological_score + nutrition_score + consistency_score;
+
+    // 5. Dynamic Behavioral Penalties
+    let penalty = 0;
+    if (burnoutRisk === 'high') penalty -= 15;
+    if (sleepHours > 0 && sleepHours < 5) penalty -= 20;
+    if (streakCount === 0) penalty -= 10;
+    if (screenHours >= 8) penalty -= 15;
+    else if (screenHours >= 5) penalty -= 5;
+
+    let finalScore = Math.max(0, Math.min(100, Math.round(base_score + penalty)));
 
     return { 
       finalScore, 
-      breakdown: { steps_points, water_points, log_bonus, workout_bonus, inactivity_penalty },
-      // Return aggregated totals to prevent needing another loop in the dashboard/log pages
-      totals: { totalSteps, totalWater, workoutLogsCount, logsCount, lastLogTime }
+      breakdown: { movement_score, physiological_score, nutrition_score, consistency_score, penalty },
+      totals 
     };
 
   } catch (error) {
