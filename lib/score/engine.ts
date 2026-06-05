@@ -105,12 +105,13 @@ export function calculateDailyScore(logs: any[], config: any = {}) {
       totals 
     };
 
-  } catch (error) {
+    } catch (error) {
     console.error("Score Engine Error:", error);
     // Fail Safe: Return Base Score
+    const fallbackScore = typeof config === 'number' ? config : (config?.onboardingScore || 50);
     return { 
-      finalScore: onboardingScore, 
-      breakdown: { steps_points: 0, water_points: 0, log_bonus: 0, workout_bonus: 0, inactivity_penalty: 0 },
+      finalScore: fallbackScore, 
+      breakdown: { movement_score: 0, physiological_score: 0, nutrition_score: 0, consistency_score: 0, penalty: 0 },
       totals: { totalSteps: 0, totalWater: 0, workoutLogsCount: 0, logsCount: 0, lastLogTime: 0 }
     };
   }
