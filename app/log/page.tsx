@@ -13,6 +13,7 @@ import { updateHabit } from '../../lib/habit/engine';
 import { calculateXP, calculateLevel, didLevelUp } from '../../lib/xp/engine';
 import { estimateActivityCalories, generateWorkoutSuggestions } from '../../lib/activity/engine';
 import { safeNumber, safeString } from '../../lib/utils/safe';
+import { getLocalMidnightRange, getUserLocalToday } from '../../lib/time/engine';
 
 // 🧠 LOGS INTELLIGENCE HELPERS
 const getMealType = () => {
@@ -173,14 +174,13 @@ export default function LogsPage() {
         await supabase.from('daily_logs').insert({ user_id: userId, log_type: modalType, data: payloadData });
       }
 
-       // 3. FIX: Properly Save Sleep Log (Constraint: user_id, date)
+        // 3. FIX: Properly Save Sleep Log (Constraint: user_id, date)
       if (modalType === 'sleep') {
         const hrs = parseFloat(amount) || 0;
         const { recovery_score } = calculateRecoveryScore(hrs, sleepQuality);
         
-        // Generate robust local date string to prevent UTC duplicates
-        const now = new Date();
-        const localDateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        // 🧠 TIME ENGINE: Generate robust local date string to prevent UTC duplicates
+        const localDateStr = getUserLocalToday();
         
         await supabase.from('sleep_logs').upsert({
           user_id: userId, date: localDateStr, sleep_hours: hrs, sleep_quality: sleepQuality, recovery_score
@@ -188,13 +188,13 @@ export default function LogsPage() {
       }
 
       // 4. Sync Score, Habit & XP Engines
-      const startOfDay = new Date();
-      startOfDay.setHours(0, 0, 0, 0); 
-      const todayDateStr = startOfDay.toISOString().split('T')[0];
+      // 🧠 TIME ENGINE: Safely clamp to local boundaries
+      const { start_utc } = getLocalMidnightRange();
+      const todayDateStr = getUserLocalToday();
 
       const [{ data: profile }, { data: logs }] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', userId).single(),
-        supabase.from('daily_logs').select('*').eq('user_id', userId).gte('created_at', startOfDay.toISOString())
+        supabase.from('daily_logs').select('*').eq('user_id', userId).gte('created_at', start_utc)
       ]);
 
       if (profile && logs) {
