@@ -14,6 +14,7 @@ import { calculateDailyScore } from '../../lib/score/engine';
 import { calculateRecoveryScore } from '../../lib/recovery/engine';
 import { updateHabit } from '../../lib/habit/engine';
 import { calculateEnergyBalance, getLocalDateString, calculateRecoveryState, detectFatiguePattern } from '../../lib/calories/energyEngine';
+import { getLocalMidnightRange, getUserLocalToday } from '../../lib/time/engine';
 import { DashboardMetrics } from '../../lib/types/dashboard';
 import { detectBurnoutRisk } from '../../lib/recovery/engine';
 import { calculateAdaptiveGoals, getDynamicGreeting, determineOperatingState, determineInterventionMode, buildAutonomousPriorityStack, generateInterventionPacket, generateCoachActionPacket, generateHabitPrescription } from '../../lib/personalization/engine';
@@ -585,22 +586,19 @@ interface AdaptiveAIContext extends AIContext {
       // Safely attach the user email for avatar fallback logic
       setUserProfile({ ...profile, email: user.email });
 
-      // Timezone Safe Fetch (Fixes Timeline Sync Bug)
-      const now = new Date();
-      const todayDateStr = getLocalDateString(now);
+      // 🧠 TIME ENGINE: Strict Local Boundaries
+      const { start_utc, end_utc } = getLocalMidnightRange();
+      const todayDateStr = getUserLocalToday();
 
-      const twoDaysAgo = new Date();
-      twoDaysAgo.setDate(now.getDate() - 2);
-
-      // Fetch broadly, filter locally to prevent UTC timeline desync
+      // Fetch perfectly clamped local logs
       const { data: rawLogs } = await supabase
         .from('daily_logs')
         .select('*')
         .eq('user_id', user.id)
-        .gte('created_at', twoDaysAgo.toISOString());
+        .gte('created_at', start_utc)
+        .lte('created_at', end_utc);
 
-      // Only process logs that match local user timezone date
-      const logs = (rawLogs || []).filter(log => getLocalDateString(new Date(log.created_at)) === todayDateStr);
+      const logs = rawLogs || [];
 
       let totalSteps = 0;
       let totalWater = 0;
@@ -629,47 +627,6 @@ interface AdaptiveAIContext extends AIContext {
       const energyBurned = energyStats?.totalBurn || 0;
       const safeEnergyIntake = energyStats?.intakeCalories || 0;
 
-      // 2. Central Source of Truth Score Calculation
-      const baseScore = profile.onboarding_score || 50;
-      const { finalScore: calculatedScore, breakdown: scoreBreakdown } = calculateDailyScore(logs || [], baseScore);
-      
-      // FIX: Generate safe local date string to prevent UTC timezone shift from overwriting yesterday's data
-      const startOfDay = new Date(); // Safely restored missing date object reference
-      const localYear = startOfDay.getFullYear();
-      const localMonth = String(startOfDay.getMonth() + 1).padStart(2, '0');
-      const localDay = String(startOfDay.getDate()).padStart(2, '0');
-      const scoreDateStr = `${localYear}-${localMonth}-${localDay}`;
-// Safe Upsert Explanation (Avoids duplicate writes)
-      await supabase.from('score_explanations').upsert({
-        user_id: user.id,
-        date: scoreDateStr,
-        breakdown: scoreBreakdown,
-        final_score: calculatedScore
-      }, { onConflict: 'user_id, date' });
-// Fetch today's explanation safely for state injection
-      const { data: explData } = await supabase
-        .from('score_explanations')
-        .select('breakdown')
-        .eq('user_id', user.id)
-        .eq('date', scoreDateStr)
-        .single();
-
-      // RESTORED: Debug logs to verify calculations
-      console.log("=== DASHBOARD LOAD DEBUG ===");
-      console.log("Fetched Logs Count:", logsCount);
-      console.log("Calculated Score:", calculatedScore);
-      console.log("DB Current Score:", profile.current_score);
-
-      // 3. Strict Profile Update Sync (with restored error handling)
-      if (calculatedScore !== profile.current_score) {
-        const { error: dashUpdateError } = await supabase
-          .from('profiles')
-          .update({ current_score: calculatedScore })
-          .eq('id', user.id);
-          
-        if (dashUpdateError) console.error("Dashboard Score Sync Failed:", dashUpdateError);
-      }
-
       // INTEGRATION CHECK: Connect to 3-day history for accurate context
       const threeDaysAgo = new Date();
       threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
@@ -679,7 +636,7 @@ interface AdaptiveAIContext extends AIContext {
         .select('log_type, data')
         .eq('user_id', user.id)
         .gte('created_at', threeDaysAgo.toISOString())
-        .lt('created_at', startOfDay.toISOString());
+        .lt('created_at', start_utc); // Time Engine synced
 
       // Fetch Recovery Data strictly from sleep_logs (Synced to local date)
       const { data: latestSleep } = await supabase.from('sleep_logs')
@@ -706,6 +663,48 @@ interface AdaptiveAIContext extends AIContext {
       // 🧠 BURNOUT & ADAPTIVE GOAL ENGINE EXECUTION
       const recentRecScores = (pastLogs || []).filter(l => l.log_type === 'sleep').slice(0, 3).map(l => l.data?.recovery_score || 50);
       const { risk_level: burnoutRisk, recovery_momentum } = detectBurnoutRisk(computedScore, sleepHours, safeNumber(profile.streak_count), safeNumber(energyStats?.deficit), recentRecScores);
+
+      // 2. Central Source of Truth Score Calculation (V2 Engine)
+      const scoreConfig = {
+        sleepHours,
+        recoveryScore: computedScore,
+        streakCount: profile.streak_count || 0,
+        burnoutRisk,
+        isV1: false
+      };
+      const { finalScore: calculatedScore, breakdown: scoreBreakdown } = calculateDailyScore(logs || [], scoreConfig);
+      
+      // Safe Upsert Explanation (Avoids duplicate writes)
+      await supabase.from('score_explanations').upsert({
+        user_id: user.id,
+        date: todayDateStr,
+        breakdown: scoreBreakdown,
+        final_score: calculatedScore
+      }, { onConflict: 'user_id, date' });
+      
+      // Fetch today's explanation safely for state injection
+      const { data: explData } = await supabase
+        .from('score_explanations')
+        .select('breakdown')
+        .eq('user_id', user.id)
+        .eq('date', todayDateStr)
+        .single();
+
+      // RESTORED: Debug logs to verify calculations
+      console.log("=== SCORE ENGINE V2 DEBUG ===");
+      console.log("Fetched Logs Count:", logsCount);
+      console.log("Calculated Score:", calculatedScore);
+      console.log("DB Current Score:", profile.current_score);
+
+      // 3. Strict Profile Update Sync
+      if (calculatedScore !== profile.current_score) {
+        const { error: dashUpdateError } = await supabase
+          .from('profiles')
+          .update({ current_score: calculatedScore })
+          .eq('id', user.id);
+          
+        if (dashUpdateError) console.error("Dashboard Score Sync Failed:", dashUpdateError);
+      }
       
       // 🧠 Safe Behavioral Drift Extraction (Scope-safe, Runtime-safe)
       const behavioralMemory = extractBehavioralMemories(pastLogs || []);
