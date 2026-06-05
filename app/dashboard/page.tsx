@@ -704,6 +704,7 @@ interface AdaptiveAIContext extends AIContext {
         score_summary: getScoreSummary(scoreBreakdown),
         xp: profile.xp || 0,
         streak_count: profile.streak_count || 0,
+        best_streak: profile.best_streak || 0, // 🧠 FIX: Ensure Best Streak loads instantly
         level: profile.level || 1,
         sleep_hours: sleepHours,
         recovery_score: computedScore,
@@ -759,30 +760,38 @@ interface AdaptiveAIContext extends AIContext {
       behavioralDrift
       );
 
-      // EXECUTE FULL ENGINE FLOW (AI Context v2)
-      const nudgeResponse = await generateCoachNudge(user.id, profile, logs || [], pastLogs || [], calculatedScore, recoveryData, safeNumber(energyStats?.energyBalance), burnoutRisk, adaptiveGoals);
-      setCoachMessage(nudgeResponse.message);
-      // FIX: Added 'as "ai" | "rule"' to satisfy TypeScript's strict type checking
-      setCoachType(nudgeResponse.type as "ai" | "rule");
-      
-      if ((nudgeResponse as any).meta?.ai_limit_hit) {
-        setAiLimitHit(true);
-        console.log("AI limit reached, basic coaching active"); // Metadata flag processed but UI stays untouched
+       // 🧠 SAFE EXECUTION BLOCK: Isolate AI & Habit Engines to prevent total UI failure
+      let nudgeResponse: any = { message: "Keep up the discipline! Consistency builds over time.", type: "rule" };
+      try {
+        nudgeResponse = await generateCoachNudge(user.id, profile, logs || [], pastLogs || [], calculatedScore, recoveryData, safeNumber(energyStats?.energyBalance), burnoutRisk, adaptiveGoals);
+        setCoachMessage(nudgeResponse.message);
+        setCoachType(nudgeResponse.type as "ai" | "rule");
+        if (nudgeResponse.meta?.ai_limit_hit) {
+          setAiLimitHit(true);
+          console.log("AI limit reached, basic coaching active");
+        }
+      } catch (e) {
+        console.error("AI Engine Failed:", e);
+        setCoachMessage(nudgeResponse.message); // Clean fallback, no more frozen UI
       }
 
-       // --- HABIT ENGINE: Sync streak on dashboard load ---
-      const habitData = await updateHabit(supabase, user.id, {
-        steps_today: totalSteps,
-        water_today: totalWater,
-        current_score: calculatedScore,
-        adaptation_mode: adaptiveGoals?.adaptation_mode || "maintain"
-      }, logsCount > 0);
+      let habitData: any = null;
+      try {
+        habitData = await updateHabit(supabase, user.id, {
+          steps_today: totalSteps,
+          water_today: totalWater,
+          current_score: calculatedScore,
+          adaptation_mode: adaptiveGoals?.adaptation_mode || "maintain"
+        }, logsCount > 0);
+      } catch (e) {
+        console.error("Habit Engine Failed:", e);
+      }
 
-        // 🧠 Append final background AI metrics to existing state safely
+      // 🧠 Append final background AI metrics safely
       setMetrics(prev => ({
         ...prev,
-        streak_count: safeNumber(habitData?.streak_count),
-        best_streak: safeNumber(habitData?.best_streak),
+        streak_count: safeNumber(habitData?.streak_count, profile.streak_count || 0),
+        best_streak: safeNumber(habitData?.best_streak, profile.best_streak || 0),
         reward_message: String(habitData?.reward_message || ""),
         lifeload_packet: nudgeResponse?.abos_metrics?.lifeload_packet,
         cognitive_energy_packet: nudgeResponse?.abos_metrics?.cognitive_energy_packet,
@@ -963,25 +972,31 @@ interface AdaptiveAIContext extends AIContext {
                 Level {retention.level}
               </span>
               
-              {/* 🧠 DASHBOARD INTELLIGENCE v6 (Adaptive Recovery Indicators) */}
+             {/* 🧠 DASHBOARD INTELLIGENCE v6 (Adaptive Recovery Indicators) */}
               {adaptation_mode === 'recovery_focus' && (
                 <span className="text-red-400 bg-red-500/10 px-2 py-1 rounded-md border border-red-500/20 capitalize flex items-center gap-1 whitespace-nowrap shrink-0">
                   ⚠️ Recovery Mode
                 </span>
               )}
               
-              {((metrics as any).streak_count > 0) && (
-                <>
-                  <span className="hidden sm:block w-1 h-1 rounded-full bg-white/20 shrink-0"></span>
-                  <span className="flex items-center gap-1 text-orange-400 whitespace-nowrap shrink-0">
-                    <Flame size={12} /> {(metrics as any).streak_count} Day Streak
+              <span className="hidden sm:block w-1 h-1 rounded-full bg-white/20 shrink-0"></span>
+              
+              {/* 🧠 DISCIPLINE & CONSISTENCY ENGINE: Always display streaks */}
+              <div className="flex items-center gap-2 shrink-0">
+                <span className={`flex items-center gap-1 font-bold whitespace-nowrap ${metrics.streak_count > 0 ? 'text-orange-400' : 'text-white/40'}`}>
+                  <Flame size={12} className={metrics.streak_count > 0 ? 'fill-orange-400' : ''} /> 
+                  {metrics.streak_count || 0} Day Streak
+                </span>
+                {(metrics.best_streak || 0) > 0 && (
+                  <span className="text-[9px] text-white/30 tracking-widest hidden sm:block font-bold">
+                    (BEST: {metrics.best_streak})
                   </span>
-                </>
-              )}
+                )}
+              </div>
               
               <span className="hidden sm:block w-1 h-1 rounded-full bg-white/20 shrink-0"></span>
               <span className="whitespace-nowrap shrink-0">+{retention.todayXP} XP Today</span>
-              
+
             </div>
             
             {/* MICRO DOPAMINE EFFECT */}
