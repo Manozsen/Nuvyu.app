@@ -1,6 +1,6 @@
-export function calculateDailyScore(logs: any[], onboardingScore: number = 50) {
+export function calculateDailyScore(logs: any[], config: any = {}) {
     try {
-     let totalSteps = 0;
+    let totalSteps = 0;
     let totalWater = 0;
     let workoutLogsCount = 0;
     let validLogsCount = 0;
