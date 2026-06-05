@@ -678,7 +678,7 @@ interface AdaptiveAIContext extends AIContext {
       const { finalScore: calculatedScore, breakdown: scoreBreakdown, totals } = calculateDailyScore(logs || [], scoreConfig);
       
       // 🧠 BUG FIX: Re-assign existing local variables WITHOUT re-declaring them.
-      // (They are already declared as 'let' at the top of fetchDashboardData)
+      // (Removing 'const' here permanently fixes the Vercel build crash)
       totalSteps = totals?.totalSteps || totalSteps;
       totalWater = totals?.totalWater || totalWater;
       logsCount = totals?.logsCount || logsCount;
