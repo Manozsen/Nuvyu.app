@@ -125,6 +125,7 @@ const getLocalDateStr = (d: Date) => {
 import { calculateEnergyBalance, getLocalDateString } from '../calories/energyEngine';
 import { AnalyticsDailyData } from '../types/analytics';
 import { safeSleepHours, safeRecoveryScore } from '../utils/sleep';
+import { getLocalMidnightRange } from '../time/engine';
 
 // 🛠️ LOCAL SAFE UTILITIES (Prevents NaN/Undefined crashes during analytics parsing)
 const safeNumber = (value: any, fallback = 0): number => { 
@@ -144,12 +145,15 @@ export async function getAnalytics(supabase: any, userId: string, days: number) 
     startDate.setDate(startDate.getDate() - days);
     const boundaryDate = getLocalDateStr(startDate);
 
+    // 🧠 TIME ENGINE: Clamp past boundaries strictly to local midnight to prevent drifting graph windows
+    const { start_utc: past_start_utc } = getLocalMidnightRange(startDate);
+
     // Efficient Parallel Fetch Strategy: Added daily_logs for accurate calorie analytics
     const [profileRes, habitsRes, sleepRes, logsRes] = await Promise.all([
       supabase.from('profiles').select('*').eq('id', userId).single(),
       supabase.from('user_habits').select('*').eq('user_id', userId).gte('date', boundaryDate).order('date', { ascending: true }),
       supabase.from('sleep_logs').select('*').eq('user_id', userId).gte('date', boundaryDate).order('date', { ascending: true }),
-      supabase.from('daily_logs').select('log_type, data, created_at').eq('user_id', userId).gte('created_at', startDate.toISOString())
+      supabase.from('daily_logs').select('log_type, data, created_at').eq('user_id', userId).gte('created_at', past_start_utc)
     ]);
 
     const profile = profileRes.data;
