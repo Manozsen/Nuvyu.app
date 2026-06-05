@@ -61,12 +61,17 @@ export default function Dashboard() {
     const getScoreSummary = (breakdown: any) => {
     if (!breakdown) return "";
     const parts = [];
+    // V1 Legacy Support
     if (breakdown.steps_points) parts.push(`+${breakdown.steps_points} steps`);
-    if (breakdown.water_points) parts.push(`+${breakdown.water_points} hydration`);
-    if (breakdown.workout_bonus) parts.push(`+${breakdown.workout_bonus} activity`); // 🧠 Validated Workout Score
-    if (breakdown.log_bonus) parts.push(`+${breakdown.log_bonus} consistency`);
+    if (breakdown.water_points) parts.push(`+${breakdown.water_points} water`);
     if (breakdown.inactivity_penalty) parts.push(`${breakdown.inactivity_penalty} fatigue`);
-    return parts.length > 0 ? parts.join(", ") : "No changes yet";
+    // V2 Engine Support
+    if (breakdown.movement_score) parts.push(`+${Math.round(breakdown.movement_score)} motion`);
+    if (breakdown.physiological_score) parts.push(`+${Math.round(breakdown.physiological_score)} body`);
+    if (breakdown.nutrition_score) parts.push(`+${Math.round(breakdown.nutrition_score)} fuel`);
+    if (breakdown.consistency_score) parts.push(`+${Math.round(breakdown.consistency_score)} habit`);
+    if (breakdown.penalty < 0) parts.push(`${breakdown.penalty} risk`);
+    return parts.length > 0 ? parts.join(" • ") : "Ready to track";
   };
 
       const supabase = createBrowserClient(
@@ -685,15 +690,18 @@ interface AdaptiveAIContext extends AIContext {
       workoutLogsCount = totals?.workoutLogsCount || workoutLogsCount;
 
       // 🚀 FUTURE-PROOF ARCHITECTURE UPGRADE:
-      // Commit React State HERE before ANY complex AI/ABOS logic executes.
-      // This guarantees the Dashboard UI will NEVER show 0s, even if an AI fetch fails.
-      // 🧠 BUG FIX: Use prev state & 'as any' to bypass Vercel strict union type errors.
+      // Commit FULL React State HERE before ANY complex AI/ABOS logic executes.
       setMetrics(prev => ({
         ...prev,
         score: calculatedScore,
         steps: totalSteps,
         water: totalWater,
         logsCount: logsCount,
+        energy_burned: energyStats?.totalBurn || 0,
+        energy_intake: energyStats?.intakeCalories || 0,
+        energy_stats: energyStats,
+        energy_balance: energyStats?.energyBalance || 0,
+        score_summary: getScoreSummary(scoreBreakdown),
         xp: profile.xp || 0,
         streak_count: profile.streak_count || 0,
         level: profile.level || 1,
@@ -770,33 +778,18 @@ interface AdaptiveAIContext extends AIContext {
         adaptation_mode: adaptiveGoals?.adaptation_mode || "maintain"
       }, logsCount > 0);
 
-      // Strictly typed & normalized state update
-      setMetrics({
-        score: calculatedScore,
-        steps: totalSteps,
-        water: totalWater,
-        logsCount: logsCount,
-        energy_burned: energyStats?.totalBurn || 0,
-        energy_intake: energyStats?.intakeCalories || 0,
-        energy_stats: energyStats,
-        energy_balance: energyStats?.energyBalance || 0,
-        sleep_hours: sleepHours,
-        recovery_score: computedScore,
-        recovery_state: recState as any,
-        fatigue_risk: detectFatiguePattern(recState, sleepHours, safeNumber(energyStats?.activityBurn), safeNumber(energyStats?.energyBalance)) as any,
-        score_summary: getScoreSummary(scoreBreakdown),
+        // 🧠 Append final background AI metrics to existing state safely
+      setMetrics(prev => ({
+        ...prev,
         streak_count: safeNumber(habitData?.streak_count),
         best_streak: safeNumber(habitData?.best_streak),
         reward_message: String(habitData?.reward_message || ""),
-        xp: safeNumber(profile?.xp),
-        level: safeNumber(profile?.level, 1),
-        burnout_risk: burnoutRisk,
-        lifeload_packet: nudgeResponse.abos_metrics?.lifeload_packet,
-        cognitive_energy_packet: nudgeResponse.abos_metrics?.cognitive_energy_packet,
-        decision_fatigue_packet: nudgeResponse.abos_metrics?.decision_fatigue_packet
-      } as any);
+        lifeload_packet: nudgeResponse?.abos_metrics?.lifeload_packet,
+        cognitive_energy_packet: nudgeResponse?.abos_metrics?.cognitive_energy_packet,
+        decision_fatigue_packet: nudgeResponse?.abos_metrics?.decision_fatigue_packet
+      } as any));
 
-            // 🧠 PART 3 & 8: CALCULATE TODAY XP (No extra DB calls, reusing existing data)
+      // 🧠 PART 3 & 8: CALCULATE TODAY XP
       const todayXP = (() => {
         let xp = Math.min(logsCount, 3) * 5;
         const cappedSteps = Math.min(totalSteps, 12000);
@@ -817,11 +810,13 @@ interface AdaptiveAIContext extends AIContext {
       
       } catch (error) {
         console.error("Dashboard Engine Crash:", error);
+        // 🧠 FALLBACK: Never leave the user stuck on "Analyzing..."
+        setCoachMessage("System syncing... Keep focusing on your daily habits.");
       } finally {
         setMounted(true);
         setIsCheckingAuth(false);
       }
-    }; // <-- THIS CLOSES THE ASYNC FUNCTION (Fixes 'await' error)
+    }; // <-- THIS CLOSES THE ASYNC FUNCTION
 
     fetchDashboardData();
   }, [router]);
