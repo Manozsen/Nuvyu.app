@@ -10,7 +10,8 @@ import { useRouter } from 'next/navigation';
 import { calculateDailyScore } from '../../lib/score/engine';
 import { calculateRecoveryScore } from '../../lib/recovery/engine';
 import { updateHabit } from '../../lib/habit/engine';
-import { calculateXP, calculateLevel, didLevelUp } from '../../lib/xp/engine';
+// 🧠 BUG FIX: Removed 'didLevelUp' (Unused import causing Vercel TS build failure)
+import { calculateXP, calculateLevel } from '../../lib/xp/engine';
 import { estimateActivityCalories, generateWorkoutSuggestions } from '../../lib/activity/engine';
 import { safeNumber, safeString } from '../../lib/utils/safe';
 import { getLocalMidnightRange, getUserLocalToday } from '../../lib/time/engine';
@@ -192,15 +193,16 @@ export default function LogsPage() {
       const { start_utc } = getLocalMidnightRange();
       const todayDateStr = getUserLocalToday();
 
-      const [{ data: profile }, { data: logs }] = await Promise.all([
+        const [{ data: profile }, { data: logs }] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', userId).single(),
         supabase.from('daily_logs').select('*').eq('user_id', userId).gte('created_at', start_utc)
       ]);
 
-      if (profile && logs) {
+      // 🧠 BUG FIX: TypeScript Null Safety. Enforce logs as array to prevent Vercel 'Object is possibly null' crashes.
+      if (profile) {
         // Score Engine
         const baseScore = profile.onboarding_score || 50;
-        const { finalScore, breakdown, totals } = calculateDailyScore(logs, baseScore);
+        const { finalScore, breakdown, totals } = calculateDailyScore(logs || [], baseScore);
 
         await supabase.from('score_explanations').upsert({
           user_id: userId, date: todayDateStr, breakdown, final_score: finalScore
@@ -208,11 +210,11 @@ export default function LogsPage() {
 
         await supabase.from('profiles').update({ current_score: finalScore }).eq('id', userId);
 
-        // Habit Engine
-        await updateHabit(supabase, userId, { steps_today: totals.totalSteps, water_today: totals.totalWater, current_score: finalScore }, true);
+        // Habit Engine safely accessing optional totals
+        await updateHabit(supabase, userId, { steps_today: totals?.totalSteps || 0, water_today: totals?.totalWater || 0, current_score: finalScore }, true);
 
-        // XP Engine
-        const xpEarned = calculateXP(totals.totalSteps, totals.totalWater, totals.logsCount, totals.workoutLogsCount, modalType === 'sleep' ? 1 : 0);
+        // XP Engine safely accessing optional totals
+        const xpEarned = calculateXP(totals?.totalSteps || 0, totals?.totalWater || 0, totals?.logsCount || 0, totals?.workoutLogsCount || 0, modalType === 'sleep' ? 1 : 0);
         const newXP = (profile.xp || 0) + xpEarned;
         const newLevel = calculateLevel(newXP);
         await supabase.from('profiles').update({ xp: newXP, level: newLevel }).eq('id', userId);
