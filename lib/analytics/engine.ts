@@ -122,7 +122,8 @@ const getLocalDateStr = (d: Date) => {
   return `${y}-${m}-${day}`;
 };
 
-import { calculateEnergyBalance, getLocalDateString } from '../calories/energyEngine';
+// 🧠 BUG FIX: Removed 'getLocalDateString' (Unused import causing Vercel TS build failure)
+import { calculateEnergyBalance } from '../calories/energyEngine';
 import { AnalyticsDailyData } from '../types/analytics';
 import { safeSleepHours, safeRecoveryScore } from '../utils/sleep';
 import { getLocalMidnightRange } from '../time/engine';
@@ -161,7 +162,8 @@ export async function getAnalytics(supabase: any, userId: string, days: number) 
     const sleep = sleepRes.data;
     const allLogs = logsRes.data || [];
 
-    const aggregated = [];
+    // 🧠 BUG FIX: Apply strict TypeScript Array signature to clear Vercel 'implicit any[]' errors
+    const aggregated: AnalyticsDailyData[] = [];
     for (let i = days - 1; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
@@ -230,14 +232,16 @@ export async function getAnalytics(supabase: any, userId: string, days: number) 
 }
 
 // 🧠 PART 7: AI-READY ANALYTICS CONTEXT & BEHAVIORAL PATTERN ENGINE
-export function buildAIAnalyticsContext(analytics: any) {
+  export function buildAIAnalyticsContext(analytics: any) {
   if (!analytics || !analytics.dailyData) return {};
   
   const validSleep = analytics.dailyData.filter((d:any) => d.sleep_hours > 0);
-  const avg_sleep = validSleep.length > 0 ? validSleep.reduce((a:any, b:any) => a + b.sleep_hours, 0) / validSleep.length : 0;
+  // 🧠 BUG FIX: Explicitly type the accumulator ('a') as number to prevent TS strict build failure
+  const avg_sleep = validSleep.length > 0 ? validSleep.reduce((a: number, b: any) => a + b.sleep_hours, 0) / validSleep.length : 0;
   
   const validSteps = analytics.dailyData.filter((d:any) => d.steps > 0);
-  const avg_steps = validSteps.length > 0 ? validSteps.reduce((a:any, b:any) => a + b.steps, 0) / validSteps.length : 0;
+  // 🧠 BUG FIX: Explicitly type the accumulator ('a') as number to prevent TS strict build failure
+  const avg_steps = validSteps.length > 0 ? validSteps.reduce((a: number, b: any) => a + b.steps, 0) / validSteps.length : 0;
   const recentDays = analytics.dailyData.slice(-3);
 
   const recentWater =
