@@ -988,7 +988,7 @@ interface AdaptiveAIContext extends AIContext {
                   {metrics.streak_count || 0} Day Streak
                 </span>
                 {(metrics.best_streak || 0) > 0 && (
-                  <span className="text-[9px] text-white/30 tracking-widest hidden sm:block font-bold">
+                  <span className="text-[9px] text-white/30 tracking-widest hidden sm:block font-bold mt-0.5">
                     (BEST: {metrics.best_streak})
                   </span>
                 )}
@@ -996,7 +996,6 @@ interface AdaptiveAIContext extends AIContext {
               
               <span className="hidden sm:block w-1 h-1 rounded-full bg-white/20 shrink-0"></span>
               <span className="whitespace-nowrap shrink-0">+{retention.todayXP} XP Today</span>
-
             </div>
             
             {/* MICRO DOPAMINE EFFECT */}
