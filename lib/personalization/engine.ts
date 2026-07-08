@@ -88,18 +88,22 @@ export function calculateAdvancedCalories(bmr: number, tdee: number, primaryTarg
 // 🧠 ADAPTIVE GOAL ENGINE (Recovery-Aware Progression System)
 // Intelligently adjusts daily targets based on fatigue, drift, and recovery data.
 
-export function calculateAdaptiveGoals(baseTDEE: number, baseSteps: number, recovery_state: string, burnout_risk: string, adherence_profile: string = "stable", behavioral_drift: string = "stable") {
+export function calculateAdaptiveGoals(baseTDEE: number, baseSteps: number, recovery_state: string, burnout_risk: string, adherence_profile: string = "stable", behavioral_drift: string = "stable", user_manual_goals: any = null) {
   let adaptive_tdee = baseTDEE || 2000;
   let adaptive_steps = baseSteps || 6000;
   let recommended_water = 3000;
+  let recommended_sleep = 7.5;
+  let recommended_protein = Math.round((baseTDEE || 2000) * 0.075); // Safe heuristic baseline
   let workout_intensity = "moderate";
   let recommendation = "maintain";
+  let challenge_difficulty: 'Low' | 'Moderate' | 'High' | 'Extreme' = 'Moderate';
 
   // 🧠 Early-Warning Behavioral Drift Protection
   if (behavioral_drift === 'multi_system_collapse' || behavioral_drift === 'recovery_deterioration') {
     adaptive_steps = Math.max(4000, baseSteps * 0.8); // Scale back before full burnout
     workout_intensity = "low_impact_preferred";
     recommendation = "drift_correction";
+    challenge_difficulty = 'Low';
   }
 
   // 🧠 Burnout & Severe Recovery Protection Logic
@@ -107,26 +111,56 @@ export function calculateAdaptiveGoals(baseTDEE: number, baseSteps: number, reco
     adaptive_steps = Math.max(3000, baseSteps * 0.7); // Safely reduce movement load by 30%
     adaptive_tdee = baseTDEE + 200; // Slight caloric surplus recommended to aid physical recovery
     recommended_water = 3500; // Extra hydration for cellular recovery
+    recommended_sleep = 8.5; // Protect recovery first
     workout_intensity = "low_impact_only";
     recommendation = "recovery_focus";
+    challenge_difficulty = 'Low';
   } 
   // 🧠 Progressive Overload Logic
   else if (recovery_state === 'optimal' || recovery_state === 'excellent') {
-    adaptive_steps = baseSteps * 1.1; // Safely suggest a 10% movement increase
+    adaptive_steps = baseSteps * 1.1; // Safely suggest a 10% movement increase (never aggressive)
+    recommended_water = 3200;
     workout_intensity = "high_intensity_approved";
     recommendation = "progressive_overload";
+    challenge_difficulty = 'High';
   }
 
   // 🧠 Smart Adherence Friction Reduction
   if (adherence_profile === "struggling" && recommendation !== "recovery_focus") {
     adaptive_steps = Math.min(adaptive_steps, 5000); // Reduce cognitive/physical load to rebuild habit momentum safely
     recommendation = "habit_rebuilding";
+    challenge_difficulty = 'Low';
+  }
+
+  // 🧠 PHASE 12: GOAL PACKET GENERATION (Source of Truth)
+  let final_goal_packet = {
+    target_steps: Math.round(adaptive_steps),
+    target_water: recommended_water,
+    target_sleep: recommended_sleep,
+    target_protein: recommended_protein,
+    challenge_difficulty,
+    goal_source: 'auto' as 'auto' | 'manual',
+    override_warning: null as string | null
+  };
+
+  // 🧠 PHASE 12: MANUAL GOAL INTEGRATION & SAFETY
+  if (user_manual_goals) {
+    final_goal_packet.goal_source = 'manual';
+    final_goal_packet.target_steps = user_manual_goals.steps || final_goal_packet.target_steps;
+    final_goal_packet.target_water = user_manual_goals.water || final_goal_packet.target_water;
+    final_goal_packet.target_sleep = user_manual_goals.sleep || final_goal_packet.target_sleep;
+    final_goal_packet.target_protein = user_manual_goals.protein || final_goal_packet.target_protein;
+    
+    // Safety Warning for Unrealistic/Dangerous Goals
+    if (burnout_risk === 'high' && final_goal_packet.target_steps > 10000) {
+      final_goal_packet.override_warning = "Manual step target is too high given current physiological burnout risk. Consider lowering.";
+    }
   }
 
   // 🧠 PHASE 4 & 6: AUTONOMOUS GOAL MODULATION & BEHAVIORAL CAPACITY BUDGET
   const goal_modulation_metadata = {
-    hydration_adjusted: recommended_water !== 3000,
-    activity_adjusted: adaptive_steps !== baseSteps,
+    hydration_adjusted: final_goal_packet.target_water !== 3000,
+    activity_adjusted: final_goal_packet.target_steps !== baseSteps,
     recovery_focused: recommendation === "recovery_focus",
     modulation_confidence: 0.85
   };
@@ -148,14 +182,15 @@ export function calculateAdaptiveGoals(baseTDEE: number, baseSteps: number, reco
   };
 
   return {
-    recommended_steps: Math.round(adaptive_steps),
+    recommended_steps: final_goal_packet.target_steps,
     recommended_calories: Math.round(adaptive_tdee),
-    recommended_water,
+    recommended_water: final_goal_packet.target_water,
     workout_intensity,
     adaptation_mode: recommendation,
     goal_modulation_metadata,
     capacity_packet,
-    capacity_budget
+    capacity_budget,
+    goal_packet: final_goal_packet // 🧠 Phase 12 Architecture Payload
   };
 }
 
@@ -187,23 +222,45 @@ export function generateInterventionPacket(lifeload_score: number, burnout_risk:
   return { primary_intervention, expected_benefit, friction_level };
 }
 
-// 🧠 PHASE 11 MODULE 3: AUTONOMOUS COACH ENGINE
+// 🧠 PHASE 11 MODULE 3: AUTONOMOUS COACH ENGINE (+ PHASE 12 BILINGUAL LAYER)
 export function generateCoachActionPacket(operating_state: string, intervention_packet: any, behavioral_memory: any) {
   let todays_priority = "Progressive Overload";
   let actionable_metric = "Steps > 8000";
   let confidence_score = 80;
+  
+  // 🧠 PHASE 12: Context Templates (Bilingual Routing)
+  let templates = {
+    english: "Momentum is strong. Let's push for progressive overload today.",
+    hinglish: "Momentum badhiya hai. Aaj limits push karte hain.",
+    banglish: "Bhalo momentum ache. Ajke target push kora chai."
+  };
 
   if (operating_state === "burnout_protection" || behavioral_memory.sleep_behavior === "sleep_deprived") {
     todays_priority = "Sleep Optimization";
     actionable_metric = "In bed by 10:30 PM";
     confidence_score = 92;
+    templates = {
+      english: "Prioritize recovery today. Get to bed early to clear sleep debt.",
+      hinglish: "Aaj recovery zaroori hai. Jaldi so jao aur body ko heal hone do.",
+      banglish: "Ajke bishram dorkar. Rat e taratari ghumate jao."
+    };
   } else if (operating_state === "rebuild" || behavioral_memory.hydration_behavior === "chronically_dehydrated") {
     todays_priority = "Hydration Recovery";
     actionable_metric = "Water > 2500ml";
     confidence_score = 88;
+    templates = {
+      english: "Let's rebuild momentum. Focus on hitting your hydration targets today.",
+      hinglish: "Chalo wapas track pe aate hain. Aaj paani ka target zaroor pura karna.",
+      banglish: "Abar shuru kora jak. Ajke jol khaoar target puron koro."
+    };
   }
 
-  return { todays_priority, actionable_metric, confidence_score };
+  return { 
+    todays_priority, 
+    actionable_metric, 
+    confidence_score,
+    localized_templates: templates // 🧠 Phase 12 Bilingual Context Injection
+  };
 }
 
 // 🧠 PHASE 11 MODULE 4: HABIT PRESCRIPTION ENGINE
