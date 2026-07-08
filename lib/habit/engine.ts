@@ -8,7 +8,79 @@ const getSupabase = () => {
   );
 };
 
-// 1. getRewardMessage (🧠 ADAPTIVE HABIT EVOLUTION)
+// 🧠 PHASE 12 MODULE 2: MICRO CHALLENGE ENGINE
+export function calculateChallengeProgress(challengeData: any, currentDateStr: string, missedDaysHistory: number) {
+  if (!challengeData || !challengeData.start_date || !challengeData.end_date) {
+    return {
+      challenge_id: 'none',
+      challenge_name: 'No Active Challenge',
+      challenge_type: 'none',
+      start_date: '',
+      end_date: '',
+      completion_percentage: 0,
+      missed_days: 0,
+      success_probability: 'Moderate',
+      status: 'pending'
+    };
+  }
+
+  const startMs = new Date(challengeData.start_date).getTime();
+  const endMs = new Date(challengeData.end_date).getTime();
+  const currentMs = new Date(currentDateStr).getTime();
+
+  const total_days = Math.max(1, Math.ceil((endMs - startMs) / (1000 * 60 * 60 * 24)));
+  const days_elapsed = Math.max(0, Math.ceil((currentMs - startMs) / (1000 * 60 * 60 * 24)));
+
+  let status = 'active';
+  if (currentMs > endMs) status = 'completed';
+  if (currentMs < startMs) status = 'pending';
+
+  const raw_completion = (days_elapsed / total_days) * 100;
+  const completion_percentage = Math.max(0, Math.min(100, Math.round(raw_completion)));
+
+  const miss_ratio = missedDaysHistory / total_days;
+  let success_probability = 'High';
+  if (miss_ratio > 0.25 || status === 'failed') success_probability = 'Low';
+  else if (miss_ratio > 0.10) success_probability = 'Moderate';
+
+  return {
+    challenge_id: challengeData.id || 'active_challenge',
+    challenge_name: challengeData.name || 'Custom Challenge',
+    challenge_type: challengeData.type || 'behavioral',
+    start_date: challengeData.start_date,
+    end_date: challengeData.end_date,
+    completion_percentage,
+    missed_days: missedDaysHistory,
+    success_probability,
+    status
+  };
+}
+
+// 🧠 PHASE 12 MODULE 5: LIGHTWEIGHT NUTRITION ADHERENCE ENGINE
+export function calculateNutritionAdherence(
+  proteinLogged: number, targetProtein: number,
+  waterLogged: number, targetWater: number,
+  sugarConsumedToday: boolean, yesterdaySugarStreak: number
+) {
+  const protein_target_hit = proteinLogged >= targetProtein;
+  const water_target_hit = waterLogged >= targetWater;
+  
+  const sugar_avoidance_streak = sugarConsumedToday ? 0 : yesterdaySugarStreak + 1;
+
+  let adherence_score = 0;
+  if (protein_target_hit) adherence_score += 40;
+  if (water_target_hit) adherence_score += 30;
+  if (!sugarConsumedToday) adherence_score += 30;
+
+  return {
+    protein_target_hit,
+    water_target_hit,
+    sugar_avoidance_streak,
+    adherence_score
+  };
+}
+
+// 1. getRewardMessage (ｧ ADAPTIVE HABIT EVOLUTION)
 export function getRewardMessage(streak: number, adaptation_mode: string = "maintain") {
   if (adaptation_mode === "recovery_focus") {
     if (streak >= 7) return "Healing up nicely 🌿";
@@ -123,9 +195,27 @@ export async function updateHabit(arg1: any, arg2?: any, arg3?: any, arg4?: bool
         }
     }
 
-     const message = getRewardMessage(streak_count, metrics?.adaptation_mode);
+    const message = getRewardMessage(streak_count, metrics?.adaptation_mode);
+
+    // 🧠 PHASE 12: EXECUTE NUTRITION & CHALLENGE ENGINES
+    const sugar_consumed = metrics?.sugar_consumed_today || false;
+    const yesterday_sugar_streak = yesterdayHabit?.sugar_avoidance_streak || 0; // Requires DB schema addition later
+    const protein_logged = metrics?.protein_logged || 0;
+    const target_protein = metrics?.target_protein || 50;
+    const target_water = metrics?.target_water || 3000;
+    
+    const nutrition_packet = calculateNutritionAdherence(
+      protein_logged, target_protein, 
+      metrics?.water_today || metrics?.water || 0, target_water, 
+      sugar_consumed, yesterday_sugar_streak
+    );
+
+    const challenge_data = metrics?.active_challenge || null;
+    const missed_days = metrics?.challenge_missed_days || 0;
+    const challenge_packet = calculateChallengeProgress(challenge_data, todayStr, missed_days);
 
     // 4. Upsert secure record
+    // Note: To persist sugar_avoidance_streak, the column must be added to user_habits table in the future.
     await supabase.from('user_habits').upsert({
         user_id: userId,
         date: todayStr,
@@ -137,7 +227,13 @@ export async function updateHabit(arg1: any, arg2?: any, arg3?: any, arg4?: bool
         best_streak
     }, { onConflict: 'user_id, date' });
 
-    return { streak_count, best_streak, reward_message: message };
+    return { 
+      streak_count, 
+      best_streak, 
+      reward_message: message,
+      challenge_packet,
+      nutrition_adherence_packet: nutrition_packet
+    };
 
   } catch (error) {
     console.error("updateHabit error:", error);
