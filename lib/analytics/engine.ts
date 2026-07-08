@@ -1,9 +1,56 @@
-// 🧠 ABOS PHASE 10: PURE FUNCTION EXTRACTION (Engine Ownership Enforcement)
-export function calculateLifeload(avg_sleep: number, avg_screen: number) {
+// 🧠 ABOS PHASE 10 & 12.3: LIFELOAD V2 (Occupational Fatigue Modifier)
+export function calculateLifeload(
+  avg_sleep: number, 
+  avg_screen: number, 
+  occupational_strain?: { 
+    standing_hours?: number; 
+    walking_hours?: number; 
+    manual_labor_level?: 'low' | 'moderate' | 'high' | 'extreme'; 
+    mental_workload_level?: 'low' | 'moderate' | 'high' | 'extreme'; 
+  }
+) {
   let lifeload_score = 100;
-  if (avg_sleep < 6) lifeload_score -= 30;
-  if (avg_screen > 6) lifeload_score -= 20;
-  if (avg_screen > 8 && avg_sleep < 5) lifeload_score -= 40; // Critical nervous system overload
+  let daily_strain_score = 0;
+  let load_driver = "behavioral_friction";
+
+  // 🧠 1. Calculate Core Sleep & Screen Debt
+  let baseline_penalty = 0;
+  if (avg_sleep < 6) baseline_penalty += 30;
+  if (avg_screen > 6) baseline_penalty += 20;
+  if (avg_screen > 8 && avg_sleep < 5) baseline_penalty += 20; // Critical nervous system overload compounding
+
+  lifeload_score -= baseline_penalty;
+
+  // 🧠 2. Calculate Occupational Strain (Phase 12.3)
+  if (occupational_strain) {
+    daily_strain_score += (occupational_strain.standing_hours || 0) * 5;
+    daily_strain_score += (occupational_strain.walking_hours || 0) * 8;
+    
+    if (occupational_strain.manual_labor_level === 'extreme') daily_strain_score += 25;
+    else if (occupational_strain.manual_labor_level === 'high') daily_strain_score += 15;
+    else if (occupational_strain.manual_labor_level === 'moderate') daily_strain_score += 5;
+
+    if (occupational_strain.mental_workload_level === 'extreme') daily_strain_score += 20;
+    else if (occupational_strain.mental_workload_level === 'high') daily_strain_score += 10;
+
+    // Cap occupational penalty deduction
+    const max_occupational_penalty = 45;
+    const applied_occupational_penalty = Math.min(daily_strain_score, max_occupational_penalty);
+    
+    lifeload_score -= applied_occupational_penalty;
+  }
+
+  // 🧠 3. Determine Dominant Load Driver
+  if (daily_strain_score > 25 && daily_strain_score > baseline_penalty) {
+    load_driver = "occupational_fatigue";
+  } else if (avg_screen > 6 && avg_screen * 3 > (8 - avg_sleep) * 5) {
+    load_driver = "screen_fatigue";
+  } else if (avg_sleep < 6) {
+    load_driver = "sleep_debt";
+  }
+
+  // Enforce absolute bounds
+  lifeload_score = Math.max(0, Math.min(100, lifeload_score));
 
   let cognitive_load = "optimal";
   if (lifeload_score <= 30) cognitive_load = "severe_overload";
@@ -16,8 +63,9 @@ export function calculateLifeload(avg_sleep: number, avg_screen: number) {
     lifeload_packet: {
       lifeload_score,
       lifeload_level: lifeload_score > 80 ? "optimal" : lifeload_score > 50 ? "manageable" : "overloaded",
-      lifeload_confidence: "high",
-      dominant_load_driver: avg_screen > 6 ? "screen_fatigue" : avg_sleep < 6 ? "sleep_debt" : "behavioral_friction"
+      lifeload_confidence: occupational_strain ? "high" : "moderate", // Confidence scales with data density
+      dominant_load_driver: load_driver,
+      daily_strain_score // Exported for dashboard rings/reports if needed
     }
   };
 }
