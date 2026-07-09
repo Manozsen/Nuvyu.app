@@ -502,7 +502,7 @@ interface AdaptiveAIContext extends AIContext {
         aiContext.coach_context_packet = buildCoachContextPacket(aiContext);
       }
 
-    // Rate Limiting System (Monetization Check)
+        // Rate Limiting System (Monetization Check)
     const limit = metrics.plan_type === 'pro' ? 100 : 20;
     const todayDate = new Date().toISOString().split('T')[0];
     
@@ -514,17 +514,26 @@ interface AdaptiveAIContext extends AIContext {
       lastReset = todayDate;
     }
 
-        if (currentCount >= limit) {
+    // 🧠 PHASE 12.5: UNIFIED PACKET EXPORT
+    const unified_abos_metrics = {
+      lifeload_packet: safe_lifeload.lifeload_packet,
+      cognitive_energy_packet: safe_cognitive,
+      decision_fatigue_packet: safe_decision_fatigue,
+      forecast_packet: aiContext?.forecast_packet,
+      coach_context_packet: aiContext?.coach_context_packet,
+      operating_state: aiContext?.operating_state,
+      intervention_engine: aiContext?.intervention_engine,
+      recovery_roi: aiContext?.recovery_roi,
+      energy_allocation: aiContext?.energy_allocation
+    };
+
+    if (currentCount >= limit) {
       saveCoachMemory(supabase, userId, metrics, behavior, ruleNudge, "rule");
       return { 
         message: ruleNudge, 
         type: "rule", 
         meta: { ai_limit_hit: true },
-        abos_metrics: {
-          lifeload_packet: safe_lifeload.lifeload_packet,
-          cognitive_energy_packet: safe_cognitive,
-          decision_fatigue_packet: safe_decision_fatigue
-        }
+        abos_metrics: unified_abos_metrics
       };
     }
 
@@ -543,27 +552,19 @@ interface AdaptiveAIContext extends AIContext {
         last_reset_date: todayDate
       }).eq('id', userId);
 
-    saveCoachMemory(supabase, userId, metrics, behavior, aiNudge, "ai");
+      saveCoachMemory(supabase, userId, metrics, behavior, aiNudge, "ai");
       return { 
         message: aiNudge, 
         type: "ai",
-        abos_metrics: {
-           lifeload_packet: safe_lifeload.lifeload_packet,
-           cognitive_energy_packet: safe_cognitive,
-           decision_fatigue_packet: safe_decision_fatigue
-          }
-        };
-      }
+        abos_metrics: unified_abos_metrics
+      };
+    }
 
     saveCoachMemory(supabase, userId, metrics, behavior, ruleNudge, "rule");
     return { 
       message: ruleNudge, 
       type: "rule",
-      abos_metrics: {
-        lifeload_packet: safe_lifeload.lifeload_packet,
-        cognitive_energy_packet: safe_cognitive,
-        decision_fatigue_packet: safe_decision_fatigue
-      }
+      abos_metrics: unified_abos_metrics
     };
   };
 
@@ -795,7 +796,18 @@ interface AdaptiveAIContext extends AIContext {
         reward_message: String(habitData?.reward_message || ""),
         lifeload_packet: nudgeResponse?.abos_metrics?.lifeload_packet,
         cognitive_energy_packet: nudgeResponse?.abos_metrics?.cognitive_energy_packet,
-        decision_fatigue_packet: nudgeResponse?.abos_metrics?.decision_fatigue_packet
+        decision_fatigue_packet: nudgeResponse?.abos_metrics?.decision_fatigue_packet,
+        // 🧠 PHASE 12.5: ORCHESTRATION LAYER STATE INJECTION
+        goal_packet: adaptiveGoals?.goal_packet,
+        adaptation_mode: adaptiveGoals?.adaptation_mode,
+        challenge_packet: habitData?.challenge_packet,
+        nutrition_adherence_packet: habitData?.nutrition_adherence_packet,
+        forecast_packet: nudgeResponse?.abos_metrics?.forecast_packet,
+        coach_context_packet: nudgeResponse?.abos_metrics?.coach_context_packet,
+        operating_state: nudgeResponse?.abos_metrics?.operating_state,
+        intervention_engine: nudgeResponse?.abos_metrics?.intervention_engine,
+        recovery_roi: nudgeResponse?.abos_metrics?.recovery_roi,
+        energy_allocation: nudgeResponse?.abos_metrics?.energy_allocation
       } as any));
 
       // 🧠 PART 3 & 8: CALCULATE TODAY XP
@@ -846,24 +858,18 @@ interface AdaptiveAIContext extends AIContext {
 
    if (!mounted || !userProfile) return null;
 
-  // 🧠 ADAPTIVE BEHAVIOR OS: Dynamically adjust UI targets based on recovery & adherence
-  const baseTDEE = userProfile.target_calories || userProfile.tdee || 2000;
-  const { risk_level: currentBurnoutRisk, burnout_trajectory_packet } = detectBurnoutRisk(metrics.recovery_score, metrics.sleep_hours, metrics.streak_count, Math.abs(Math.min(0, metrics.energy_balance)), []);
-  // Legacy strict signature bypass for 6-arg orchestration
-  const adaptiveGoals: any = calculateAdaptiveGoals(baseTDEE, 6000, metrics.recovery_state, currentBurnoutRisk, "stable", "stable" as any);
-  const { recommended_calories: targetCalories, recommended_steps: targetSteps, recommended_water: targetWater, adaptation_mode, goal_modulation_metadata, capacity_packet, capacity_budget } = adaptiveGoals;
-
-  // 🧠 SAFE ABOS PHASE 10: UI DERIVATION (Null-Safe)
-  const safe_consistency = (metrics?.streak_count || 0) > 3 ? "highly_adherent" : (metrics?.streak_count || 0) > 0 ? "stable" : "struggling";
-  const safe_adherence_risk = (metrics?.streak_count || 0) === 0 ? "high" : "low";
-  const estimated_sleep_debt = Math.max(0, 8 - (metrics?.sleep_hours || 0));
-
-  const operating_state_engine = determineOperatingState(currentBurnoutRisk || "low", safe_consistency);
-  const intervention_engine = determineInterventionMode(operating_state_engine.operating_state);
-  const recovery_roi = calculateRecoveryROI(estimated_sleep_debt, metrics?.fatigue_risk || "low", safe_adherence_risk);
-  const energy_allocation = calculateEnergyAllocation(estimated_sleep_debt, metrics?.fatigue_risk || "low", (metrics?.sleep_hours || 0) >= 7 ? "high" : "low");
-  const safeBehavioralRoutines = extractBehavioralMemories([]);
-  const compound_engine = detectHabitCompounds(safeBehavioralRoutines.preferred_workout_hour || null, safeBehavioralRoutines.night_eating_frequency || 0);
+  // 🧠 ABOS PHASE 12.5: PURE CONSUMER ARCHITECTURE
+  // The Dashboard UI now exclusively consumes pre-computed packets from React State.
+  // NO business logic, calculations, or engine executions exist in the render path.
+  const targetCalories = metrics.energy_stats?.targetCalories || userProfile.target_calories || userProfile.tdee || 2000;
+  const targetSteps = (metrics as any).goal_packet?.target_steps || 6000;
+  const targetWater = (metrics as any).goal_packet?.target_water || 3000;
+  const adaptation_mode = (metrics as any).adaptation_mode || 'maintain';
+  
+  const operating_state_engine = (metrics as any).operating_state || { operating_state: 'growth' };
+  const intervention_engine = (metrics as any).intervention_engine || { intervention_mode: 'momentum_push' };
+  const recovery_roi = (metrics as any).recovery_roi || { roi_action: 'Consistency' };
+  const energy_allocation = (metrics as any).energy_allocation || { recommended_focus: 'Physical Progression' };
 
   let energyColorClass = "text-[#00FFA3]";
   if (metrics.energy_intake > 0) {
