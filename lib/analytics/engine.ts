@@ -1,4 +1,4 @@
-// 🧠 ABOS PHASE 10 & 12.3: LIFELOAD V2 (Occupational Fatigue Modifier)
+// 🧠 ABOS PHASE 10 & 12.3A: LIFELOAD V2 (Occupational Fatigue Modifier)
 export function calculateLifeload(
   avg_sleep: number, 
   avg_screen: number, 
@@ -7,6 +7,7 @@ export function calculateLifeload(
     walking_hours?: number; 
     manual_labor_level?: 'low' | 'moderate' | 'high' | 'extreme'; 
     mental_workload_level?: 'low' | 'moderate' | 'high' | 'extreme'; 
+    commute_hours?: number;
   }
 ) {
   let lifeload_score = 100;
@@ -25,6 +26,7 @@ export function calculateLifeload(
   if (occupational_strain) {
     daily_strain_score += (occupational_strain.standing_hours || 0) * 5;
     daily_strain_score += (occupational_strain.walking_hours || 0) * 8;
+    daily_strain_score += (occupational_strain.commute_hours || 0) * 4;
     
     if (occupational_strain.manual_labor_level === 'extreme') daily_strain_score += 25;
     else if (occupational_strain.manual_labor_level === 'high') daily_strain_score += 15;
@@ -57,6 +59,19 @@ export function calculateLifeload(
   else if (lifeload_score <= 60) cognitive_load = "high_strain";
   else if (lifeload_score <= 80) cognitive_load = "moderate_strain";
 
+  // 🧠 PHASE 12.3A: EXACT STRAIN PACKET EXPORT
+  const strain_packet = {
+    standing_hours: occupational_strain?.standing_hours || 0,
+    walking_hours: occupational_strain?.walking_hours || 0,
+    manual_load: occupational_strain?.manual_labor_level || 'low',
+    mental_load: occupational_strain?.mental_workload_level || 'low',
+    commute_load: occupational_strain?.commute_hours || 0,
+    daily_strain_score,
+    dominant_driver: load_driver,
+    recommended_adjustment: daily_strain_score > 30 ? "Reduce intensity 20%" : daily_strain_score > 15 ? "Prioritize active recovery" : "Maintain normal intensity",
+    confidence: occupational_strain ? "high" : "low"
+  };
+
   return {
     lifeload_score,
     cognitive_load,
@@ -66,7 +81,8 @@ export function calculateLifeload(
       lifeload_confidence: occupational_strain ? "high" : "moderate", // Confidence scales with data density
       dominant_load_driver: load_driver,
       daily_strain_score // Exported for dashboard rings/reports if needed
-    }
+    },
+    strain_packet
   };
 }
 
