@@ -80,6 +80,76 @@ export function calculateNutritionAdherence(
   };
 }
 
+// 🧠 PHASE 12.4A: COMMITMENT ENGINE
+export function calculateCommitmentIntegrity(
+  contractItems: string[], 
+  metrics: { steps: number, water: number, sleep: number }, 
+  historicalIntegrity: number
+) {
+  if (!contractItems || contractItems.length === 0) {
+    return {
+      non_negotiables: [],
+      completed_items: [],
+      missed_items: [],
+      commitment_score: 0,
+      commitment_integrity_score: historicalIntegrity || 50,
+      contract_completion_rate: 0,
+      status: 'pending' as 'active' | 'completed' | 'failed' | 'pending'
+    };
+  }
+
+  const completed_items: string[] = [];
+  const missed_items: string[] = [];
+
+  // Dynamic evaluation of behavioral strings
+  contractItems.forEach(item => {
+    let passed = false;
+    const lowerItem = item.toLowerCase();
+    
+    // Naive parsing for core metrics (Will be expanded when custom goals are fully supported)
+    if (lowerItem.includes('step')) {
+      const target = parseInt(item.replace(/[^0-9]/g, '')) || 6000;
+      passed = metrics.steps >= target;
+    } else if (lowerItem.includes('water')) {
+      const target = parseInt(item.replace(/[^0-9]/g, '')) || 2000;
+      passed = metrics.water >= target;
+    } else if (lowerItem.includes('sleep')) {
+      const target = parseFloat(item.replace(/[^0-9.]/g, '')) || 7;
+      passed = metrics.sleep >= target;
+    } else {
+      // Custom non-negotiables assume passed if explicitly logged (handled outside this pure function for now)
+      passed = false; 
+    }
+
+    if (passed) completed_items.push(item);
+    else missed_items.push(item);
+  });
+
+  const contract_completion_rate = Math.round((completed_items.length / contractItems.length) * 100);
+  const commitment_score = completed_items.length * 5; // +5 raw points per kept promise
+
+  // Psychological Momentum (Integrity Score)
+  let commitment_integrity_score = historicalIntegrity || 50;
+  if (contract_completion_rate === 100) commitment_integrity_score += 5;
+  else if (contract_completion_rate < 50) commitment_integrity_score -= 10;
+  
+  commitment_integrity_score = Math.max(0, Math.min(100, commitment_integrity_score));
+
+  let status: 'active' | 'completed' | 'failed' | 'pending' = 'active';
+  if (contract_completion_rate === 100) status = 'completed';
+  else if (contract_completion_rate < 50 && contractItems.length > 0) status = 'failed';
+
+  return {
+    non_negotiables: contractItems,
+    completed_items,
+    missed_items,
+    commitment_score,
+    commitment_integrity_score,
+    contract_completion_rate,
+    status
+  };
+}
+
 // 1. getRewardMessage (ｧ ADAPTIVE HABIT EVOLUTION)
 export function getRewardMessage(streak: number, adaptation_mode: string = "maintain") {
   if (adaptation_mode === "recovery_focus") {
@@ -214,6 +284,15 @@ export async function updateHabit(arg1: any, arg2?: any, arg3?: any, arg4?: bool
     const missed_days = metrics?.challenge_missed_days || 0;
     const challenge_packet = calculateChallengeProgress(challenge_data, todayStr, missed_days);
 
+    // 🧠 PHASE 12.4A: EXECUTE COMMITMENT ENGINE
+    const active_contract = metrics?.commitment_contract || []; // Expected array of strings
+    const historical_integrity = yesterdayHabit?.commitment_integrity || 50;
+    const commitment_packet = calculateCommitmentIntegrity(
+      active_contract, 
+      { steps: metrics?.steps_today || 0, water: metrics?.water_today || 0, sleep: metrics?.sleep_hours || 0 },
+      historical_integrity
+    );
+
     // 4. Upsert secure record
     // Note: To persist sugar_avoidance_streak, the column must be added to user_habits table in the future.
     await supabase.from('user_habits').upsert({
@@ -227,12 +306,13 @@ export async function updateHabit(arg1: any, arg2?: any, arg3?: any, arg4?: bool
         best_streak
     }, { onConflict: 'user_id, date' });
 
-    return { 
+      return { 
       streak_count, 
       best_streak, 
       reward_message: message,
       challenge_packet,
-      nutrition_adherence_packet: nutrition_packet
+      nutrition_adherence_packet: nutrition_packet,
+      commitment_packet // 🧠 Phase 12.4A Core Output
     };
 
   } catch (error) {
