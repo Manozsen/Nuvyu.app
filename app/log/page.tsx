@@ -42,8 +42,8 @@ export default function LogsPage() {
   const [feedLogs, setFeedLogs] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'all' | 'nutrition' | 'workout' | 'recovery'>('all');
 
-    // Quick Add Modal State
-  const [modalType, setModalType] = useState<'water' | 'steps' | 'food' | 'workout' | 'sleep' | 'activity' | 'screen' | null>(null);
+  // Quick Add Modal State
+  const [modalType, setModalType] = useState<'water' | 'steps' | 'food' | 'workout' | 'sleep' | 'activity' | 'screen' | 'strain' | 'contract' | 'challenge' | null>(null);
   const [successFeedback, setSuccessFeedback] = useState<string | null>(null);
 
   // Input States
@@ -74,10 +74,15 @@ export default function LogsPage() {
     if (log.log_type === 'activity') setActivityData({ type: log.data?.activity_name||log.data?.type||'', duration: log.data?.duration_mins||'', intensity: log.data?.intensity||'medium' });
   };
   
-  // Workout & Activity Intelligence
+    // Workout & Activity Intelligence
   const [workoutData, setWorkoutData] = useState({ exercise: '', sets: '', reps: '', duration: '' });
   const [activityData, setActivityData] = useState({ type: '', duration: '', intensity: 'medium' });
   
+  // 🧠 PHASE 12.65: BEHAVIORAL INPUT STATES
+  const [contractItems, setContractItems] = useState(['', '', '']);
+  const [strainData, setStrainData] = useState({ standing: '', walking: '', commute: '', mental: 'low', manual: 'low' });
+  const [nutritionAdherence, setNutritionAdherence] = useState({ protein_hit: false, sugar_free: true });
+
   const [workoutSuggestions, setWorkoutSuggestions] = useState(["Push-ups", "Pull-ups", "Squats", "Plank", "Running", "HIIT"]);
 
   const supabase = createBrowserClient(
@@ -282,7 +287,10 @@ export default function LogsPage() {
             { id: 'workout', icon: Dumbbell, label: 'Workout', color: 'text-purple-400', bg: 'bg-purple-500/10 border-purple-500/20' },
             { id: 'sleep', icon: Moon, label: 'Sleep', color: 'text-indigo-400', bg: 'bg-indigo-500/10 border-indigo-500/20' },
             { id: 'screen', icon: Activity, label: 'Screen', color: 'text-pink-400', bg: 'bg-pink-500/10 border-pink-500/20' },
-            { id: 'activity', icon: Zap, label: 'Activity', color: 'text-yellow-400', bg: 'bg-yellow-500/10 border-yellow-500/20' }
+            { id: 'activity', icon: Zap, label: 'Activity', color: 'text-yellow-400', bg: 'bg-yellow-500/10 border-yellow-500/20' },
+            // 🧠 PHASE 12.65: BEHAVIORAL INPUT BUTTONS
+            { id: 'strain', icon: Zap, label: 'Fatigue', color: 'text-orange-500', bg: 'bg-orange-600/10 border-orange-600/20' },
+            { id: 'contract', icon: CheckCircle2, label: 'Contract', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' }
           ].map(btn => (
             <button 
               key={btn.id} onClick={() => setModalType(btn.id as any)}
