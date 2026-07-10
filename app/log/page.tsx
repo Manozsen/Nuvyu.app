@@ -480,10 +480,60 @@ export default function LogsPage() {
                     </div>
                   )}
 
+                 {/* 🧠 PHASE 12.65: NUTRITION ADHERENCE TOGGLES */}
+                  <div className="flex gap-3 pt-2">
+                    <button type="button" onClick={() => setNutritionAdherence(p => ({...p, protein_hit: !p.protein_hit}))} className={`flex-1 py-3 rounded-xl text-xs font-bold transition-all ${nutritionAdherence.protein_hit ? 'bg-[#00FFA3]/20 text-[#00FFA3] border border-[#00FFA3]/50' : 'bg-white/5 text-white/50 border border-white/10'}`}>Protein Target Hit</button>
+                    <button type="button" onClick={() => setNutritionAdherence(p => ({...p, sugar_free: !p.sugar_free}))} className={`flex-1 py-3 rounded-xl text-xs font-bold transition-all ${nutritionAdherence.sugar_free ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/50' : 'bg-white/5 text-white/50 border border-white/10'}`}>Sugar Free Today</button>
+                  </div>
+
                   <div className="text-white/30 text-[10px] font-bold uppercase tracking-widest px-2 flex justify-between mt-2">
                     <span>AI Context parsing prep</span>
                     <span>Ready</span>
                   </div>
+                </div>
+              )}
+
+              {/* 🧠 PHASE 12.65: OCCUPATIONAL FATIGUE MODAL */}
+              {modalType === 'strain' && (
+                <div className="space-y-4">
+                  <div className="flex gap-3">
+                    <input type="number" placeholder="Standing Hrs" value={strainData.standing} onChange={e => setStrainData({...strainData, standing: e.target.value})} className="w-full bg-black/50 border border-white/10 rounded-xl p-4 text-center focus:outline-none" />
+                    <input type="number" placeholder="Walking Hrs" value={strainData.walking} onChange={e => setStrainData({...strainData, walking: e.target.value})} className="w-full bg-black/50 border border-white/10 rounded-xl p-4 text-center focus:outline-none" />
+                    <input type="number" placeholder="Commute Hrs" value={strainData.commute} onChange={e => setStrainData({...strainData, commute: e.target.value})} className="w-full bg-black/50 border border-white/10 rounded-xl p-4 text-center focus:outline-none" />
+                  </div>
+                  <div className="text-[10px] font-bold uppercase tracking-widest text-white/40 px-2 mt-2">Mental Workload</div>
+                  <div className="flex gap-2">
+                    {['low', 'moderate', 'high', 'extreme'].map(level => (
+                      <button key={`mental-${level}`} onClick={() => setStrainData({...strainData, mental: level as any})} className={`flex-1 py-2 rounded-lg text-xs font-bold capitalize ${strainData.mental === level ? 'bg-orange-500/20 text-orange-400 border border-orange-500/50' : 'bg-white/5 text-white/50 border border-white/10'}`}>{level}</button>
+                    ))}
+                  </div>
+                  <div className="text-[10px] font-bold uppercase tracking-widest text-white/40 px-2 mt-2">Manual Labor</div>
+                  <div className="flex gap-2">
+                    {['low', 'moderate', 'high', 'extreme'].map(level => (
+                      <button key={`manual-${level}`} onClick={() => setStrainData({...strainData, manual: level as any})} className={`flex-1 py-2 rounded-lg text-xs font-bold capitalize ${strainData.manual === level ? 'bg-orange-500/20 text-orange-400 border border-orange-500/50' : 'bg-white/5 text-white/50 border border-white/10'}`}>{level}</button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 🧠 PHASE 12.65: COMMITMENT CONTRACT MODAL */}
+              {modalType === 'contract' && (
+                <div className="space-y-3">
+                  <div className="text-[10px] font-bold uppercase tracking-widest text-[#00FFA3] mb-2">Set Today's Non-Negotiables</div>
+                  {[0, 1, 2].map(index => (
+                    <input 
+                      key={index}
+                      type="text" 
+                      value={contractItems[index]} 
+                      onChange={e => {
+                        const newItems = [...contractItems];
+                        newItems[index] = e.target.value;
+                        setContractItems(newItems);
+                      }} 
+                      placeholder={`Goal ${index + 1} (e.g. 10,000 steps)`} 
+                      className="w-full bg-black/50 border border-white/10 rounded-2xl p-4 font-bold focus:border-[#00FFA3] focus:outline-none" 
+                    />
+                  ))}
                 </div>
               )}
               
