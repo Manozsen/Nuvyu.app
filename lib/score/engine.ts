@@ -3,7 +3,6 @@ export function calculateDailyScore(logs: any[], config: any = {}) {
     let totalSteps = 0;
     let totalWater = 0;
     let workoutLogsCount = 0;
-    let validLogsCount = 0;
     let screenHours = 0;
     let lastLogTime = 0;
     const logsCount = logs.length;
@@ -13,27 +12,22 @@ export function calculateDailyScore(logs: any[], config: any = {}) {
       const logTime = new Date(log.created_at).getTime();
       if (logTime > lastLogTime) lastLogTime = logTime;
 
-      // 🧠 Fake Activity Resistance & Step Spam Prevention
+    // 🧠 Fake Activity Resistance & Step Spam Prevention
       if (log.log_type === 'steps') {
         const val = Number(log.data?.amount) || 0;
-        if (val > 0 && val < 50000) { totalSteps += val; validLogsCount++; }
+        if (val > 0 && val < 50000) { totalSteps += val; }
       }
       else if (log.log_type === 'water') {
         const val = Number(log.data?.amount) || 0;
-        if (val > 0) { totalWater += val; validLogsCount++; }
+        if (val > 0) { totalWater += val; }
       }
       else if (log.log_type === 'workout' || log.log_type === 'activity') {
         // 🧠 Real Movement & Workout Authenticity Scoring
         const duration = Number(log.data?.duration) || Number(log.data?.duration_mins) || 0;
         if (duration >= 5) workoutLogsCount += 1; // Strict duration validation blocks fake activity points
-        validLogsCount++;
       }
       else if (log.log_type === 'screen') {
         screenHours += Number(log.data?.amount) || 0;
-        validLogsCount++;
-      }
-      else if (['sleep', 'food'].includes(log.log_type)) {
-        validLogsCount++;
       }
     });
 
