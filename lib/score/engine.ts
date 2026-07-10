@@ -66,8 +66,9 @@ export function calculateDailyScore(logs: any[], config: any = {}) {
       return { finalScore, breakdown: { steps_points, water_points, log_bonus, workout_bonus, inactivity_penalty }, totals };
     }
 
-    // 🧠 SCORE ENGINE V2: Absolute Weighted Behavioral Matrix (0-100)
-    const { sleepHours = 0, recoveryScore = 0, streakCount = 0, burnoutRisk = 'low' } = config;
+    //  SCORE ENGINE V2: Absolute Weighted Behavioral Matrix (0-100)
+    // 🧠 PHASE 12.4A: Added commitmentScore config extraction
+    const { sleepHours = 0, recoveryScore = 0, streakCount = 0, burnoutRisk = 'low', commitmentScore = 0 } = config;
 
     // 1. Movement Base (30%)
     const stepsPoints = Math.min((totalSteps / 10000) * 15, 15);
@@ -85,7 +86,9 @@ export function calculateDailyScore(logs: any[], config: any = {}) {
     const nutrition_score = waterPoints + (foodLogged ? 10 : 0);
 
     // 4. Consistency Base (20%)
-    const consistency_score = Math.min((streakCount / 7) * 20, 20);
+    // 🧠 PHASE 12.4A: Commitment Score physically increases the Consistency Base
+    const raw_consistency = Math.min((streakCount / 7) * 20, 20);
+    const consistency_score = Math.min(raw_consistency + commitmentScore, 20); // Capped at 20 to preserve matrix balance
 
     let base_score = movement_score + physiological_score + nutrition_score + consistency_score;
 
