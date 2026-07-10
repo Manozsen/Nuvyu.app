@@ -286,7 +286,7 @@ export async function updateHabit(arg1: any, arg2?: any, arg3?: any, arg4?: bool
 
     // 🧠 PHASE 12.4A: EXECUTE COMMITMENT ENGINE
     const active_contract = metrics?.commitment_contract || []; // Expected array of strings
-    const historical_integrity = yesterdayHabit?.commitment_integrity || 50;
+    const historical_integrity = yesterdayHabit?.commitment_integrity_score || 50; // 🧠 FIX: Aligned property name with strict packet interface
     const commitment_packet = calculateCommitmentIntegrity(
       active_contract, 
       { steps: metrics?.steps_today || 0, water: metrics?.water_today || 0, sleep: metrics?.sleep_hours || 0 },
