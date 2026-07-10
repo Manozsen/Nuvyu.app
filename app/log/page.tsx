@@ -159,9 +159,21 @@ export default function LogsPage() {
       // 1. Prepare Payload (Strictly Typed)
       let payloadData: any = {};
       if (modalType === 'water' || modalType === 'steps' || modalType === 'screen') payloadData = { amount: safeNumber(amount) };
-      else if (modalType === 'food') payloadData = { 
+        else if (modalType === 'food') payloadData = { 
         text: safeString(textInput).trim(), meal_type: mealType,
+        protein_hit: nutritionAdherence.protein_hit, // 🧠 PHASE 12.65: Adherence tracking
+        sugar_free: nutritionAdherence.sugar_free,
         ai_nutrition_prep: { status: 'pending', sync_ready: true } // 🧠 Phase 5 scalable architecture setup
+      };
+      else if (modalType === 'strain') payloadData = { // 🧠 PHASE 12.65: Strain mapping
+        standing_hours: safeNumber(strainData.standing),
+        walking_hours: safeNumber(strainData.walking),
+        commute_hours: safeNumber(strainData.commute),
+        mental_workload_level: strainData.mental,
+        manual_labor_level: strainData.manual
+      };
+      else if (modalType === 'contract') payloadData = { // 🧠 PHASE 12.65: Contract mapping
+        non_negotiables: contractItems.filter(i => i.trim().length > 0)
       };
       else if (modalType === 'sleep') payloadData = { sleep_hours: safeNumber(amount), sleep_quality: sleepQuality }
       else if (modalType === 'workout') payloadData = { 
