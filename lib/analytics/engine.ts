@@ -1,3 +1,8 @@
+import { calculateEnergyBalance } from '../calories/energyEngine';
+import { AnalyticsDailyData } from '../types/analytics';
+import { safeSleepHours, safeRecoveryScore } from '../utils/sleep';
+import { getLocalMidnightRange } from '../time/engine';
+
 // 🧠 ABOS PHASE 10 & 12.3A: LIFELOAD V2 (Occupational Fatigue Modifier)
 export function calculateLifeload(
   avg_sleep: number, 
@@ -185,12 +190,6 @@ const getLocalDateStr = (d: Date) => {
   const day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
 };
-
-// 🧠 BUG FIX: Removed 'getLocalDateString' (Unused import causing Vercel TS build failure)
-import { calculateEnergyBalance } from '../calories/energyEngine';
-import { AnalyticsDailyData } from '../types/analytics';
-import { safeSleepHours, safeRecoveryScore } from '../utils/sleep';
-import { getLocalMidnightRange } from '../time/engine';
 
 // 🛠️ LOCAL SAFE UTILITIES (Prevents NaN/Undefined crashes during analytics parsing)
 const safeNumber = (value: any, fallback = 0): number => { 
