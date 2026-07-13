@@ -806,9 +806,11 @@ interface AdaptiveAIContext extends AIContext {
         lifeload_packet: nudgeResponse?.abos_metrics?.lifeload_packet,
         cognitive_energy_packet: nudgeResponse?.abos_metrics?.cognitive_energy_packet,
         decision_fatigue_packet: nudgeResponse?.abos_metrics?.decision_fatigue_packet,
-        // 🧠 PHASE 12.5: ORCHESTRATION LAYER STATE INJECTION
+       // 🧠 PHASE 12.5: ORCHESTRATION LAYER STATE INJECTION
         goal_packet: adaptiveGoals?.goal_packet,
         adaptation_mode: adaptiveGoals?.adaptation_mode,
+        capacity_packet: adaptiveGoals?.capacity_packet, // 🧠 PHASE 13C.5: Restored Packet
+        capacity_budget: adaptiveGoals?.capacity_budget, // 🧠 PHASE 13C.5: Restored Packet
         challenge_packet: habitData?.challenge_packet,
         commitment_packet: habitData?.commitment_packet, // 🧠 PHASE 12.5A: Inject Missing Packet
         nutrition_adherence_packet: habitData?.nutrition_adherence_packet,
