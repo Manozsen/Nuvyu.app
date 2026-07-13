@@ -23,6 +23,11 @@ import { AIContext } from '../../lib/types/ai';
 import { safeSleepHours, safeSleepQuality, safeRecoveryScore } from '../../lib/utils/sleep';
 import { safeNumber, safeRecoveryState, safeFatigueRisk, safeEnergyStats } from '../../lib/utils/safe';
 
+// 🧠 PHASE 13D: COMPONENT ARCHITECTURE ENFORCEMENT
+import { Header } from '../../components/dashboard/Header';
+import { BottomNav } from '../../components/dashboard/BottomNav';
+import { BentoCard, AdaptiveBentoCard } from '../../components/dashboard/Cards';
+
 export default function Dashboard() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
@@ -895,49 +900,7 @@ interface AdaptiveAIContext extends AIContext {
       <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-[#00FFA3]/10 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[10%] right-[-10%] w-72 h-72 bg-blue-600/10 rounded-full blur-[100px] pointer-events-none" />
 
-      <header className="px-6 pt-10 pb-6 flex justify-between items-center z-10 relative">
-        <div>
-          <motion.h1 
-            initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-            className="text-2xl font-black tracking-tighter"
-          >
-            NUVYU<span className="text-[#00FFA3]">.AI</span>
-          </motion.h1>
-          <motion.p 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}
-            className="text-white/50 text-sm font-medium mt-1 capitalize"
-          >
-            {getDynamicGreeting()}, {userProfile.full_name ? userProfile.full_name.split(' ')[0] : 'Athlete'}.
-          </motion.p>
-        </div>
-        <div className="flex gap-3 items-center">
-            <motion.button 
-              whileTap={{ scale: 0.9 }} 
-              onClick={handleLogout}
-              disabled={isLoggingOut}
-              className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center backdrop-blur-md hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-400 transition-all text-white/60 shrink-0"
-            >
-              {isLoggingOut ? <Loader2 size={16} className="animate-spin" /> : <LogOut size={16} />}
-            </motion.button>
-            
-            <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center backdrop-blur-md shrink-0">
-              <Bell size={18} className="text-white/80" />
-            </div>
-
-            <Link href="/profile">
-              <motion.div 
-                whileTap={{ scale: 0.9 }}
-                className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center backdrop-blur-md overflow-hidden hover:border-[#00FFA3]/50 transition-all cursor-pointer shrink-0"
-              >
-                <img 
-                  src={`https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(userProfile.full_name || userProfile.email || 'user')}&backgroundColor=00FFA3&textColor=000000`} 
-                  alt="Profile" 
-                  className="w-full h-full object-cover"
-                />
-              </motion.div>
-            </Link>
-        </div>
-      </header>
+      <Header userProfile={userProfile} handleLogout={handleLogout} isLoggingOut={isLoggingOut} />
 
       <main className="px-6 space-y-6 z-10 relative">
         
@@ -1194,82 +1157,17 @@ interface AdaptiveAIContext extends AIContext {
               <span className="text-white text-xs font-bold">{recovery_roi.roi_action}</span>
             </div>
           </div>
-        </motion.section>
+         </motion.section>
         
       </main>
 
-           {/* FIXED BOTTOM NAVIGATION */}
-      <div className="fixed bottom-6 left-6 right-6 flex justify-center z-40">
-        <nav className="bg-[#0A0A0A]/80 backdrop-blur-xl border border-white/10 rounded-full px-6 py-4 flex items-center gap-12 shadow-[0_10px_40px_rgba(0,0,0,0.8)]">
-          <Link href="/reports">
-            <LayoutDashboard size={24} className="text-[#00FFA3]" strokeWidth={2.5} />
-          </Link>
-          
-          <Link href="/log">
-            <motion.div 
-              whileTap={{ scale: 0.9 }}
-              className="bg-[#00FFA3] p-4 rounded-full shadow-[0_0_30px_rgba(0,255,163,0.4)] text-black cursor-pointer -mt-8 border-4 border-black flex items-center justify-center"
-            >
-              <Plus size={28} strokeWidth={3} />
-            </motion.div>
-          </Link>
-          
-          <Link href="/profile">
-            <Settings size={24} className="text-white/40 hover:text-white transition-colors cursor-pointer" />
-          </Link>
-        </nav>
-      </div>
+      <BottomNav />
 
     </div>
   );
 }
 
-// RESTORED & SAFE BENTOCARD COMPONENT (UX STABILIZATION ENGINE)
-const BentoCard = React.memo(function BentoCard({ icon: Icon, label, value, target, color, delay }: any) {
-  return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay }}
-      className="bg-[#0A0A0A] border border-white/10 rounded-[1.5rem] p-4 sm:p-5 flex flex-col justify-between h-28 sm:h-32 shadow-xl overflow-hidden"
-    >
-      <div className="flex items-center gap-2 truncate">
-        <Icon size={16} className={`shrink-0 ${color}`} />
-        <span className="text-white/50 text-[10px] sm:text-xs font-bold uppercase tracking-wider truncate">{label}</span>
-      </div>
-      <div className="mt-2">
-        <div className="text-xl sm:text-2xl font-black text-white tracking-tight truncate">{value}</div>
-        <div className="text-[10px] sm:text-xs font-medium text-white/40 mt-0.5 truncate">{target}</div>
-      </div>
-     </motion.div>
-  );
-});
+// 🧠 COMPONENTS EXTRACTED TO components/dashboard/ (Phase 13D Architecture Enforcement)
 
-// 🧠 PHASE 12.6: ADAPTIVE UI COMPONENT
-const AdaptiveBentoCard = React.memo(function AdaptiveBentoCard({ icon: Icon, label, value, target, source, reason, color, delay }: any) {
-  return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay }}
-      className="bg-[#0A0A0A] border border-white/10 rounded-[1.5rem] p-4 sm:p-5 flex flex-col justify-between h-36 shadow-xl overflow-hidden relative"
-    >
-      <div className="flex justify-between items-start">
-        <div className="flex items-center gap-2 truncate">
-          <Icon size={16} className={`shrink-0 ${color}`} />
-          <span className="text-white/50 text-[10px] sm:text-xs font-bold uppercase tracking-wider truncate">{label}</span>
-        </div>
-        <span className={`text-[8px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded ${source === 'auto' ? 'bg-[#00FFA3]/10 text-[#00FFA3]' : 'bg-orange-500/10 text-orange-400'}`}>
-          {source === 'auto' ? 'AI GOAL' : 'MANUAL'}
-        </span>
-      </div>
-      <div className="mt-2">
-        <div className="flex items-baseline gap-1 truncate">
-          <span className="text-xl sm:text-2xl font-black text-white tracking-tight">{value}</span>
-          <span className="text-[10px] sm:text-xs font-medium text-white/40">/ {target}</span>
-        </div>
-        <div className="text-[9px] font-medium text-white/40 mt-1.5 truncate leading-tight border-t border-white/5 pt-1.5">
-          {reason}
-        </div>
-      </div>
-    </motion.div>
-  );
-});
 
 
