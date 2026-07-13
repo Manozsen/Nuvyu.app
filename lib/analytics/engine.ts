@@ -101,13 +101,60 @@ export function calculateCognitiveEnergy(avg_sleep: number, avg_screen: number, 
   };
 }
 
+// 🧠 PHASE 13C.5: DECISION BUDGET HELPER (Pure Function)
+export function buildDecisionBudget(fatigue_level: string, overload_source: string) {
+  const isHighFatigue = fatigue_level === "high";
+  
+  let recommendation = "Maintain standard cognitive load.";
+  let recommended_task_complexity = "high";
+  let recommended_window = "Flexible";
+  let recovery_required = false;
+  
+  if (isHighFatigue) {
+    recommended_task_complexity = "low";
+    recovery_required = true;
+    
+    if (overload_source === "screen_fatigue") {
+      recommendation = "Delay complex decisions. Disconnect from screens immediately.";
+      recommended_window = "Tomorrow morning";
+    } else if (overload_source === "sleep_debt") {
+      recommendation = "Cognitive capacity severely compromised. Rest required.";
+      recommended_window = "Post-recovery";
+    } else {
+      recommendation = "Delay complex decisions until tomorrow.";
+      recommended_window = "Tomorrow";
+    }
+  }
+
+  return {
+    budget_status: isHighFatigue ? "Depleted" : "Optimal",
+    remaining_capacity: isHighFatigue ? "Low" : "High",
+    mental_load: isHighFatigue ? "Severe" : "Manageable",
+    confidence: "high",
+    recommended_task_complexity,
+    recommended_window,
+    recovery_required,
+    recommendation,
+    reason_chain: [
+      `Fatigue: ${fatigue_level}`,
+      `Source: ${overload_source.replace('_', ' ')}`,
+      `Result: ${isHighFatigue ? 'Depleted Budget' : 'Sufficient Capacity'}`
+    ]
+  };
+}
+
 export function calculateDecisionFatigue(lifeload_score: number, adherence_score: number, dominant_load_driver: string) {
   const decision_fatigue = (lifeload_score < 50 && adherence_score < 50) ? "high" : "low";
+  
+  // 🧠 PHASE 13C.5: ATTACH PURE DECISION BUDGET
+  const decision_budget = buildDecisionBudget(decision_fatigue, dominant_load_driver);
+
   return {
     fatigue_score: decision_fatigue === "high" ? 85 : 20,
     fatigue_level: decision_fatigue,
     overload_source: dominant_load_driver,
-    confidence: "high"
+    confidence: "high",
+    decision_budget // Expose to packet consumers
   };
 }
 
