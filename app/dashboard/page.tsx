@@ -27,6 +27,8 @@ import { safeNumber, safeRecoveryState, safeFatigueRisk, safeEnergyStats } from 
 import { Header } from '../../components/dashboard/Header';
 import { BottomNav } from '../../components/dashboard/BottomNav';
 import { BentoCard, AdaptiveBentoCard } from '../../components/dashboard/Cards';
+import { AdaptiveMissionHero } from '../../components/dashboard/AdaptiveMissionHero';
+import { CoachIntelligencePanel } from '../../components/dashboard/CoachIntelligencePanel';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -902,7 +904,24 @@ interface AdaptiveAIContext extends AIContext {
 
       <Header userProfile={userProfile} handleLogout={handleLogout} isLoggingOut={isLoggingOut} />
 
-      <main className="px-6 space-y-6 z-10 relative">
+      <main className="px-4 sm:px-6 space-y-6 z-10 relative">
+        
+        {/* 🧠 SECTION 2: ADAPTIVE MISSION HERO */}
+        <AdaptiveMissionHero 
+          goalPacket={gp} 
+          recoveryRoi={recovery_roi} 
+          operatingState={operating_state_engine} 
+        />
+
+        {/* 🧠 SECTION 3: COACH INTELLIGENCE */}
+        <CoachIntelligencePanel 
+          coachMessage={coachMessage}
+          operatingState={operating_state_engine}
+          strainPacket={sp}
+          forecastPacket={fp}
+        />
+
+        {/* 🧠 SECTION 5 PREP: SCORE ARCHITECTURE IS NOW MOVED BELOW ACTION CENTER (In upcoming patch) */}
         
         <motion.section 
           initial={{ opacity: 0, scale: 0.95 }}
@@ -934,29 +953,8 @@ interface AdaptiveAIContext extends AIContext {
               </div>
           </div>
 
-          <div className="w-full bg-gradient-to-r from-[#00FFA3]/10 to-transparent border-l-4 border-[#00FFA3] p-4 rounded-r-xl backdrop-blur-sm">
-            <div className="flex items-center gap-2 mb-1">
-              <Zap size={16} className="text-[#00FFA3]" fill="#00FFA3" />
-              <span className="text-xs font-bold text-[#00FFA3] uppercase tracking-wider">Coach Nudge</span>
-            </div>
-            <p className="text-sm font-medium text-white/90 leading-relaxed">
-              &quot;{coachMessage}&quot;
-            </p>
-            
-            {/* 🧠 MODULE 6: AI WHY PANEL */}
-            <div className="mt-3 pt-3 border-t border-[#00FFA3]/10">
-               <div className="text-[9px] font-bold text-[#00FFA3]/60 uppercase tracking-widest mb-1.5 flex items-center gap-1"><Brain size={10} /> AI Reasoning</div>
-               <div className="flex flex-wrap gap-2 text-[10px] text-white/50 leading-tight">
-                  <span className="bg-white/5 px-2 py-0.5 rounded border border-white/5 flex items-center gap-1">Recovery <ChevronRight size={8}/> {operating_state_engine.operating_state.replace('_', ' ')}</span>
-                  <span className="bg-white/5 px-2 py-0.5 rounded border border-white/5 flex items-center gap-1">Strain <ChevronRight size={8}/> {sp.dominant_driver.replace('_', ' ')}</span>
-                  <span className="bg-white/5 px-2 py-0.5 rounded border border-white/5 flex items-center gap-1">Forecast <ChevronRight size={8}/> {fp.transition_text}</span>
-                  <span className="bg-[#00FFA3]/5 text-[#00FFA3]/70 px-2 py-0.5 rounded border border-[#00FFA3]/10">Confidence: {sp.confidence === 'high' ? '92%' : '78%'}</span>
-               </div>
-            </div>
-          </div>
-
           {/* 🧠 RETENTION STRIP (Level, Streak, XP) */}
-          <div className="w-full mt-5 flex flex-col sm:flex-row sm:items-center justify-between border-t border-white/5 pt-4 gap-3">
+          <div className="w-full mt-2 flex flex-col sm:flex-row sm:items-center justify-between border-t border-white/5 pt-4 gap-3">
             <div className="flex flex-wrap items-center gap-2 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-white/70 w-full sm:w-auto">
               
               <span className="text-[#00FFA3] bg-[#00FFA3]/10 px-2 py-1 rounded-md border border-[#00FFA3]/20 whitespace-nowrap shrink-0">
