@@ -26,10 +26,11 @@ import { safeNumber, safeRecoveryState, safeFatigueRisk, safeEnergyStats } from 
 // 🧠 PHASE 13D: COMPONENT ARCHITECTURE ENFORCEMENT
 import { Header } from '../../components/dashboard/Header';
 import { BottomNav } from '../../components/dashboard/BottomNav';
-import { BentoCard, AdaptiveBentoCard } from '../../components/dashboard/Cards';
 import { AdaptiveMissionHero } from '../../components/dashboard/AdaptiveMissionHero';
 import { CoachIntelligencePanel } from '../../components/dashboard/CoachIntelligencePanel';
 import { AIExecutionCard, CommitmentContract, ActiveChallenge } from '../../components/dashboard/ActionCenter';
+import { SystemStatusHero, CapacityBudgetCard, DecisionBudgetCard, BehaviorTrendCard } from '../../components/dashboard/SystemStatus';
+import { AdaptiveGoalGrid } from '../../components/dashboard/AdaptiveGoalGrid';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -893,13 +894,19 @@ interface AdaptiveAIContext extends AIContext {
     else if (intakeRatio >= 0.9) energyColorClass = "text-yellow-500";
   }
 
-  // 🧠 PHASE 12.6: PURE CONSUMER EXTRACTION (No logic, purely mapped defaults for safety)
+    // 🧠 PHASE 12.6 & 13D.4: PURE CONSUMER EXTRACTION (No logic, purely mapped defaults for safety)
   const gp = (metrics as any).goal_packet || { target_steps: 6000, target_water: 3000, goal_source: 'auto', challenge_difficulty: 'Moderate', override_warning: null };
   const cp = (metrics as any).commitment_packet || { non_negotiables: [], completed_items: [], commitment_integrity_score: 100, contract_completion_rate: 0, status: 'pending' };
   const chp = (metrics as any).challenge_packet || { challenge_name: 'No Active Challenge', completion_percentage: 0, missed_days: 0, success_probability: 'Moderate', status: 'pending' };
   const np = (metrics as any).nutrition_adherence_packet || { protein_target_hit: false, water_target_hit: false, sugar_avoidance_streak: 0, adherence_score: 0 };
   const sp = (metrics as any).strain_packet || { standing_hours: 0, walking_hours: 0, mental_load: 'low', dominant_driver: 'behavioral_friction', recommended_adjustment: 'Maintain normal intensity', confidence: 'low' };
   const fp = (metrics as any).forecast_packet || { transition_text: 'Stable trajectory.' };
+  
+  // 🧠 System Status Packets
+  const tp = (metrics as any).trend_packet || { today_trend: 'stable', weekly_trend: 'stable', behavior_drift: 'stable', momentum_score: 50 };
+  const cap = (metrics as any).capacity_packet || { capacity_score: 100, capacity_level: 'optimal', limiting_factor: 'none' };
+  const cab = (metrics as any).capacity_budget || { available_effort_units: 10, max_friction_tolerance: 'high' };
+  const dbp = (metrics as any).decision_fatigue_packet?.decision_budget || { budget_status: 'Optimal', mental_load: 'Manageable', recommendation: 'Maintain standard load', reason_chain: ['System optimal'] };
 
   return (
     <div className="relative min-h-screen bg-black text-white pb-28 overflow-hidden selection:bg-[#00FFA3]/30">
@@ -933,185 +940,32 @@ interface AdaptiveAIContext extends AIContext {
            <ActiveChallenge chp={chp} />
         </div>
 
-        {/* 🧠 SECTION 5 PREP: SCORE ARCHITECTURE IS NOW MOVED BELOW ACTION CENTER (In upcoming patch) */}
-        
-        <motion.section 
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-          className="bg-[#0A0A0A] border border-white/10 rounded-[2rem] p-6 flex flex-col items-center relative overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
-        >
-          <div className="relative w-52 h-52 flex items-center justify-center mb-4">
-              <svg className="absolute w-full h-full transform -rotate-90">
-                  <circle cx="104" cy="104" r="90" stroke="rgba(255,255,255,0.05)" strokeWidth="12" fill="transparent" />
-                  <motion.circle 
-                      cx="104" cy="104" r="90" stroke="#00FFA3" strokeWidth="12" fill="transparent"
-                      strokeDasharray={565}
-                      initial={{ strokeDashoffset: 565 }}
-                      animate={{ strokeDashoffset: 565 - (565 * metrics.score) / 100 }}
-                      transition={{ duration: 1.5, delay: 0.2, ease: "easeOut" }}
-                      strokeLinecap="round"
-                      className="drop-shadow-[0_0_15px_rgba(0,255,163,0.5)]"
-                  />
-              </svg>
-              <div className="text-center">
-                  <motion.span 
-                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
-                    className="text-6xl font-black tracking-tighter drop-shadow-lg"
-                  >
-                    {metrics.score}
-                  </motion.span>
-                  <p className="text-[#00FFA3] text-xs font-bold uppercase tracking-widest mt-1">Daily Score</p>
-              </div>
+        {/* 🧠 SECTION 5: SYSTEM STATUS EXPERIENCE */}
+        <div className="space-y-6 pt-2">
+          <SystemStatusHero 
+            score={metrics.score} level={retention.level} xp={retention.xp} 
+            streak={metrics.streak_count} momentum={tp.momentum_score} 
+            trend={tp.today_trend} operatingState={operating_state_engine.operating_state} 
+          />
+          <div className="grid grid-cols-2 gap-4">
+            <CapacityBudgetCard cap={cap} cab={cab} />
+            <DecisionBudgetCard dbp={dbp} />
           </div>
+          <BehaviorTrendCard tp={tp} />
+        </div>
 
-          {/* 🧠 RETENTION STRIP (Level, Streak, XP) */}
-          <div className="w-full mt-2 flex flex-col sm:flex-row sm:items-center justify-between border-t border-white/5 pt-4 gap-3">
-            <div className="flex flex-wrap items-center gap-2 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-white/70 w-full sm:w-auto">
-              
-              <span className="text-[#00FFA3] bg-[#00FFA3]/10 px-2 py-1 rounded-md border border-[#00FFA3]/20 whitespace-nowrap shrink-0">
-                Level {retention.level}
-              </span>
-              
-             {/* 🧠 DASHBOARD INTELLIGENCE v6 (Adaptive Recovery Indicators) */}
-              {adaptation_mode === 'recovery_focus' && (
-                <span className="text-red-400 bg-red-500/10 px-2 py-1 rounded-md border border-red-500/20 capitalize flex items-center gap-1 whitespace-nowrap shrink-0">
-                  ⚠️ Recovery Mode
-                </span>
-              )}
-              
-              <span className="hidden sm:block w-1 h-1 rounded-full bg-white/20 shrink-0"></span>
-              
-              {/* 🧠 DISCIPLINE & CONSISTENCY ENGINE: Always display streaks */}
-              <div className="flex items-center gap-2 shrink-0">
-                <span className={`flex items-center gap-1 font-bold whitespace-nowrap ${metrics.streak_count > 0 ? 'text-orange-400' : 'text-white/40'}`}>
-                  <Flame size={12} className={metrics.streak_count > 0 ? 'fill-orange-400' : ''} /> 
-                  {metrics.streak_count || 0} Day Streak
-                </span>
-                {(metrics.best_streak || 0) > 0 && (
-                  <span className="text-[9px] text-white/30 tracking-widest hidden sm:block font-bold mt-0.5">
-                    (BEST: {metrics.best_streak})
-                  </span>
-                )}
-              </div>
-              
-              <span className="hidden sm:block w-1 h-1 rounded-full bg-white/20 shrink-0"></span>
-              <span className="whitespace-nowrap shrink-0">+{retention.todayXP} XP Today</span>
-            </div>
-            
-            {/* MICRO DOPAMINE EFFECT */}
-            {retention.todayXP > 0 && (
-              <span className="text-[9px] font-bold text-white/40 uppercase tracking-widest text-left sm:text-right shrink-0">
-                Momentum building 🔥
-              </span>
-            )}
-          </div>
-
-       </motion.section>
-
-        <div className="flex justify-between items-end pt-6">
+        {/* 🧠 SECTION 6: ADAPTIVE GOAL GRID */}
+        <div className="flex justify-between items-end pt-2">
            <h3 className="text-white/60 font-bold uppercase tracking-widest text-[10px] ml-2">Today's Operating Bounds</h3>
-           <Link 
-             href="/log"
-             className="flex items-center gap-1 text-[#00FFA3] text-[10px] font-black uppercase tracking-widest bg-[#00FFA3]/10 px-3 py-1.5 rounded-md border border-[#00FFA3]/30 hover:bg-[#00FFA3]/20 transition-all active:scale-95"
-           >
+           <Link href="/log" className="flex items-center gap-1 text-[#00FFA3] text-[10px] font-black uppercase tracking-widest bg-[#00FFA3]/10 px-3 py-1.5 rounded-md border border-[#00FFA3]/30 hover:bg-[#00FFA3]/20 transition-all active:scale-95">
              <Plus size={12} /> Add Log
            </Link>
         </div>
+        <AdaptiveGoalGrid 
+          metrics={metrics} gp={gp} np={np} sp={sp} 
+          energyColorClass={energyColorClass} targetCalories={targetCalories} 
+        />
 
-          <section className="grid grid-cols-2 gap-4">
-          {/* 🧠 MODULE 3: ADAPTIVE GOAL CARDS */}
-          <AdaptiveBentoCard icon={Footprints} label="Steps" value={metrics.steps} target={gp.target_steps} source={gp.goal_source} reason={gp.override_warning || "AI Optimized target"} color="text-[#00FFA3]" delay={0.25} />
-          <AdaptiveBentoCard icon={Droplets} label="Water" value={metrics.water} target={`${gp.target_water}ml`} source={gp.goal_source} reason={"Hydration baseline"} color="text-blue-400" delay={0.3} />
-          
-          {/* REAL BODY ENERGY INTELLIGENCE CARD */}
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-            className="bg-[#0A0A0A] border border-white/10 rounded-[1.5rem] p-5 flex flex-col justify-between shadow-xl col-span-2"
-          >
-            <div className="flex items-center gap-2 mb-4">
-              <Flame size={16} className={energyColorClass} />
-              <span className="text-white/50 text-[10px] font-bold uppercase tracking-widest">Energy Balance Engine</span>
-            </div>
-            <div className="flex justify-between items-end">
-              <div>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-black">{metrics.energy_stats?.totalBurn || 0}</span>
-                  <span className="text-white/40 text-[10px] font-medium uppercase tracking-widest">Kcal Out</span>
-                </div>
-                <div className="text-[#00FFA3] text-[10px] font-bold uppercase tracking-widest mt-1">
-                  {metrics.energy_stats?.activityBurn || 0} active • {metrics.energy_stats?.bmrBurn || 0} bmr
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="flex items-baseline gap-1 justify-end">
-                  <span className="text-2xl font-bold text-orange-400">{metrics.energy_stats?.intakeCalories || 0}</span>
-                  <span className="text-white/40 text-[10px] font-medium uppercase tracking-widest">/ {metrics.energy_stats?.targetCalories || targetCalories} In</span>
-                </div>
-                <div className="text-white/40 text-[10px] font-bold uppercase tracking-widest mt-1">
-                  {metrics.energy_stats?.deficit ? 'deficit' : metrics.energy_stats?.surplus ? 'surplus' : 'maintenance'}
-                </div>
-              </div>
-            </div>
-          </motion.div>
-          
-         {/* 🧠 MODULE 4: LIGHTWEIGHT NUTRITION CARD */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="bg-[#0A0A0A] border border-white/10 rounded-[1.5rem] p-5 shadow-xl">
-             <div className="text-white/50 text-[10px] font-bold uppercase tracking-widest mb-4">Nutrition Bounds</div>
-             <div className="space-y-3">
-                <div className="flex justify-between items-center text-sm"><span className="text-white/70">Protein Target</span> <span className={`font-bold ${np.protein_target_hit ? "text-[#00FFA3]" : "text-orange-400"}`}>{np.protein_target_hit ? 'Hit' : 'Pending'}</span></div>
-                <div className="flex justify-between items-center text-sm"><span className="text-white/70">Sugar-Free</span> <span className="text-white font-bold">{np.sugar_avoidance_streak} Day Streak</span></div>
-             </div>
-          </motion.div>
-
-          {/* 🧠 MODULE 5: DAILY STRAIN CARD */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }} className="bg-[#0A0A0A] border border-white/10 rounded-[1.5rem] p-5 shadow-xl">
-             <div className="text-white/50 text-[10px] font-bold uppercase tracking-widest mb-4 flex items-center justify-between">
-               <span className="flex items-center gap-1"><Zap size={12}/> Daily Strain</span>
-               <span className="text-orange-400">{sp.daily_strain_score} Load</span>
-             </div>
-             <div className="grid grid-cols-2 gap-2 text-sm mb-3">
-                <div><span className="text-white/40 block text-[9px] uppercase tracking-widest mb-0.5">Physical</span><span className="text-white font-medium">{sp.standing_hours + sp.walking_hours} hrs</span></div>
-                <div><span className="text-white/40 block text-[9px] uppercase tracking-widest mb-0.5">Mental</span><span className="text-white font-medium capitalize">{sp.mental_load}</span></div>
-             </div>
-             <div className="pt-3 border-t border-white/5 text-[9px] font-medium leading-tight">
-               <span className="text-white/40">Adjustment: </span><span className="text-orange-400">{sp.recommended_adjustment}</span>
-             </div>
-          </motion.div>
-            
-        {/* Recovery & Sleep Integrations */}
-          <BentoCard icon={Moon} label="Sleep" value={metrics.sleep_hours || 0} target={`/ ${gp.target_sleep} hrs`} color="text-indigo-400" delay={0.5} />
-          <BentoCard icon={Activity} label="Recovery" value={`${metrics.recovery_score || 0}%`} target={metrics.recovery_state} color="text-purple-400" delay={0.55} />
-        </section>
-
-        {/* 🧠 ABOS EXECUTIVE SUMMARY */}
-        <motion.section 
-          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}
-          className="bg-[#0A0A0A] border border-white/10 rounded-[1.5rem] p-5 shadow-xl mt-4"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <Brain size={16} className="text-[#00FFA3]" />
-              <span className="text-white/50 text-[10px] font-bold uppercase tracking-widest">ABOS Operating State</span>
-            </div>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-[#00FFA3] bg-[#00FFA3]/10 px-2 py-1 rounded-md">{operating_state_engine.operating_state.replace('_', ' ')}</span>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-white/5 rounded-xl p-3 border border-white/5">
-              <span className="text-white/40 text-[9px] font-bold uppercase tracking-widest block mb-1">Intervention</span>
-              <span className="text-white text-xs font-bold capitalize">{intervention_engine.intervention_mode.replace('_', ' ')}</span>
-            </div>
-            <div className="bg-white/5 rounded-xl p-3 border border-white/5">
-              <span className="text-white/40 text-[9px] font-bold uppercase tracking-widest block mb-1">Energy Focus</span>
-              <span className="text-white text-xs font-bold capitalize">{energy_allocation.recommended_focus}</span>
-            </div>
-            <div className="col-span-2 bg-[#00FFA3]/5 rounded-xl p-3 border border-[#00FFA3]/10">
-              <span className="text-[#00FFA3]/60 text-[9px] font-bold uppercase tracking-widest block mb-1">Highest Recovery ROI</span>
-              <span className="text-white text-xs font-bold">{recovery_roi.roi_action}</span>
-            </div>
-          </div>
-         </motion.section>
-        
       </main>
 
       <BottomNav />
