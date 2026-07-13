@@ -496,9 +496,9 @@ interface AdaptiveAIContext extends AIContext {
         aiContext.energy_allocation = energy_allocation;
         aiContext.compound_engine = compound_engine;
 
-        // 🧠 ABOS PHASE 11: AUTONOMOUS COACH INTELLIGENCE (ACI)
+       // 🧠 ABOS PHASE 11: AUTONOMOUS COACH INTELLIGENCE (ACI)
         const recentWater_fb = (pastLogs || []).filter(l => l.log_type === 'water').slice(0, 3).map(l => Number(l.data?.amount) || 0);
-        const mem_packet = buildBehavioralMemoryPacket(recentRecScores, recentSleepHours_fb, recentWater_fb);
+        const mem_packet = buildBehavioralMemoryPacket(recentRecScores, recentSleepHours_fb, recentWater_fb, consistency, safeStreak);
         const int_packet = generateInterventionPacket(safe_lifeload.lifeload_score, burnoutRisk, local_adherence);
         const action_packet = generateCoachActionPacket(operating_state_engine.operating_state, int_packet, mem_packet);
         const habit_rx_packet = generateHabitPrescription(metrics?.fatigue_risk || "low", int_packet);
@@ -526,6 +526,7 @@ interface AdaptiveAIContext extends AIContext {
     const unified_abos_metrics = {
       lifeload_packet: safe_lifeload.lifeload_packet,
       strain_packet: (safe_lifeload as any).strain_packet, // 🧠 PHASE 12.3A: Expose Missing Packet
+      trend_packet: aiContext?.behavioral_memory_packet?.trend_packet, // 🧠 PHASE 13C.7: Expose Trend Packet
       cognitive_energy_packet: safe_cognitive,
       decision_fatigue_packet: safe_decision_fatigue,
       forecast_packet: aiContext?.forecast_packet,
@@ -806,11 +807,12 @@ interface AdaptiveAIContext extends AIContext {
         lifeload_packet: nudgeResponse?.abos_metrics?.lifeload_packet,
         cognitive_energy_packet: nudgeResponse?.abos_metrics?.cognitive_energy_packet,
         decision_fatigue_packet: nudgeResponse?.abos_metrics?.decision_fatigue_packet,
-       // 🧠 PHASE 12.5: ORCHESTRATION LAYER STATE INJECTION
+      // 🧠 PHASE 12.5: ORCHESTRATION LAYER STATE INJECTION
         goal_packet: adaptiveGoals?.goal_packet,
         adaptation_mode: adaptiveGoals?.adaptation_mode,
         capacity_packet: adaptiveGoals?.capacity_packet, // 🧠 PHASE 13C.5: Restored Packet
         capacity_budget: adaptiveGoals?.capacity_budget, // 🧠 PHASE 13C.5: Restored Packet
+        trend_packet: nudgeResponse?.abos_metrics?.trend_packet, // 🧠 PHASE 13C.7: Restored Packet
         challenge_packet: habitData?.challenge_packet,
         commitment_packet: habitData?.commitment_packet, // 🧠 PHASE 12.5A: Inject Missing Packet
         nutrition_adherence_packet: habitData?.nutrition_adherence_packet,
