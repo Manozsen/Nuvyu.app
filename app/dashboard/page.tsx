@@ -29,6 +29,7 @@ import { BottomNav } from '../../components/dashboard/BottomNav';
 import { BentoCard, AdaptiveBentoCard } from '../../components/dashboard/Cards';
 import { AdaptiveMissionHero } from '../../components/dashboard/AdaptiveMissionHero';
 import { CoachIntelligencePanel } from '../../components/dashboard/CoachIntelligencePanel';
+import { AIExecutionCard, CommitmentContract, ActiveChallenge } from '../../components/dashboard/ActionCenter';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -913,13 +914,20 @@ interface AdaptiveAIContext extends AIContext {
           operatingState={operating_state_engine} 
         />
 
-        {/* 🧠 SECTION 3: COACH INTELLIGENCE */}
+       {/* 🧠 SECTION 3: COACH INTELLIGENCE */}
         <CoachIntelligencePanel 
           coachMessage={coachMessage}
           operatingState={operating_state_engine}
           strainPacket={sp}
           forecastPacket={fp}
         />
+
+        {/* 🧠 SECTION 4: BEHAVIORAL ACTION CENTER */}
+        <div className="space-y-6 pt-2">
+           <AIExecutionCard recoveryRoi={recovery_roi} interventionEngine={intervention_engine} strainPacket={sp} />
+           <CommitmentContract cp={cp} />
+           <ActiveChallenge chp={chp} />
+        </div>
 
         {/* 🧠 SECTION 5 PREP: SCORE ARCHITECTURE IS NOW MOVED BELOW ACTION CENTER (In upcoming patch) */}
         
@@ -995,72 +1003,15 @@ interface AdaptiveAIContext extends AIContext {
             )}
           </div>
 
-        </motion.section>
+       </motion.section>
 
-        {/* 🧠 MODULE 1: COMMITMENT CONTRACT WIDGET */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="bg-[#0A0A0A] border border-white/10 rounded-[1.5rem] p-5 shadow-xl">
-           <div className="flex justify-between items-center mb-4">
-             <h3 className="text-white/50 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1"><Flame size={12} className="text-orange-400"/> Today's Contract</h3>
-             <span className={`text-[8px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded ${cp.status === 'completed' ? 'bg-[#00FFA3]/10 text-[#00FFA3]' : 'bg-white/5 text-white/50'}`}>{cp.status}</span>
-           </div>
-           
-           {cp.non_negotiables.length > 0 ? (
-              <div className="space-y-2.5">
-                 {cp.non_negotiables.map((item: string, i: number) => {
-                    const isDone = cp.completed_items?.includes(item);
-                    return (
-                      <div key={i} className="flex items-center gap-3 text-sm">
-                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-colors ${isDone ? 'bg-[#00FFA3] border-[#00FFA3]' : 'border-white/20 bg-black'}`}>
-                           {isDone && <motion.div initial={{scale:0}} animate={{scale:1}} className="w-2 h-2 bg-black rounded-full" />}
-                        </div> 
-                        <span className={`truncate transition-colors ${isDone ? 'text-white/40 line-through' : 'text-white/90 font-medium'}`}>{item}</span>
-                      </div>
-                    )
-                 })}
-                 <div className="flex justify-between items-center mt-4 pt-4 border-t border-white/5">
-                    <div className="text-[10px] text-white/40 uppercase tracking-widest">Integrity: <span className="text-[#00FFA3] font-bold">{cp.commitment_integrity_score}</span></div>
-                    <div className="text-[10px] text-white/40 uppercase tracking-widest">Completion: <span className="text-white font-bold">{cp.contract_completion_rate}%</span></div>
-                 </div>
-              </div>
-           ) : (
-              <div className="text-sm text-white/30 font-medium pb-2">No non-negotiables set for today. Focus on your baseline targets below.</div>
-           )}
-        </motion.div>
-
-        {/* 🧠 MODULE 2: ACTIVE CHALLENGE RINGS */}
-        {chp.status === 'active' && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-gradient-to-br from-[#0A0A0A] to-[#111] border border-purple-500/20 rounded-[1.5rem] p-5 shadow-[0_8px_32px_rgba(168,85,247,0.1)]">
-             <div className="flex justify-between items-start mb-4">
-               <div>
-                 <h3 className="text-purple-400 text-[10px] font-bold uppercase tracking-widest">Active Challenge</h3>
-                 <p className="text-white font-bold text-sm mt-0.5">{chp.challenge_name}</p>
-               </div>
-               <div className="text-right">
-                 <span className="text-white/40 text-[9px] uppercase tracking-widest block mb-0.5">Success Prob.</span>
-                 <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${chp.success_probability === 'High' ? 'bg-[#00FFA3]/10 text-[#00FFA3]' : chp.success_probability === 'Moderate' ? 'bg-yellow-500/10 text-yellow-400' : 'bg-red-500/10 text-red-400'}`}>{chp.success_probability}</span>
-               </div>
-             </div>
-             
-             <div className="flex items-center gap-4">
-                <div className="relative w-14 h-14 shrink-0 flex items-center justify-center">
-                  <svg className="absolute w-full h-full transform -rotate-90"><circle cx="28" cy="28" r="24" stroke="rgba(255,255,255,0.05)" strokeWidth="6" fill="transparent" /><circle cx="28" cy="28" r="24" stroke="#A855F7" strokeWidth="6" fill="transparent" strokeDasharray={150} strokeDashoffset={150 - (150 * chp.completion_percentage) / 100} strokeLinecap="round" /></svg>
-                  <span className="text-xs font-black text-white">{chp.completion_percentage}%</span>
-                </div>
-                <div className="flex-1 space-y-2">
-                   <div className="flex justify-between text-xs font-medium"><span className="text-white/50">Missed Days</span><span className="text-white">{chp.missed_days}</span></div>
-                   <div className="w-full bg-white/5 h-1 rounded-full overflow-hidden"><div className="bg-purple-500 h-full" style={{ width: `${chp.completion_percentage}%`}} /></div>
-                </div>
-             </div>
-          </motion.div>
-        )}
-
-        <div className="flex justify-between items-end pt-2">
-           <h3 className="text-white/60 font-bold uppercase tracking-widest text-[10px] ml-2">Today's Operating Activity</h3>
+        <div className="flex justify-between items-end pt-6">
+           <h3 className="text-white/60 font-bold uppercase tracking-widest text-[10px] ml-2">Today's Operating Bounds</h3>
            <Link 
              href="/log"
-             className="flex items-center gap-1 text-[#00FFA3] text-xs font-bold uppercase tracking-widest bg-[#00FFA3]/10 px-3 py-1.5 rounded-full border border-[#00FFA3]/30 hover:bg-[#00FFA3]/20 transition-all"
+             className="flex items-center gap-1 text-[#00FFA3] text-[10px] font-black uppercase tracking-widest bg-[#00FFA3]/10 px-3 py-1.5 rounded-md border border-[#00FFA3]/30 hover:bg-[#00FFA3]/20 transition-all active:scale-95"
            >
-             <Plus size={14} /> Add Log
+             <Plus size={12} /> Add Log
            </Link>
         </div>
 
