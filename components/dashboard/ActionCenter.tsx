@@ -41,11 +41,11 @@ export const CommitmentContract = React.memo(function CommitmentContract({ cp }:
       initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} 
       className="bg-[#0A0A0A] border border-white/10 rounded-[2rem] p-6 shadow-xl"
     >
-       <div className="flex justify-between items-center mb-5">
+      <div className="flex justify-between items-center mb-5">
          <h3 className="text-white/40 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5">
            <CheckCircle2 size={12} className="text-white/60"/> Today's Contract
          </h3>
-         <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-md ${cp.status === 'completed' ? 'bg-[#00FFA3]/10 text-[#00FFA3]' : 'bg-white/5 text-white/50'}`}>
+         <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-md transition-all duration-500 ${cp.status === 'completed' ? 'bg-[#00FFA3]/15 text-[#00FFA3] shadow-[0_0_15px_rgba(0,255,163,0.2)]' : 'bg-white/5 text-white/50'}`}>
            {cp.status}
          </span>
        </div>
@@ -84,12 +84,20 @@ export const CommitmentContract = React.memo(function CommitmentContract({ cp }:
 export const ActiveChallenge = React.memo(function ActiveChallenge({ chp }: any) {
   if (chp.status !== 'active') return null;
 
+  const isComplete = chp.completion_percentage === 100;
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} 
-      className="bg-gradient-to-br from-[#0A0A0A] to-[#111] border border-purple-500/20 rounded-[2rem] p-6 shadow-[0_8px_32px_rgba(168,85,247,0.1)]"
+      className={`bg-gradient-to-br from-[#0A0A0A] to-[#111] border rounded-[2rem] p-6 relative overflow-hidden transition-all duration-1000 ${isComplete ? 'border-[#00FFA3]/40 shadow-[0_0_30px_rgba(0,255,163,0.15)]' : 'border-purple-500/20 shadow-[0_8px_32px_rgba(168,85,247,0.1)]'}`}
     >
-       <div className="flex justify-between items-start mb-6">
+       {isComplete && (
+         <motion.div 
+           initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1.5 }}
+           className="absolute inset-0 bg-gradient-to-tr from-[#00FFA3]/5 to-transparent pointer-events-none" 
+         />
+       )}
+       <div className="flex justify-between items-start mb-6 relative z-10">
          <div>
            <h3 className="text-purple-400 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 mb-1.5">
              <Target size={12} /> Active Challenge
