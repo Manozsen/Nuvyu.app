@@ -31,10 +31,13 @@ export const SystemStatusHero = React.memo(function SystemStatusHero({ score, le
           <circle cx="96" cy="96" r="84" stroke="rgba(255,255,255,0.05)" strokeWidth="10" fill="transparent" />
           <motion.circle 
             cx="96" cy="96" r="84" stroke="#00FFA3" strokeWidth="10" fill="transparent"
-            strokeDasharray={527} strokeDashoffset={527 - (527 * score) / 100} strokeLinecap="round"
-            initial={{ strokeDashoffset: 527 }} animate={{ strokeDashoffset: 527 - (527 * score) / 100 }}
-            transition={{ duration: 1.5, delay: 0.2, ease: "easeOut" }}
-            className="drop-shadow-[0_0_15px_rgba(0,255,163,0.4)]"
+            strokeDasharray={527} strokeLinecap="round"
+            initial={{ strokeDashoffset: 527, filter: "drop-shadow(0px 0px 0px rgba(0,255,163,0))" }} 
+            animate={{ 
+              strokeDashoffset: 527 - (527 * score) / 100,
+              filter: score >= 80 ? "drop-shadow(0px 0px 25px rgba(0,255,163,0.7))" : "drop-shadow(0px 0px 10px rgba(0,255,163,0.3))"
+            }}
+            transition={{ duration: shouldReduceMotion ? 0 : 1.5, delay: 0.2, ease: "easeOut" }}
           />
         </svg>
          <div className="text-center z-10">
@@ -45,9 +48,15 @@ export const SystemStatusHero = React.memo(function SystemStatusHero({ score, le
         </div>
       </div>
 
-      <div className="w-full grid grid-cols-4 gap-2 pt-4 border-t border-white/5">
-        <div className="text-center"><span className="block text-[9px] text-white/40 font-bold uppercase tracking-widest mb-1">Level</span><span className="text-sm font-black text-white">{level}</span></div>
-        <div className="text-center"><span className="block text-[9px] text-white/40 font-bold uppercase tracking-widest mb-1">XP</span><span className="text-sm font-black text-[#A855F7]">{xp}</span></div>
+       <div className="w-full grid grid-cols-4 gap-2 pt-4 border-t border-white/5">
+        <div className="text-center relative overflow-hidden rounded-lg">
+          {!shouldReduceMotion && <motion.div initial={{ x: '-100%' }} animate={{ x: '200%' }} transition={{ duration: 1.5, delay: 1, ease: "easeInOut" }} className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12 pointer-events-none" />}
+          <span className="block text-[9px] text-white/40 font-bold uppercase tracking-widest mb-1">Level</span><span className="text-sm font-black text-white">{level}</span>
+        </div>
+        <div className="text-center relative overflow-hidden rounded-lg">
+          {!shouldReduceMotion && <motion.div initial={{ x: '-100%' }} animate={{ x: '200%' }} transition={{ duration: 1.5, delay: 1.2, ease: "easeInOut" }} className="absolute inset-0 bg-gradient-to-r from-transparent via-[#A855F7]/30 to-transparent skew-x-12 pointer-events-none" />}
+          <span className="block text-[9px] text-white/40 font-bold uppercase tracking-widest mb-1">XP</span><span className="text-sm font-black text-[#A855F7]">{xp}</span>
+        </div>
         <div className="text-center"><span className="block text-[9px] text-white/40 font-bold uppercase tracking-widest mb-1">Momentum</span><span className="text-sm font-black text-[#00FFA3]">{momentum}</span></div>
         <div className="text-center flex flex-col items-center justify-center"><span className="block text-[9px] text-white/40 font-bold uppercase tracking-widest mb-1">Trend</span><TrendIcon size={16} className={trend === 'improving' ? 'text-[#00FFA3]' : trend === 'declining' ? 'text-red-400' : 'text-white/50'} /></div>
       </div>
