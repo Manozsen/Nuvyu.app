@@ -68,7 +68,12 @@ export const BehaviorTimeline = React.memo(function BehaviorTimeline({ logs, sp,
             if (log.log_type === 'food') { title = `Nutrition Logged`; icon = <Zap size={12} className="text-orange-400"/>; color = "border-orange-500/30 bg-orange-500/10"; }
 
             return (
-              <div key={log.id || i} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+              <motion.div 
+                key={log.id || i} 
+                whileTap={{ scale: 0.98 }}
+                transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active cursor-pointer"
+              >
                 <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 ${color} relative z-10`}>
                   {icon}
                 </div>
@@ -78,7 +83,7 @@ export const BehaviorTimeline = React.memo(function BehaviorTimeline({ logs, sp,
                   </div>
                   <div className="text-[9px] font-black text-white/40 uppercase tracking-widest">{timeStr} • {log.log_type}</div>
                 </div>
-              </div>
+              </motion.div>
             );
           })
         )}
