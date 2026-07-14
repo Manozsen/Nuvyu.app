@@ -5,7 +5,13 @@ import { BookOpen, TrendingUp, ShieldAlert, Activity, Award, Droplets } from 'lu
 export const RecoveryForecastCard = React.memo(function RecoveryForecastCard({ fp, burnoutRisk }: any) {
   if (!fp) return null;
   return (
-    <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="bg-[#0A0A0A] border border-white/10 rounded-[2rem] p-6 shadow-xl">
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }} 
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-20px" }}
+      transition={{ type: "spring", stiffness: 300, damping: 25 }}
+      className="bg-[#0A0A0A] border border-white/10 rounded-[2rem] p-6 shadow-xl"
+    >
       <h3 className="text-white/40 text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 mb-5"><Activity size={12} /> Recovery Forecast</h3>
       <div className="grid grid-cols-2 gap-4 mb-4">
         <div><span className="block text-[9px] text-white/40 font-bold uppercase tracking-widest mb-1">Burnout Risk</span><span className={`text-sm font-black capitalize ${burnoutRisk === 'high' ? 'text-red-400' : burnoutRisk === 'medium' ? 'text-orange-400' : 'text-[#00FFA3]'}`}>{burnoutRisk || 'Low'}</span></div>
@@ -31,8 +37,14 @@ export const WeeklyStory = React.memo(function WeeklyStory({ tp, mem, fp }: any)
   const p1 = `This week your overall trajectory is indicating ${trajectoryStr}, accompanied by a ${tp.weekly_trend || 'stable'} weekly trend. Your behavioral drift is currently classified as ${driftStr}.`;
   const p2 = `Analyzing specific habits, your sleep behavior is tracking as ${sleepStr} and hydration is ${hydrationStr}. ${fp?.transition_text || ''}`;
 
-  return (
-    <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-gradient-to-br from-white/[0.08] to-transparent border border-white/10 rounded-[2rem] p-6 shadow-2xl backdrop-blur-md">
+    return (
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }} 
+      whileInView={{ opacity: 1, y: 0 }} 
+      viewport={{ once: true, margin: "-20px" }}
+      transition={{ delay: 0.1, type: "spring", stiffness: 300, damping: 25 }} 
+      className="bg-gradient-to-br from-white/[0.08] to-transparent border border-white/10 rounded-[2rem] p-6 shadow-2xl backdrop-blur-md"
+    >
       <h3 className="text-white/40 text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 mb-4"><BookOpen size={12} /> Editorial Narrative</h3>
       <div className="space-y-4">
         <p className="text-[15px] font-medium text-white/90 leading-relaxed tracking-tight">{p1}</p>
@@ -45,7 +57,13 @@ export const WeeklyStory = React.memo(function WeeklyStory({ tp, mem, fp }: any)
 export const BehaviorMemoryHighlights = React.memo(function BehaviorMemoryHighlights({ mem, tp }: any) {
   if (!mem || !tp) return null;
   return (
-    <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="grid grid-cols-2 gap-4">
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }} 
+      whileInView={{ opacity: 1, y: 0 }} 
+      viewport={{ once: true, margin: "-20px" }}
+      transition={{ delay: 0.2, type: "spring", stiffness: 300, damping: 25 }} 
+      className="grid grid-cols-2 gap-4"
+    >
       <div className="bg-[#0A0A0A] border border-white/10 rounded-[1.5rem] p-5">
         <Award size={14} className="text-[#00FFA3] mb-2" />
         <span className="block text-[9px] text-white/40 font-bold uppercase tracking-widest mb-1">Consistency</span>
