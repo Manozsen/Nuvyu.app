@@ -13,8 +13,11 @@ export function BottomNav() {
         
         <Link href="/log">
           <motion.div 
-            whileTap={{ scale: 0.9 }}
-            className="bg-[#00FFA3] p-4 rounded-full shadow-[0_0_30px_rgba(0,255,163,0.4)] text-black cursor-pointer -mt-8 border-4 border-black flex items-center justify-center"
+            whileTap={{ scale: 0.92 }}
+            onTapStart={() => { if (typeof window !== 'undefined' && 'vibrate' in navigator) navigator.vibrate(40); }}
+            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+            animate={{ boxShadow: ["0px 0px 15px rgba(0,255,163,0.3)", "0px 0px 30px rgba(0,255,163,0.6)", "0px 0px 15px rgba(0,255,163,0.3)"] }}
+            className="bg-[#00FFA3] p-4 rounded-full text-black cursor-pointer -mt-8 border-4 border-black flex items-center justify-center"
           >
             <Plus size={28} strokeWidth={3} />
           </motion.div>
