@@ -25,6 +25,7 @@ export const BehaviorTimeline = React.memo(function BehaviorTimeline({ logs, sp,
   const [activeFilter, setActiveFilter] = useState('today');
   const [filterMsg, setFilterMsg] = useState('');
 
+  // 🧠 STRICT RULE 3: Gracefully disable filtering without faking data or executing queries
   const handleFilter = (type: string) => {
     if (type !== 'today') {
       setFilterMsg('Historical timeline syncing available soon.');
@@ -35,14 +36,14 @@ export const BehaviorTimeline = React.memo(function BehaviorTimeline({ logs, sp,
   };
 
   return (
-    <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="pt-4">
+    <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="pt-4 pb-8">
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-white/60 font-bold uppercase tracking-widest text-[10px] ml-2">Behavior Timeline</h3>
       </div>
 
       <EditorialInsightStrip sp={sp} tp={tp} memConfidence={mem?.memory_confidence} />
 
-      {/* Filters */}
+      {/* Timeline Filters */}
       <div className="flex gap-2 mb-6">
         <button onClick={() => handleFilter('today')} className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all ${activeFilter === 'today' ? 'bg-white text-black' : 'bg-white/5 text-white/40'}`}>Today</button>
         <button onClick={() => handleFilter('7day')} className="px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest bg-white/5 text-white/20 border border-white/5 flex items-center gap-1"><Lock size={10}/> 7 Days</button>
