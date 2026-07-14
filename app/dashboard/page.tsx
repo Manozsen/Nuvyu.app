@@ -31,6 +31,8 @@ import { CoachIntelligencePanel } from '../../components/dashboard/CoachIntellig
 import { AIExecutionCard, CommitmentContract, ActiveChallenge } from '../../components/dashboard/ActionCenter';
 import { SystemStatusHero, CapacityBudgetCard, DecisionBudgetCard, BehaviorTrendCard } from '../../components/dashboard/SystemStatus';
 import { AdaptiveGoalGrid } from '../../components/dashboard/AdaptiveGoalGrid';
+import { RecoveryForecastCard, WeeklyStory, BehaviorMemoryHighlights } from '../../components/dashboard/Narrative';
+import { BehaviorTimeline } from '../../components/dashboard/Timeline';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -959,7 +961,7 @@ interface AdaptiveAIContext extends AIContext {
           <BehaviorTrendCard tp={tp} />
         </div>
 
-        {/* 🧠 SECTION 6: ADAPTIVE GOAL GRID */}
+       {/* 🧠 SECTION 6: ADAPTIVE GOAL GRID */}
         <div className="flex justify-between items-end pt-2">
            <h3 className="text-white/60 font-bold uppercase tracking-widest text-[10px] ml-2">Today's Operating Bounds</h3>
            <Link href="/log" className="flex items-center gap-1 text-[#00FFA3] text-[10px] font-black uppercase tracking-widest bg-[#00FFA3]/10 px-3 py-1.5 rounded-md border border-[#00FFA3]/30 hover:bg-[#00FFA3]/20 transition-all active:scale-95">
@@ -970,6 +972,20 @@ interface AdaptiveAIContext extends AIContext {
           metrics={metrics} gp={gp} np={np} sp={sp} 
           energyColorClass={energyColorClass} targetCalories={targetCalories} 
         />
+
+        {/* 🧠 SECTION 7 & 8: BEHAVIORAL NARRATIVE & TIMELINE */}
+        <div className="space-y-6 pt-6">
+          <RecoveryForecastCard fp={fp} burnoutRisk={metrics.burnout_risk} />
+          <BehaviorMemoryHighlights mem={metrics.behavioral_memory_packet} tp={tp} />
+          <WeeklyStory tp={tp} mem={metrics.behavioral_memory_packet} fp={fp} />
+          
+          <BehaviorTimeline 
+            logs={metrics.today_logs} 
+            sp={sp} 
+            tp={tp} 
+            mem={metrics.behavioral_memory_packet} 
+          />
+        </div>
 
       </main>
 
