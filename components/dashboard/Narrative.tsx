@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { BookOpen, TrendingUp, ShieldAlert, Activity, Award } from 'lucide-react';
+import { BookOpen, TrendingUp, ShieldAlert, Activity, Award, Droplets } from 'lucide-react'; // 🧠 VERCEL FIX: Droplets explicitly imported
 
 export const RecoveryForecastCard = React.memo(function RecoveryForecastCard({ fp, burnoutRisk }: any) {
   if (!fp) return null;
@@ -22,9 +22,14 @@ export const RecoveryForecastCard = React.memo(function RecoveryForecastCard({ f
 export const WeeklyStory = React.memo(function WeeklyStory({ tp, mem, fp }: any) {
   if (!tp || !mem) return null;
   
-  // Synthesizing Narrative exclusively from existing packets (No LLM)
-  const p1 = `This week your overall trajectory is indicating ${tp.trajectory?.toLowerCase()}, accompanied by a ${tp.weekly_trend} weekly trend. Your behavioral drift is currently classified as ${tp.behavior_drift?.replace(/_/g, ' ')}.`;
-  const p2 = `Analyzing specific habits, your sleep behavior is tracking as ${mem.sleep_behavior?.replace(/_/g, ' ')} and hydration is ${mem.hydration_behavior?.replace(/_/g, ' ')}. ${fp?.transition_text || ''}`;
+  // 🧠 Synthesizing Narrative exclusively from existing packets (No LLM, No Invented Insights)
+  const trajectoryStr = tp.trajectory ? tp.trajectory.toLowerCase() : "stable";
+  const driftStr = tp.behavior_drift ? tp.behavior_drift.replace(/_/g, ' ') : "stable";
+  const sleepStr = mem.sleep_behavior ? mem.sleep_behavior.replace(/_/g, ' ') : "at baseline";
+  const hydrationStr = mem.hydration_behavior ? mem.hydration_behavior.replace(/_/g, ' ') : "consistent";
+  
+  const p1 = `This week your overall trajectory is indicating ${trajectoryStr}, accompanied by a ${tp.weekly_trend || 'stable'} weekly trend. Your behavioral drift is currently classified as ${driftStr}.`;
+  const p2 = `Analyzing specific habits, your sleep behavior is tracking as ${sleepStr} and hydration is ${hydrationStr}. ${fp?.transition_text || ''}`;
 
   return (
     <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-gradient-to-br from-white/[0.08] to-transparent border border-white/10 rounded-[2rem] p-6 shadow-2xl backdrop-blur-md">
@@ -44,22 +49,22 @@ export const BehaviorMemoryHighlights = React.memo(function BehaviorMemoryHighli
       <div className="bg-[#0A0A0A] border border-white/10 rounded-[1.5rem] p-5">
         <Award size={14} className="text-[#00FFA3] mb-2" />
         <span className="block text-[9px] text-white/40 font-bold uppercase tracking-widest mb-1">Consistency</span>
-        <span className="text-sm font-black text-white capitalize">{mem.adherence_drift?.replace(/_/g, ' ')}</span>
+        <span className="text-sm font-black text-white capitalize">{mem.adherence_drift?.replace(/_/g, ' ') || 'Stable'}</span>
       </div>
       <div className="bg-[#0A0A0A] border border-white/10 rounded-[1.5rem] p-5">
         <ShieldAlert size={14} className="text-orange-400 mb-2" />
         <span className="block text-[9px] text-white/40 font-bold uppercase tracking-widest mb-1">System Risk</span>
-        <span className="text-sm font-black text-white capitalize">{mem.sleep_behavior?.replace(/_/g, ' ')}</span>
+        <span className="text-sm font-black text-white capitalize">{mem.sleep_behavior?.replace(/_/g, ' ') || 'Low'}</span>
       </div>
       <div className="bg-[#0A0A0A] border border-white/10 rounded-[1.5rem] p-5">
         <Droplets size={14} className="text-blue-400 mb-2" />
         <span className="block text-[9px] text-white/40 font-bold uppercase tracking-widest mb-1">Hydration</span>
-        <span className="text-sm font-black text-white capitalize">{mem.hydration_behavior?.replace(/_/g, ' ')}</span>
+        <span className="text-sm font-black text-white capitalize">{mem.hydration_behavior?.replace(/_/g, ' ') || 'Consistent'}</span>
       </div>
       <div className="bg-[#0A0A0A] border border-white/10 rounded-[1.5rem] p-5">
         <TrendingUp size={14} className="text-purple-400 mb-2" />
         <span className="block text-[9px] text-white/40 font-bold uppercase tracking-widest mb-1">Velocity</span>
-        <span className="text-sm font-black text-white capitalize">{tp.habit_velocity}</span>
+        <span className="text-sm font-black text-white capitalize">{tp.habit_velocity || 'Moderate'}</span>
       </div>
     </motion.div>
   );
