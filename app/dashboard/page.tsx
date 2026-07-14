@@ -56,7 +56,9 @@ export default function Dashboard() {
     best_streak: 0,
     reward_message: "",
     xp: 0,
-    level: 1
+    level: 1,
+    today_logs: [], // 🧠 PHASE 13C.8: Missing state added
+    behavioral_memory_packet: null // 🧠 PHASE 13C.8: Missing state added
   });
 
     // Intelligence System State
@@ -528,6 +530,7 @@ interface AdaptiveAIContext extends AIContext {
       lifeload_packet: safe_lifeload.lifeload_packet,
       strain_packet: (safe_lifeload as any).strain_packet, // 🧠 PHASE 12.3A: Expose Missing Packet
       trend_packet: aiContext?.behavioral_memory_packet?.trend_packet, // 🧠 PHASE 13C.7: Expose Trend Packet
+      behavioral_memory_packet: aiContext?.behavioral_memory_packet, // 🧠 PHASE 13C.8: Expose Parent Packet
       cognitive_energy_packet: safe_cognitive,
       decision_fatigue_packet: safe_decision_fatigue,
       forecast_packet: aiContext?.forecast_packet,
@@ -701,7 +704,7 @@ interface AdaptiveAIContext extends AIContext {
       logsCount = totals?.logsCount || logsCount;
       workoutLogsCount = totals?.workoutLogsCount || workoutLogsCount;
 
-      // 🚀 FUTURE-PROOF ARCHITECTURE UPGRADE:
+       // 🚀 FUTURE-PROOF ARCHITECTURE UPGRADE:
       // Commit FULL React State HERE before ANY complex AI/ABOS logic executes.
       setMetrics(prev => ({
         ...prev,
@@ -709,6 +712,7 @@ interface AdaptiveAIContext extends AIContext {
         steps: totalSteps,
         water: totalWater,
         logsCount: logsCount,
+        today_logs: logs, // 🧠 PHASE 13C.8: Inject missing Timeline dependency
         energy_burned: energyStats?.totalBurn || 0,
         energy_intake: energyStats?.intakeCalories || 0,
         energy_stats: energyStats,
@@ -814,6 +818,7 @@ interface AdaptiveAIContext extends AIContext {
         capacity_packet: adaptiveGoals?.capacity_packet, // 🧠 PHASE 13C.5: Restored Packet
         capacity_budget: adaptiveGoals?.capacity_budget, // 🧠 PHASE 13C.5: Restored Packet
         trend_packet: nudgeResponse?.abos_metrics?.trend_packet, // 🧠 PHASE 13C.7: Restored Packet
+        behavioral_memory_packet: nudgeResponse?.abos_metrics?.behavioral_memory_packet, // 🧠 PHASE 13C.8: Restored Packet
         challenge_packet: habitData?.challenge_packet,
         commitment_packet: habitData?.commitment_packet, // 🧠 PHASE 12.5A: Inject Missing Packet
         nutrition_adherence_packet: habitData?.nutrition_adherence_packet,
