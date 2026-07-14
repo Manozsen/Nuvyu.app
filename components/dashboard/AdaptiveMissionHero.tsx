@@ -23,9 +23,13 @@ export function AdaptiveMissionHero({ goalPacket, recoveryRoi, operatingState }:
         </span>
       </div>
 
-      <div className="bg-[#0A0A0A] border border-white/10 rounded-[2rem] p-6 shadow-xl relative overflow-hidden">
+        <div className="bg-[#0A0A0A] border border-white/10 rounded-[2rem] p-6 shadow-xl relative overflow-hidden">
         {/* Subtle background glow based on state */}
-        <div className={`absolute -top-10 -right-10 w-32 h-32 blur-[60px] rounded-full opacity-20 pointer-events-none ${goalPacket?.challenge_difficulty === 'Low' ? 'bg-orange-500' : 'bg-[#00FFA3]'}`} />
+        <motion.div 
+          animate={{ opacity: [0.15, 0.3, 0.15], scale: [1, 1.1, 1] }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          className={`absolute -top-10 -right-10 w-32 h-32 blur-[60px] rounded-full pointer-events-none ${goalPacket?.challenge_difficulty === 'Low' ? 'bg-orange-500' : 'bg-[#00FFA3]'}`} 
+        />
         
         <div className="space-y-4 relative z-10">
           <div className="flex items-start gap-4">
