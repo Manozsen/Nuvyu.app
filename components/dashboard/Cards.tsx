@@ -4,8 +4,9 @@ import { motion } from 'framer-motion';
 export const BentoCard = React.memo(function BentoCard({ icon: Icon, label, value, target, color, delay }: any) {
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay }}
-      className="bg-[#0A0A0A] border border-white/10 rounded-[1.5rem] p-4 sm:p-5 flex flex-col justify-between h-28 sm:h-32 shadow-xl overflow-hidden"
+      initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay, type: "spring", stiffness: 300, damping: 25 }}
+      whileTap={{ scale: 0.96 }}
+      className="bg-[#0A0A0A] border border-white/10 rounded-[1.5rem] p-4 sm:p-5 flex flex-col justify-between h-28 sm:h-32 shadow-xl overflow-hidden cursor-pointer"
     >
       <div className="flex items-center gap-2 truncate">
         <Icon size={16} className={`shrink-0 ${color}`} />
@@ -22,8 +23,9 @@ export const BentoCard = React.memo(function BentoCard({ icon: Icon, label, valu
 export const AdaptiveBentoCard = React.memo(function AdaptiveBentoCard({ icon: Icon, label, value, target, source, reason, color, delay }: any) {
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay }}
-      className="bg-[#0A0A0A] border border-white/10 rounded-[1.5rem] p-4 sm:p-5 flex flex-col justify-between h-36 shadow-xl overflow-hidden relative"
+      initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay, type: "spring", stiffness: 300, damping: 25 }}
+      whileTap={{ scale: 0.96 }}
+      className="bg-[#0A0A0A] border border-white/10 rounded-[1.5rem] p-4 sm:p-5 flex flex-col justify-between h-36 shadow-xl overflow-hidden relative cursor-pointer"
     >
       <div className="flex justify-between items-start">
         <div className="flex items-center gap-2 truncate">
