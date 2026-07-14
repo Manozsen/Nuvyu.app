@@ -24,13 +24,67 @@ export interface DashboardMetrics {
  // 🧠 ABOS DYNAMIC LOAD EXPOSURE
   lifeload_packet?: { lifeload_score: number; lifeload_level: string; lifeload_confidence: string; dominant_load_driver: string; };
   cognitive_energy_packet?: { cognitive_freshness: string; cognitive_fatigue: string; mental_recovery: string; attention_capacity: string; mental_load: string; };
-  decision_fatigue_packet?: { fatigue_score: number; fatigue_level: string; overload_source: string; confidence: string; };
+  decision_fatigue_packet?: { 
+    fatigue_score: number; 
+    fatigue_level: string; 
+    overload_source: string; 
+    confidence: string; 
+    decision_budget?: {
+      budget_status: string;
+      mental_load: string;
+      recommendation: string;
+      reason_chain?: string[];
+    };
+  };
 
   // 🧠 PHASE 12 BEHAVIORAL EXPOSURE
   goal_packet?: GoalPacket;
   commitment_packet?: CommitmentPacket;
   challenge_packet?: ChallengePacket;
   nutrition_adherence_packet?: NutritionAdherencePacket;
+
+  // 🧠 PHASE 13 — NARRATIVE & ABOS SYSTEM EXPOSURE
+  today_logs?: DailyLog[];
+  behavioral_memory_packet?: BehavioralMemoryPacket | null;
+  trend_packet?: TrendPacket;
+  adaptation_mode?: string;
+  capacity_packet?: { capacity_score: number; capacity_level: string; limiting_factor: string; };
+  capacity_budget?: { available_effort_units: number; max_friction_tolerance: string; };
+  strain_packet?: { standing_hours: number; walking_hours: number; mental_load: string; dominant_driver: string; recommended_adjustment: string; confidence: string; daily_strain_score: number; };
+  forecast_packet?: { transition_text: string; };
+  coach_context_packet?: { serialized_state: string; priority_directive: string; llm_routing_flag: boolean; };
+  operating_state?: { operating_state: string; };
+  intervention_engine?: { intervention_mode: string; };
+  recovery_roi?: { roi_action: string; };
+  energy_allocation?: { recommended_focus: string; };
+}
+
+export interface DailyLog {
+  id?: string | number;
+  log_type: string;
+  data?: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface TrendPacket {
+  today_trend: string;
+  weekly_trend: string;
+  behavior_drift: string;
+  momentum_score: number;
+  momentum_direction?: string;
+  consistency_score?: number;
+  habit_velocity?: string;
+  trajectory?: string;
+  confidence?: string;
+  reason_chain?: string[];
+}
+
+export interface BehavioralMemoryPacket {
+  adherence_drift: string;
+  hydration_behavior: string;
+  sleep_behavior: string;
+  memory_confidence: number;
+  trend_packet?: TrendPacket;
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
