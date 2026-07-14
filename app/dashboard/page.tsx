@@ -58,7 +58,7 @@ export default function Dashboard() {
     xp: 0,
     level: 1,
     today_logs: [], // 🧠 PHASE 13C.8: Missing state added
-    behavioral_memory_packet: null // 🧠 PHASE 13C.8: Missing state added
+    behavioral_memory_packet: null, // 🧠 PHASE 13C.8: Missing state added
   });
 
     // Intelligence System State
