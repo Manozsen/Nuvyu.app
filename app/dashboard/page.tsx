@@ -53,6 +53,7 @@ export default function Dashboard() {
     recovery_score: 0,
     recovery_state: "moderate", // Fixed strict enum
     fatigue_risk: "low", // Fixed strict enum
+    burnout_risk: "low", // 🧠 PHASE 13D.5: Missing State Initialization Fixed
     score_summary: "",
     streak_count: 0,
     best_streak: 0,
