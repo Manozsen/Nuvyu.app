@@ -1,16 +1,17 @@
 import React, { useEffect } from 'react';
-import { motion, useMotionValue, useTransform, animate } from 'framer-motion';
+import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 'framer-motion';
 import { Brain, Activity, Zap, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
 export const SystemStatusHero = React.memo(function SystemStatusHero({ score, level, xp, streak, momentum, trend, operatingState }: any) {
-  // 🧠 PHASE 14D: Earned Metrics Count-Up Animation
+  // 🧠 PHASE 14E: Premium Delight & Earned Metrics Count-Up Animation
   const count = useMotionValue(0);
   const rounded = useTransform(count, Math.round);
+  const shouldReduceMotion = useReducedMotion();
 
   useEffect(() => {
-    const controls = animate(count, score || 0, { duration: 1.5, ease: "easeOut", delay: 0.2 });
+    const controls = animate(count, score || 0, { duration: shouldReduceMotion ? 0 : 1.5, ease: "easeOut", delay: 0.2 });
     return controls.stop;
-  }, [score, count]);
+  }, [score, count, shouldReduceMotion]);
   const TrendIcon = trend === 'improving' ? TrendingUp : trend === 'declining' ? TrendingDown : Minus;
   
   return (
