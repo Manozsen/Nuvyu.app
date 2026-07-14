@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { Zap, Footprints, Droplets, Activity } from 'lucide-react';
 
 interface AdaptiveMissionHeroProps {
@@ -9,6 +9,9 @@ interface AdaptiveMissionHeroProps {
 }
 
 export function AdaptiveMissionHero({ goalPacket, recoveryRoi, operatingState }: AdaptiveMissionHeroProps) {
+  const shouldReduceMotion = useReducedMotion();
+  // Haptic feedback can be added later on native platforms.
+  
   return (
     <motion.section 
       initial={{ opacity: 0, y: 15 }} 
@@ -23,10 +26,10 @@ export function AdaptiveMissionHero({ goalPacket, recoveryRoi, operatingState }:
         </span>
       </div>
 
-        <div className="bg-[#0A0A0A] border border-white/10 rounded-[2rem] p-6 shadow-xl relative overflow-hidden">
-        {/* Subtle background glow based on state */}
+      <div className="bg-[#0A0A0A] border border-white/10 rounded-[2rem] p-6 shadow-xl relative overflow-hidden">
+        {/* Premium ambient success glow based on state */}
         <motion.div 
-          animate={{ opacity: [0.15, 0.3, 0.15], scale: [1, 1.1, 1] }}
+          animate={shouldReduceMotion ? { opacity: 0.2, scale: 1 } : { opacity: [0.15, 0.3, 0.15], scale: [1, 1.1, 1] }}
           transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
           className={`absolute -top-10 -right-10 w-32 h-32 blur-[60px] rounded-full pointer-events-none ${goalPacket?.challenge_difficulty === 'Low' ? 'bg-orange-500' : 'bg-[#00FFA3]'}`} 
         />
