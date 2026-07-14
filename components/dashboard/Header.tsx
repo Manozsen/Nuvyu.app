@@ -34,7 +34,6 @@ export function Header({ userProfile, handleLogout, isLoggingOut }: HeaderProps)
       <div className="flex gap-3 items-center">
       <motion.button 
             whileTap={{ scale: 0.92 }}
-            onTapStart={() => { if (typeof window !== 'undefined' && 'vibrate' in navigator) navigator.vibrate(10); }}
             transition={{ type: "spring", stiffness: 400, damping: 25 }}
             onClick={handleLogout}
             disabled={isLoggingOut}
@@ -45,7 +44,6 @@ export function Header({ userProfile, handleLogout, isLoggingOut }: HeaderProps)
           
           <motion.div 
             whileTap={{ scale: 0.92 }}
-            onTapStart={() => { if (typeof window !== 'undefined' && 'vibrate' in navigator) navigator.vibrate(10); }}
             transition={{ type: "spring", stiffness: 400, damping: 25 }}
             className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center backdrop-blur-md shrink-0 cursor-pointer hover:bg-white/10 transition-colors"
           >
