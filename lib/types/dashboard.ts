@@ -14,6 +14,7 @@ export interface DashboardMetrics {
   recovery_score: number;
   recovery_state: RecoveryState;
   fatigue_risk: FatigueRisk;
+  burnout_risk: string; // 🧠 PHASE 13D.5: Missing Top-Level Type Fixed
   score_summary: string;
   streak_count: number;
   best_streak: number;
