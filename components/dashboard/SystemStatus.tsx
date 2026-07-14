@@ -1,8 +1,16 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useEffect } from 'react';
+import { motion, useMotionValue, useTransform, animate } from 'framer-motion';
 import { Brain, Activity, Zap, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
 export const SystemStatusHero = React.memo(function SystemStatusHero({ score, level, xp, streak, momentum, trend, operatingState }: any) {
+  // 🧠 PHASE 14D: Earned Metrics Count-Up Animation
+  const count = useMotionValue(0);
+  const rounded = useTransform(count, Math.round);
+
+  useEffect(() => {
+    const controls = animate(count, score || 0, { duration: 1.5, ease: "easeOut", delay: 0.2 });
+    return controls.stop;
+  }, [score, count]);
   const TrendIcon = trend === 'improving' ? TrendingUp : trend === 'declining' ? TrendingDown : Minus;
   
   return (
@@ -28,9 +36,9 @@ export const SystemStatusHero = React.memo(function SystemStatusHero({ score, le
             className="drop-shadow-[0_0_15px_rgba(0,255,163,0.4)]"
           />
         </svg>
-        <div className="text-center">
-          <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="text-6xl font-black tracking-tighter drop-shadow-lg text-white">
-            {score}
+         <div className="text-center z-10">
+          <motion.span className="text-6xl font-black tracking-tighter drop-shadow-lg text-white">
+            {rounded}
           </motion.span>
           <p className="text-[#00FFA3] text-[10px] font-bold uppercase tracking-widest mt-1">Daily Score</p>
         </div>
