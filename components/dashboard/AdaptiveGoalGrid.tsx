@@ -10,8 +10,15 @@ export const AdaptiveGoalGrid = React.memo(function AdaptiveGoalGrid({ metrics, 
       <AdaptiveBentoCard icon={Footprints} label="Steps" value={metrics.steps} target={gp.target_steps} source={gp.goal_source} reason={gp.override_warning || "AI optimized target."} color="text-[#00FFA3]" delay={0.1} />
       <AdaptiveBentoCard icon={Droplets} label="Water" value={metrics.water} target={`${gp.target_water}ml`} source={gp.goal_source} reason={"Hydration baseline."} color="text-blue-400" delay={0.15} />
       
-      {/* Energy & Nutrition Block */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-[#0A0A0A] border border-white/10 rounded-[1.5rem] p-5 flex flex-col justify-between shadow-xl col-span-2">
+            {/* Energy & Nutrition Block */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }} 
+        whileInView={{ opacity: 1, y: 0 }} 
+        viewport={{ once: true, margin: "-20px" }}
+        whileTap={{ scale: 0.98 }}
+        transition={{ delay: 0.2, type: "spring", stiffness: 300, damping: 25 }} 
+        className="bg-[#0A0A0A] border border-white/10 rounded-[1.5rem] p-5 flex flex-col justify-between shadow-xl col-span-2 cursor-pointer"
+      >
         <div className="flex items-center gap-2 mb-4">
           <Flame size={16} className={energyColorClass} />
           <span className="text-white/50 text-[10px] font-bold uppercase tracking-widest">Energy Balance & Nutrition</span>
