@@ -12,13 +12,13 @@ export const RecoveryForecastCard = React.memo(function RecoveryForecastCard({ f
       transition={{ type: "spring", stiffness: 300, damping: 25 }}
       className="bg-[#0A0A0A] border border-white/10 rounded-[2rem] p-6 shadow-xl"
     >
-      <h3 className="text-white/40 text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 mb-5"><Activity size={12} /> Recovery Forecast</h3>
+      <h3 className="text-white/40 text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 mb-5"><Activity size={12} /> Tomorrow</h3>
       <div className="grid grid-cols-2 gap-4 mb-4">
-        <div><span className="block text-[9px] text-white/40 font-bold uppercase tracking-widest mb-1">Burnout Risk</span><span className={`text-sm font-black capitalize ${burnoutRisk === 'high' ? 'text-red-400' : burnoutRisk === 'medium' ? 'text-orange-400' : 'text-[#00FFA3]'}`}>{burnoutRisk || 'Low'}</span></div>
-        <div><span className="block text-[9px] text-white/40 font-bold uppercase tracking-widest mb-1">Expected Trend</span><span className="text-sm font-black text-white capitalize">{fp.transition_text?.split(' ')[0] || 'Stable'}</span></div>
+        <div><span className="block text-[9px] text-white/40 font-bold uppercase tracking-widest mb-1">Fatigue Level</span><span className={`text-sm font-black capitalize ${burnoutRisk === 'high' ? 'text-red-400' : burnoutRisk === 'medium' ? 'text-orange-400' : 'text-[#00FFA3]'}`}>{burnoutRisk || 'Low'}</span></div>
+        <div><span className="block text-[9px] text-white/40 font-bold uppercase tracking-widest mb-1">Looking Ahead</span><span className="text-sm font-black text-white capitalize">{fp.transition_text?.split(' ')[0] || 'Stable'}</span></div>
       </div>
       <div className="bg-white/5 rounded-xl p-4 border border-white/5">
-        <span className="block text-[9px] text-white/40 font-bold uppercase tracking-widest mb-1">3-Day Projection</span>
+        <span className="block text-[9px] text-white/40 font-bold uppercase tracking-widest mb-1">Next 3 Days</span>
         <p className="text-sm font-medium text-white/80 leading-snug">{fp.transition_text || 'System trajectory is currently stable. Maintain baseline habits.'}</p>
       </div>
     </motion.div>
@@ -45,7 +45,7 @@ export const WeeklyStory = React.memo(function WeeklyStory({ tp, mem, fp }: any)
       transition={{ delay: 0.1, type: "spring", stiffness: 300, damping: 25 }} 
       className="bg-gradient-to-br from-white/[0.08] to-transparent border border-white/10 rounded-[2rem] p-6 shadow-2xl backdrop-blur-md"
     >
-      <h3 className="text-white/40 text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 mb-4"><BookOpen size={12} /> Editorial Narrative</h3>
+      <h3 className="text-white/40 text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 mb-4"><BookOpen size={12} /> Weekly Insights</h3>
       <div className="space-y-4">
         <p className="text-[15px] font-medium text-white/90 leading-relaxed tracking-tight">{p1}</p>
         <p className="text-[15px] font-medium text-white/80 leading-relaxed tracking-tight">{p2}</p>
@@ -69,9 +69,9 @@ export const BehaviorMemoryHighlights = React.memo(function BehaviorMemoryHighli
         <span className="block text-[9px] text-white/40 font-bold uppercase tracking-widest mb-1">Consistency</span>
         <span className="text-sm font-black text-white capitalize">{mem.adherence_drift?.replace(/_/g, ' ') || 'Stable'}</span>
       </div>
-      <div className="bg-[#0A0A0A] border border-white/10 rounded-[1.5rem] p-5">
+       <div className="bg-[#0A0A0A] border border-white/10 rounded-[1.5rem] p-5">
         <ShieldAlert size={14} className="text-orange-400 mb-2" />
-        <span className="block text-[9px] text-white/40 font-bold uppercase tracking-widest mb-1">System Risk</span>
+        <span className="block text-[9px] text-white/40 font-bold uppercase tracking-widest mb-1">Sleep Quality</span>
         <span className="text-sm font-black text-white capitalize">{mem.sleep_behavior?.replace(/_/g, ' ') || 'Low'}</span>
       </div>
       <div className="bg-[#0A0A0A] border border-white/10 rounded-[1.5rem] p-5">
@@ -81,7 +81,7 @@ export const BehaviorMemoryHighlights = React.memo(function BehaviorMemoryHighli
       </div>
       <div className="bg-[#0A0A0A] border border-white/10 rounded-[1.5rem] p-5">
         <TrendingUp size={14} className="text-purple-400 mb-2" />
-        <span className="block text-[9px] text-white/40 font-bold uppercase tracking-widest mb-1">Velocity</span>
+        <span className="block text-[9px] text-white/40 font-bold uppercase tracking-widest mb-1">Pace</span>
         <span className="text-sm font-black text-white capitalize">{tp.habit_velocity || 'Moderate'}</span>
       </div>
     </motion.div>
