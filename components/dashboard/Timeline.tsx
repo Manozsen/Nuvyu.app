@@ -2,24 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Clock, Zap, Target, Lock } from 'lucide-react';
 
-export const EditorialInsightStrip = React.memo(function EditorialInsightStrip({ sp, tp, memConfidence }: any) {
-  return (
-    <div className="bg-black/50 border border-white/10 rounded-[1.5rem] p-4 flex flex-col gap-3 mb-6 backdrop-blur-md">
-      <div className="flex justify-between items-center border-b border-white/5 pb-2">
-        <span className="text-[9px] text-white/40 font-bold uppercase tracking-widest">Today's Biggest Risk</span>
-        <span className="text-[10px] font-black text-orange-400 uppercase tracking-widest capitalize">{sp?.dominant_driver?.replace(/_/g, ' ') || 'None'}</span>
-      </div>
-      <div className="flex justify-between items-center">
-        <span className="text-[9px] text-white/40 font-bold uppercase tracking-widest">Momentum Indicator</span>
-        <span className="text-[10px] font-black text-[#00FFA3] uppercase tracking-widest capitalize">{tp?.momentum_direction || 'Stable'}</span>
-      </div>
-      <div className="flex justify-between items-center pt-2 border-t border-white/5">
-         <span className="text-[9px] text-white/40 font-bold uppercase tracking-widest">AI Confidence Map</span>
-         <span className="text-[9px] font-bold text-white/70 uppercase tracking-widest">{(memConfidence || 0.9) * 100}% Accuracy</span>
-      </div>
-    </div>
-  );
-});
+// Editorial Insight Strip Removed (Visual Clutter/Jargon Purge)
 
 export const BehaviorTimeline = React.memo(function BehaviorTimeline({ logs, sp, tp, mem }: any) {
   const [activeFilter, setActiveFilter] = useState('today');
@@ -36,12 +19,10 @@ export const BehaviorTimeline = React.memo(function BehaviorTimeline({ logs, sp,
   };
 
   return (
-    <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="pt-4 pb-8">
+     <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="pt-4 pb-8">
       <div className="flex justify-between items-center mb-6">
-        <h3 className="text-white/60 font-bold uppercase tracking-widest text-[10px] ml-2">Behavior Timeline</h3>
+        <h3 className="text-white/60 font-bold uppercase tracking-widest text-[10px] ml-2">Today's Activity</h3>
       </div>
-
-      <EditorialInsightStrip sp={sp} tp={tp} memConfidence={mem?.memory_confidence} />
 
       {/* Timeline Filters */}
       <div className="flex gap-2 mb-6">
