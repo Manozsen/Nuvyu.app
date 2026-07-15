@@ -34,12 +34,11 @@ export function AdaptiveMissionHero({ goalPacket, recoveryRoi, operatingState }:
           className={`absolute -top-10 -right-10 w-32 h-32 blur-[60px] rounded-full pointer-events-none ${goalPacket?.challenge_difficulty === 'Low' ? 'bg-orange-500' : 'bg-[#00FFA3]'}`} 
         />
         
-        <div className="space-y-4 relative z-10">
+         <div className="space-y-4 relative z-10">
           <div className="flex items-start gap-4">
             <div className="w-8 h-8 rounded-full bg-[#00FFA3]/10 border border-[#00FFA3]/20 flex items-center justify-center shrink-0 mt-1">
               <Footprints size={14} className="text-[#00FFA3]" />
             </div>
-            <div>
             <div>
               <div className="text-lg font-bold text-white tracking-tight">{goalPacket?.target_steps || 6000} Steps</div>
               <div className="text-[11px] text-white/40 font-medium">Daily target</div>
