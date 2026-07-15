@@ -11,13 +11,10 @@ export const AIExecutionCard = React.memo(function AIExecutionCard({ recoveryRoi
       initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
       className="bg-gradient-to-br from-[#00FFA3]/10 to-transparent border border-[#00FFA3]/20 rounded-[2rem] p-6 shadow-xl relative overflow-hidden"
     >
-      <div className="flex justify-between items-start mb-4">
+       <div className="flex justify-between items-start mb-4">
         <h3 className="text-[#00FFA3]/80 text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5">
-          <Play size={10} fill="currentColor" /> Next Action
+          <Play size={10} fill="currentColor" /> Up Next
         </h3>
-        <span className="text-[9px] font-bold uppercase tracking-widest text-[#00FFA3] bg-[#00FFA3]/10 px-2 py-1 rounded-md border border-[#00FFA3]/20">
-          {confidence} Confidence
-        </span>
       </div>
       <div className="mb-6">
         <div className="text-2xl font-black text-white tracking-tight capitalize mb-2">
@@ -25,11 +22,10 @@ export const AIExecutionCard = React.memo(function AIExecutionCard({ recoveryRoi
         </div>
         <div className="text-[11px] font-bold text-white/50 uppercase tracking-widest flex items-center gap-2">
            <span className="bg-black/40 px-2 py-1 rounded-md border border-white/5">~ 15 MIN</span>
-           <span className="bg-black/40 px-2 py-1 rounded-md border border-white/5 capitalize">Expected Benefit: {benefit}</span>
         </div>
       </div>
       <button className="w-full bg-[#00FFA3] text-black font-black uppercase tracking-widest text-[11px] py-4 rounded-xl flex items-center justify-center gap-2 hover:shadow-[0_0_20px_rgba(0,255,163,0.3)] transition-all active:scale-95">
-        Execute Protocol <ArrowRight size={14} />
+        Start <ArrowRight size={14} />
       </button>
     </motion.div>
   );
@@ -41,9 +37,9 @@ export const CommitmentContract = React.memo(function CommitmentContract({ cp }:
       initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} 
       className="bg-[#0A0A0A] border border-white/10 rounded-[2rem] p-6 shadow-xl"
     >
-      <div className="flex justify-between items-center mb-5">
+        <div className="flex justify-between items-center mb-5">
          <h3 className="text-white/40 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5">
-           <CheckCircle2 size={12} className="text-white/60"/> Today's Contract
+           <CheckCircle2 size={12} className="text-white/60"/> Daily Promises
          </h3>
          <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-md transition-all duration-500 ${cp.status === 'completed' ? 'bg-[#00FFA3]/15 text-[#00FFA3] shadow-[0_0_15px_rgba(0,255,163,0.2)]' : 'bg-white/5 text-white/50'}`}>
            {cp.status}
@@ -63,19 +59,9 @@ export const CommitmentContract = React.memo(function CommitmentContract({ cp }:
                   </div>
                 )
              })}
-             <div className="flex justify-between items-center mt-4 pt-5 border-t border-white/5">
-                <div>
-                  <div className="text-[9px] text-white/40 font-bold uppercase tracking-widest mb-1">Integrity Score</div>
-                  <div className="text-lg font-black text-[#00FFA3]">{cp.commitment_integrity_score}</div>
-                </div>
-                <div className="text-right">
-                  <div className="text-[9px] text-white/40 font-bold uppercase tracking-widest mb-1">Completion</div>
-                  <div className="text-lg font-black text-white">{cp.contract_completion_rate}%</div>
-                </div>
-             </div>
           </div>
        ) : (
-          <div className="text-sm text-white/30 font-medium pb-2">No non-negotiables set for today. Focus on your baseline targets.</div>
+          <div className="text-sm text-white/30 font-medium pb-2">No daily promises set today. Keep it simple.</div>
        )}
     </motion.div>
   );
