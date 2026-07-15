@@ -90,15 +90,9 @@ export const ActiveChallenge = React.memo(function ActiveChallenge({ chp }: any)
            </h3>
            <p className="text-white font-black text-lg tracking-tight">{chp.challenge_name}</p>
          </div>
-         <div className="text-right">
-           <span className="text-white/40 text-[9px] font-bold uppercase tracking-widest block mb-1">Success Prob.</span>
-           <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-md ${chp.success_probability === 'High' ? 'bg-[#00FFA3]/10 text-[#00FFA3]' : chp.success_probability === 'Moderate' ? 'bg-yellow-500/10 text-yellow-400' : 'bg-red-500/10 text-red-400'}`}>
-             {chp.success_probability}
-           </span>
-         </div>
        </div>
        
-       <div className="flex items-center gap-5">
+       <div className="flex items-center gap-5 relative z-10">
           <div className="relative w-16 h-16 shrink-0 flex items-center justify-center">
             <svg className="absolute w-full h-full transform -rotate-90">
               <circle cx="32" cy="32" r="28" stroke="rgba(255,255,255,0.05)" strokeWidth="6" fill="transparent" />
@@ -114,11 +108,7 @@ export const ActiveChallenge = React.memo(function ActiveChallenge({ chp }: any)
             </svg>
             <span className="text-sm font-black text-white">{chp.completion_percentage}%</span>
           </div>
-          <div className="flex-1 space-y-2">
-             <div className="flex justify-between text-[11px] font-bold uppercase tracking-widest">
-               <span className="text-white/40">Missed Days</span>
-               <span className="text-white">{chp.missed_days}</span>
-             </div>
+          <div className="flex-1">
              <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
                <motion.div 
                  initial={{ width: 0 }} animate={{ width: `${chp.completion_percentage}%` }} transition={{ duration: 1 }}
