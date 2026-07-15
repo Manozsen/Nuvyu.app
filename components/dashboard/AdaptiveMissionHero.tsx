@@ -19,10 +19,10 @@ export function AdaptiveMissionHero({ goalPacket, recoveryRoi, operatingState }:
       transition={{ delay: 0.1, duration: 0.4 }}
       className="px-2"
     >
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-5 mt-4">
         <h2 className="text-3xl font-black tracking-tighter text-white">Today's Mission</h2>
-        <span className="text-[10px] font-bold uppercase tracking-widest text-[#00FFA3] bg-[#00FFA3]/10 px-2 py-1 rounded-md border border-[#00FFA3]/20">
-          {operatingState?.operating_state?.replace('_', ' ') || 'Optimal'}
+        <span className="text-[10px] font-bold uppercase tracking-widest text-[#00FFA3] bg-[#00FFA3]/10 px-2.5 py-1 rounded-md border border-[#00FFA3]/20">
+          Ready
         </span>
       </div>
 
@@ -40,8 +40,9 @@ export function AdaptiveMissionHero({ goalPacket, recoveryRoi, operatingState }:
               <Footprints size={14} className="text-[#00FFA3]" />
             </div>
             <div>
+            <div>
               <div className="text-lg font-bold text-white tracking-tight">{goalPacket?.target_steps || 6000} Steps</div>
-              <div className="text-[11px] text-white/50 font-medium uppercase tracking-wider">{goalPacket?.goal_source === 'manual' ? 'Manual Target' : 'AI Adaptive Target'}</div>
+              <div className="text-[11px] text-white/40 font-medium">Daily target</div>
             </div>
           </div>
 
@@ -51,7 +52,7 @@ export function AdaptiveMissionHero({ goalPacket, recoveryRoi, operatingState }:
             </div>
             <div>
               <div className="text-lg font-bold text-white tracking-tight">{goalPacket?.target_water || 3000} ml Water</div>
-              <div className="text-[11px] text-white/50 font-medium uppercase tracking-wider">Hydration Baseline</div>
+              <div className="text-[11px] text-white/40 font-medium">Daily target</div>
             </div>
           </div>
 
@@ -61,7 +62,7 @@ export function AdaptiveMissionHero({ goalPacket, recoveryRoi, operatingState }:
             </div>
             <div>
               <div className="text-lg font-bold text-white tracking-tight capitalize">{recoveryRoi?.roi_action || 'Consistency'}</div>
-              <div className="text-[11px] text-white/50 font-medium uppercase tracking-wider">Highest Recovery ROI</div>
+              <div className="text-[11px] text-white/40 font-medium">Helps you recover</div>
             </div>
           </div>
         </div>
