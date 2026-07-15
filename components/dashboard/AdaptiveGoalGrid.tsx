@@ -21,7 +21,7 @@ export const AdaptiveGoalGrid = React.memo(function AdaptiveGoalGrid({ metrics, 
       >
         <div className="flex items-center gap-2 mb-4">
           <Flame size={16} className={energyColorClass} />
-          <span className="text-white/50 text-[10px] font-bold uppercase tracking-widest">Energy Balance & Nutrition</span>
+          <span className="text-white/50 text-[10px] font-bold uppercase tracking-widest">Fuel & Burn</span>
         </div>
         <div className="flex justify-between items-end mb-4 border-b border-white/5 pb-4">
           <div><div className="flex items-baseline gap-1"><span className="text-4xl font-black text-white">{metrics.energy_stats?.totalBurn || 0}</span><span className="text-white/40 text-[10px] font-medium uppercase tracking-widest">Out</span></div><div className="text-[#00FFA3] text-[10px] font-bold uppercase tracking-widest mt-1">{metrics.energy_stats?.activityBurn || 0} active</div></div>
