@@ -941,8 +941,22 @@ interface AdaptiveAIContext extends AIContext {
           forecastPacket={fp}
         />
 
+        {/* 🧠 SECTION 3.5: MASSIVE PRIMARY CTA (HERO ANCHOR) */}
+        <div className="px-2 pt-4 pb-16">
+          <Link href="/log" className="block w-full group relative">
+            <motion.div animate={{ opacity: [0.15, 0.3, 0.15] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} className="absolute inset-0 bg-[#00FFA3] rounded-[9999px] blur-xl opacity-30 group-hover:opacity-50 transition-opacity duration-500" />
+            <motion.button whileTap={{ scale: 0.96 }} className="relative w-full bg-[#00FFA3] text-black font-black uppercase tracking-widest text-[14px] py-5 rounded-[9999px] flex items-center justify-center gap-2 shadow-[0_0_0_1px_rgba(0,255,163,0.5)_inset]">
+              Log Today <Plus size={18} strokeWidth={3} />
+            </motion.button>
+          </Link>
+        </div>
+
+        {/* --- BELOW THE FOLD (PROGRESSIVE DISCLOSURE) --- */}
+        <div className="space-y-10 pt-4 border-t border-white/5 relative">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+          
         {/* 🧠 SECTION 4: BEHAVIORAL ACTION CENTER */}
-        <div className="space-y-6 pt-2">
+        <div className="space-y-6">
            <AIExecutionCard recoveryRoi={recovery_roi} interventionEngine={intervention_engine} strainPacket={sp} />
            <CommitmentContract cp={cp} />
            <ActiveChallenge chp={chp} />
@@ -962,19 +976,16 @@ interface AdaptiveAIContext extends AIContext {
           <BehaviorTrendCard tp={tp} />
         </div>
 
-       {/* 🧠 SECTION 6: ADAPTIVE GOAL GRID */}
-        <div className="flex justify-between items-end pt-2">
-           <h3 className="text-white/60 font-bold uppercase tracking-widest text-[10px] ml-2">Today's Operating Bounds</h3>
-           <Link href="/log" className="flex items-center gap-1 text-[#00FFA3] text-[10px] font-black uppercase tracking-widest bg-[#00FFA3]/10 px-3 py-1.5 rounded-md border border-[#00FFA3]/30 hover:bg-[#00FFA3]/20 transition-all active:scale-95">
-             <Plus size={12} /> Add Log
-           </Link>
+         {/* 🧠 SECTION 6: ADAPTIVE GOAL GRID */}
+        <div className="flex justify-between items-end mb-2">
+           <h3 className="text-white/60 font-bold uppercase tracking-widest text-[10px] ml-2">Daily Targets</h3>
         </div>
         <AdaptiveGoalGrid 
           metrics={metrics} gp={gp} np={np} sp={sp} 
           energyColorClass={energyColorClass} targetCalories={targetCalories} 
         />
 
-        {/* 🧠 SECTION 7 & 8: BEHAVIORAL NARRATIVE & TIMELINE */}
+                {/* 🧠 SECTION 7 & 8: BEHAVIORAL NARRATIVE & TIMELINE */}
         <div className="space-y-6 pt-6">
           <RecoveryForecastCard fp={fp} burnoutRisk={metrics.burnout_risk} />
           <BehaviorMemoryHighlights mem={metrics.behavioral_memory_packet} tp={tp} />
@@ -987,9 +998,11 @@ interface AdaptiveAIContext extends AIContext {
             mem={metrics.behavioral_memory_packet} 
           />
         </div>
+        
+        </div> {/* Close Below The Fold Wrapper */}
 
       </main>
-
+      
       <BottomNav />
 
     </div>
