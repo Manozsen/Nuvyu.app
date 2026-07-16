@@ -41,11 +41,12 @@ export const SystemStatusHero = React.memo(function SystemStatusHero({ score, le
             transition={{ duration: shouldReduceMotion ? 0 : 1.5, delay: 0.2, ease: "easeOut" }}
           />
         </svg>
-         <div className="text-center z-10 flex flex-col items-center">
-          <motion.span className="text-7xl font-black tracking-tighter text-white drop-shadow-md">
+        <div className="text-center z-10 flex flex-col items-center">
+          <span className="text-[11px] font-bold text-white/40 uppercase tracking-widest mb-1">Today's Score</span>
+          <motion.span className="text-7xl font-black tracking-tighter text-white drop-shadow-md leading-none">
             {rounded}
           </motion.span>
-          <span className="text-[12px] font-medium text-white/40 mt-1 capitalize">{operatingState?.replace('_', ' ') || 'Ready'}</span>
+          <span className="text-[12px] font-medium text-white/40 mt-2">Updated throughout the day</span>
         </div>
       </div>
 
