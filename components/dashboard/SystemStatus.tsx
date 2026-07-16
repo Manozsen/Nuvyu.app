@@ -70,14 +70,34 @@ export const SystemStatusHero = React.memo(function SystemStatusHero({ score, le
 export const CapacityBudgetCard = React.memo(function CapacityBudgetCard({ cap, cab }: any) {
   if (!cap || !cab) return null;
   return (
-    <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="bg-cyan-500/5 border border-cyan-500/20 rounded-[1.5rem] p-5 shadow-xl relative overflow-hidden">
-       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-cyan-400/80 text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5"><Activity size={12} /> Energy Today</h3>
-        <span className="text-[9px] font-bold uppercase tracking-widest text-cyan-400 bg-cyan-500/10 px-2 py-1 rounded-md">{cap.capacity_level}</span>
+    <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="bg-[#050505] border border-white/5 rounded-[24px] p-5">
+       <div className="flex justify-between items-center mb-5">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-full bg-cyan-500/10 flex items-center justify-center">
+            <Activity size={12} className="text-cyan-400" />
+          </div>
+          <h3 className="text-white/60 text-[13px] font-medium">Energy Today</h3>
+        </div>
+        <span className="text-[11px] font-medium text-cyan-400 bg-cyan-500/10 px-2.5 py-1 rounded-full capitalize">{cap.capacity_level}</span>
       </div>
-      <div className="flex items-end">
-        <div>
-           <span className="text-3xl font-black text-white tracking-tight">{cap.capacity_score}</span><span className="text-[10px] text-white/40 font-bold ml-1 uppercase">/ 100</span>
+      <div className="flex justify-between items-end mb-5">
+        <div className="flex items-baseline gap-1">
+           <span className="text-4xl font-semibold text-white tracking-tight">{cap.capacity_score}</span>
+           <span className="text-[13px] text-white/40 font-medium">/ 100</span>
+        </div>
+        <div className="text-right flex flex-col">
+           <span className="text-[16px] font-semibold text-white tracking-tight">{cab.available_effort_units}</span>
+           <span className="text-[11px] text-white/40 font-medium">Effort Units</span>
+        </div>
+      </div>
+      <div className="pt-4 border-t border-white/5 space-y-2">
+        <div className="flex justify-between items-center">
+          <span className="text-[12px] text-white/40 font-medium">Limiting Factor</span>
+          <span className="text-[12px] font-medium text-white capitalize">{cap.limiting_factor?.replace('_', ' ')}</span>
+        </div>
+        <div className="flex justify-between items-center">
+          <span className="text-[12px] text-white/40 font-medium">Friction Tolerance</span>
+          <span className="text-[12px] font-medium text-white capitalize">{cab.max_friction_tolerance}</span>
         </div>
       </div>
     </motion.div>
@@ -87,14 +107,29 @@ export const CapacityBudgetCard = React.memo(function CapacityBudgetCard({ cap, 
 export const DecisionBudgetCard = React.memo(function DecisionBudgetCard({ dbp }: any) {
   if (!dbp) return null;
   return (
-    <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-[#0A0A0A] border border-white/10 rounded-[1.5rem] p-5 shadow-xl">
-       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-white/40 text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5"><Brain size={12} /> Mental Focus</h3>
-        <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded-md ${dbp.budget_status === 'Optimal' ? 'bg-[#00FFA3]/10 text-[#00FFA3]' : 'bg-red-500/10 text-red-400'}`}>{dbp.budget_status}</span>
+    <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-[#050505] border border-white/5 rounded-[24px] p-5">
+       <div className="flex justify-between items-center mb-5">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-full bg-[#00FFA3]/10 flex items-center justify-center">
+            <Brain size={12} className="text-[#00FFA3]" />
+          </div>
+          <h3 className="text-white/60 text-[13px] font-medium">Mental Focus</h3>
+        </div>
+        <span className={`text-[11px] font-medium px-2.5 py-1 rounded-full capitalize ${dbp.budget_status === 'Optimal' ? 'bg-[#00FFA3]/10 text-[#00FFA3]' : 'bg-red-500/10 text-red-400'}`}>{dbp.budget_status}</span>
       </div>
-      <div>
-        <p className="text-sm font-medium text-white/90 leading-snug">&quot;{dbp.recommendation}&quot;</p>
+      <div className="mb-5">
+        <p className="text-[15px] font-medium text-white/90 leading-relaxed tracking-tight">&quot;{dbp.recommendation}&quot;</p>
       </div>
+      {dbp.reason_chain && dbp.reason_chain.length > 0 && (
+        <div className="pt-4 border-t border-white/5 space-y-2.5">
+           {dbp.reason_chain.map((reason: string, idx: number) => (
+             <div key={idx} className="text-[12px] font-medium text-white/50 flex items-start gap-2.5 leading-snug">
+               <div className="w-1.5 h-1.5 rounded-full bg-white/20 mt-1 shrink-0" /> 
+               <span>{reason}</span>
+             </div>
+           ))}
+        </div>
+      )}
     </motion.div>
   );
 });
