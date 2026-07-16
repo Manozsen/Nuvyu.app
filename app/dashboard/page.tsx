@@ -1012,10 +1012,19 @@ interface AdaptiveAIContext extends AIContext {
 
         {/* SECTION 5: SYSTEM STATUS EXPERIENCE (Analytics UI Relocated) */}
 
-         {/* 🧠 SECTION 6: ADAPTIVE GOAL GRID */}
-
-        <div className="flex justify-between items-end mb-2">
-           <h3 className="text-white/60 font-bold uppercase tracking-widest text-[10px] ml-2">Daily Targets</h3>
+        {/* 🧠 SECTION 6: TODAY'S TARGETS (FUTURE DECOUPLED ARCHITECTURE) */}
+        {/* 
+          FUTURE GEMINI ARCHITECTURE:
+          - Gemini API -> Daily Target Generator -> Today's Targets UI
+          - Local Score Engine -> Today's Score UI
+          
+          These systems must remain fully decoupled. This ensures:
+          - Faster dashboard rendering & offline capability
+          - Lower Gemini usage / rate limiting
+          - Deterministic score computation independent of target generation
+        */}
+        <div className="flex justify-between items-end mb-4 mt-4">
+           <h3 className="text-white font-medium text-[16px] tracking-tight ml-2">NUVYU Set Today's Targets For You</h3>
         </div>
         <AdaptiveGoalGrid 
           metrics={metrics} gp={gp} np={np} sp={sp} 
