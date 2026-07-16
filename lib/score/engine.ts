@@ -90,7 +90,7 @@ export function calculateDailyScore(logs: any[], config: any = {}) {
     let penalty = 0;
     if (burnoutRisk === 'high') penalty -= 15;
     if (sleepHours > 0 && sleepHours < 5) penalty -= 20;
-    if (streakCount === 0) penalty -= 10;
+    // Streak penalty removed: Prevents mathematical lock at 0 for initial daily logs
     if (screenHours >= 8) penalty -= 15;
     else if (screenHours >= 5) penalty -= 5;
 
