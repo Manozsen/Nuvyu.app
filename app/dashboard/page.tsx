@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Flame, Footprints, Droplets, Camera, Zap, LayoutDashboard, Settings, Bell, ChevronRight, LogOut, Loader2, Plus, Activity, Moon, Brain } from 'lucide-react';
+import { Flame, Footprints, Droplets, Zap, Bell, ChevronRight, Loader2, Plus, Activity, Moon, Brain } from 'lucide-react';
 import { createBrowserClient } from '@supabase/ssr';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -11,9 +11,8 @@ import { getRecentMemory, saveCoachMemory, detectUserPattern, calculateConsisten
 import { predictAdherenceRisk, calculateRecoveryDebt, calculateResilienceScore, calculateResiliencePacket, generateForecastPacket, buildRecoveryDigitalTwin, calculateRecoveryROI, calculateEnergyAllocation } from '../../lib/recovery/engine';
 import { extractBehavioralMemories, detectHabitCompounds, buildBehavioralMemoryPacket } from '../../lib/memory/engine';
 import { calculateDailyScore } from '../../lib/score/engine';
-import { calculateRecoveryScore } from '../../lib/recovery/engine';
 import { updateHabit } from '../../lib/habit/engine';
-import { calculateEnergyBalance, getLocalDateString, calculateRecoveryState, detectFatiguePattern } from '../../lib/calories/energyEngine';
+import { calculateEnergyBalance, calculateRecoveryState, detectFatiguePattern } from '../../lib/calories/energyEngine';
 import { getLocalMidnightRange, getUserLocalToday } from '../../lib/time/engine';
 import { DashboardMetrics } from '../../lib/types/dashboard';
 import { detectBurnoutRisk } from '../../lib/recovery/engine';
@@ -924,39 +923,46 @@ interface AdaptiveAIContext extends AIContext {
 
       <Header userProfile={userProfile} handleLogout={handleLogout} isLoggingOut={isLoggingOut} />
 
-      <main className="px-4 sm:px-6 space-y-6 z-10 relative">
+        <main className="px-4 sm:px-6 z-10 relative">
         
-        {/* 🧠 SECTION 2: ADAPTIVE MISSION HERO */}
-        <AdaptiveMissionHero 
-          goalPacket={gp} 
-          recoveryRoi={recovery_roi} 
-          operatingState={operating_state_engine} 
-        />
+        {/* 🧠 SECTION 2: THE UNIFIED DAILY NEXUS (HERO) */}
+        <div className="flex flex-col items-center pt-2 pb-14 w-full">
+           <SystemStatusHero 
+             score={metrics.score} level={retention.level} xp={retention.xp} 
+             streak={metrics.streak_count} momentum={tp.momentum_score} 
+             trend={tp.today_trend} operatingState={operating_state_engine.operating_state} 
+           />
+           
+           <CoachIntelligencePanel 
+             coachMessage={coachMessage}
+             operatingState={operating_state_engine}
+             strainPacket={sp}
+             forecastPacket={fp}
+           />
+           
+           <AdaptiveMissionHero 
+             goalPacket={gp} 
+             recoveryRoi={recovery_roi} 
+             operatingState={operating_state_engine}
+           />
 
-       {/* 🧠 SECTION 3: COACH INTELLIGENCE */}
-        <CoachIntelligencePanel 
-          coachMessage={coachMessage}
-          operatingState={operating_state_engine}
-          strainPacket={sp}
-          forecastPacket={fp}
-        />
-
-        {/* 🧠 SECTION 3.5: MASSIVE PRIMARY CTA (HERO ANCHOR) */}
-        <div className="px-2 pt-4 pb-16">
-          <Link href="/log" className="block w-full group relative">
-            <motion.div animate={{ opacity: [0.15, 0.3, 0.15] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} className="absolute inset-0 bg-[#00FFA3] rounded-[9999px] blur-xl opacity-30 group-hover:opacity-50 transition-opacity duration-500" />
-            <motion.button whileTap={{ scale: 0.96 }} className="relative w-full bg-[#00FFA3] text-black font-black uppercase tracking-widest text-[14px] py-5 rounded-[9999px] flex items-center justify-center gap-2 shadow-[0_0_0_1px_rgba(0,255,163,0.5)_inset]">
-              Log Today <Plus size={18} strokeWidth={3} />
-            </motion.button>
-          </Link>
+           {/* MASSIVE PRIMARY CTA */}
+           <div className="w-full px-4 pt-8">
+             <Link href="/log" className="block w-full group relative">
+               <motion.div animate={{ opacity: [0.1, 0.25, 0.1] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} className="absolute inset-0 bg-[#00FFA3] rounded-[9999px] blur-xl opacity-20 group-hover:opacity-40 transition-opacity duration-500" />
+               <motion.button whileTap={{ scale: 0.96 }} className="relative w-full bg-[#00FFA3] text-black font-bold text-[16px] py-4 rounded-[9999px] flex items-center justify-center gap-2 shadow-[0_0_0_1px_rgba(0,255,163,0.5)_inset]">
+                 Log Today <Plus size={18} strokeWidth={3} />
+               </motion.button>
+             </Link>
+           </div>
         </div>
 
         {/* --- BELOW THE FOLD (PROGRESSIVE DISCLOSURE) --- */}
-        <div className="space-y-10 pt-4 border-t border-white/5 relative">
+        <div className="space-y-8 pt-8 border-t border-white/5 relative">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
           
         {/* 🧠 SECTION 4: BEHAVIORAL ACTION CENTER */}
-        <div className="space-y-6">
+        <div className="space-y-6 opacity-90">
            <AIExecutionCard recoveryRoi={recovery_roi} interventionEngine={intervention_engine} strainPacket={sp} />
            <CommitmentContract cp={cp} />
            <ActiveChallenge chp={chp} />
@@ -964,11 +970,6 @@ interface AdaptiveAIContext extends AIContext {
 
         {/* 🧠 SECTION 5: SYSTEM STATUS EXPERIENCE */}
         <div className="space-y-6 pt-2">
-          <SystemStatusHero 
-            score={metrics.score} level={retention.level} xp={retention.xp} 
-            streak={metrics.streak_count} momentum={tp.momentum_score} 
-            trend={tp.today_trend} operatingState={operating_state_engine.operating_state} 
-          />
           <div className="grid grid-cols-2 gap-4">
             <CapacityBudgetCard cap={cap} cab={cab} />
             <DecisionBudgetCard dbp={dbp} />
