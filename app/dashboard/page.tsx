@@ -694,7 +694,7 @@ interface AdaptiveAIContext extends AIContext {
       const recentRecScores = (pastLogs || []).filter(l => l.log_type === 'sleep').slice(0, 3).map(l => l.data?.recovery_score || 50);
       const { risk_level: burnoutRisk, recovery_momentum } = detectBurnoutRisk(computedScore, sleepHours, safeNumber(profile.streak_count), safeNumber(energyStats?.deficit), recentRecScores);
 
-            // 2. Central Source of Truth Score Calculation (V2 Engine)
+      // 2. Central Source of Truth Score Calculation (V2 Engine)
       const scoreConfig = {
         sleepHours,
         recoveryScore: computedScore,
