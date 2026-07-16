@@ -967,29 +967,50 @@ interface AdaptiveAIContext extends AIContext {
 
         <main className="px-4 sm:px-6 z-10 relative">
         
-        {/* 🧠 SECTION 2: THE UNIFIED DAILY NEXUS (HERO) */}
-        <div className="flex flex-col items-center pt-2 pb-14 w-full">
+       {/* 🧠 SYSTEM 1: TODAY'S SCORE & COACHING */}
+        <div className="flex flex-col items-center pt-2 pb-6 w-full">
            <SystemStatusHero 
              score={metrics.score} level={retention.level} xp={retention.xp} 
              streak={metrics.streak_count} momentum={tp.momentum_score} 
              trend={tp.today_trend} operatingState={operating_state_engine.operating_state} 
            />
            
-           <CoachIntelligencePanel 
-             coachMessage={coachMessage}
-             operatingState={operating_state_engine}
-             strainPacket={sp}
-             forecastPacket={fp}
-           />
-           
-           <AdaptiveMissionHero 
-             goalPacket={gp} 
-             recoveryRoi={recovery_roi} 
-             operatingState={operating_state_engine}
-           />
+           <div className="w-full mt-4">
+             <CoachIntelligencePanel 
+               coachMessage={coachMessage}
+               operatingState={operating_state_engine}
+               strainPacket={sp}
+               forecastPacket={fp}
+             />
+           </div>
+        </div>
 
-           {/* MASSIVE PRIMARY CTA */}
-           <div className="w-full px-4 pt-8">
+        {/* 🧠 SYSTEM 2: NUVYU TARGETS (FUTURE DECOUPLED AI ARCHITECTURE) */}
+        {/* 
+          FUTURE NUVYU INTELLIGENCE REASONING ENGINE:
+          - Gemini API evaluates full user context (identity, sleep, trends, burnout risk)
+          - Outputs dynamic, personalized targets optimizing for adherence and recovery
+          - Supports "WHY" reasoning (e.g. "Lighter walking goal to improve recovery")
+          - This completely replaces static defaults later
+        */}
+        <div className="px-1 mb-8 mt-2 w-full">
+          <div className="mb-4">
+             <h3 className="text-white font-medium text-[16px] tracking-tight ml-2">NUVYU Set Today's Targets For You</h3>
+          </div>
+          <AdaptiveGoalGrid 
+            metrics={metrics} gp={gp} np={np} sp={sp} 
+            energyColorClass={energyColorClass} targetCalories={targetCalories} 
+          />
+        </div>
+
+        {/* --- BELOW THE FOLD (ACTION & NARRATIVE) --- */}
+        <div className="space-y-8 pt-8 border-t border-white/5 relative w-full">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+          
+        {/* 🧠 ACTION CENTER & DAILY PROMISES */}
+        <div className="space-y-6 opacity-90 w-full">
+           {/* Primary Action CTA */}
+           <div className="w-full px-2 mb-8">
              <Link href="/log" className="block w-full group relative">
                <motion.div animate={{ opacity: [0.1, 0.25, 0.1] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} className="absolute inset-0 bg-[#00FFA3] rounded-[9999px] blur-xl opacity-20 group-hover:opacity-40 transition-opacity duration-500" />
                <motion.button whileTap={{ scale: 0.96 }} className="relative w-full bg-[#00FFA3] text-black font-bold text-[16px] py-4 rounded-[9999px] flex items-center justify-center gap-2 shadow-[0_0_0_1px_rgba(0,255,163,0.5)_inset]">
@@ -997,39 +1018,16 @@ interface AdaptiveAIContext extends AIContext {
                </motion.button>
              </Link>
            </div>
-        </div>
 
-        {/* --- BELOW THE FOLD (PROGRESSIVE DISCLOSURE) --- */}
-        <div className="space-y-8 pt-8 border-t border-white/5 relative">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-          
-        {/* 🧠 SECTION 4: BEHAVIORAL ACTION CENTER */}
-        <div className="space-y-6 opacity-90">
+           <AdaptiveMissionHero 
+             goalPacket={gp} 
+             recoveryRoi={recovery_roi} 
+             operatingState={operating_state_engine}
+           />
            <AIExecutionCard recoveryRoi={recovery_roi} interventionEngine={intervention_engine} strainPacket={sp} />
            <CommitmentContract cp={cp} />
            <ActiveChallenge chp={chp} />
         </div>
-
-        {/* SECTION 5: SYSTEM STATUS EXPERIENCE (Analytics UI Relocated) */}
-
-        {/* 🧠 SECTION 6: TODAY'S TARGETS (FUTURE DECOUPLED ARCHITECTURE) */}
-        {/* 
-          FUTURE GEMINI ARCHITECTURE:
-          - Gemini API -> Daily Target Generator -> Today's Targets UI
-          - Local Score Engine -> Today's Score UI
-          
-          These systems must remain fully decoupled. This ensures:
-          - Faster dashboard rendering & offline capability
-          - Lower Gemini usage / rate limiting
-          - Deterministic score computation independent of target generation
-        */}
-        <div className="flex justify-between items-end mb-4 mt-4">
-           <h3 className="text-white font-medium text-[16px] tracking-tight ml-2">NUVYU Set Today's Targets For You</h3>
-        </div>
-        <AdaptiveGoalGrid 
-          metrics={metrics} gp={gp} np={np} sp={sp} 
-          energyColorClass={energyColorClass} targetCalories={targetCalories} 
-        />
 
         {/* 🧠 SECTION 7 & 8: BEHAVIORAL NARRATIVE & TIMELINE */}
         <div className="space-y-6 pt-6">
