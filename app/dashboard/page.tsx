@@ -68,11 +68,18 @@ export default function Dashboard() {
   const [coachType, setCoachType] = useState<"ai" | "rule">("rule");
   const [aiLimitHit, setAiLimitHit] = useState(false);
   
-  // Retention Engine State
+    // Retention Engine State
   const [retention, setRetention] = useState({ xp: 0, level: 1, todayXP: 0 });
 
   useEffect(() => {
-    console.log("metrics.score state =", metrics.score);
+    console.log("========== METRICS STATE ==========");
+    console.log(metrics);
+    console.log("metrics.score =", metrics.score);
+  }, [metrics]);
+
+  useEffect(() => {
+    console.log("========== SCORE CHANGED ==========");
+    console.log(metrics.score);
   }, [metrics.score]);
 
     const getScoreSummary = (breakdown: any) => {
@@ -616,8 +623,8 @@ interface AdaptiveAIContext extends AIContext {
       const { start_utc, end_utc } = getLocalMidnightRange();
       const todayDateStr = getUserLocalToday();
 
-      // Fetch perfectly clamped local logs
-      const { data: rawLogs } = await supabase
+            // Fetch perfectly clamped local logs
+      const { data: rawLogs, error: logsError } = await supabase
         .from('daily_logs')
         .select('*')
         .eq('user_id', user.id)
@@ -626,9 +633,14 @@ interface AdaptiveAIContext extends AIContext {
 
       const logs = rawLogs || [];
 
-      console.log("RAW LOGS FROM SUPABASE", rawLogs);
-      console.log("LOGS PASSED TO ENGINE", logs);
-      console.log("LOG COUNT", logs.length);
+      console.log("========== SUPABASE DAILY LOGS ==========");
+      console.log({
+        logsError,
+        rawLogs,
+        count: rawLogs?.length ?? 0,
+        start_utc,
+        end_utc
+      });
 
       let totalSteps = 0;
       let totalWater = 0;
@@ -694,7 +706,7 @@ interface AdaptiveAIContext extends AIContext {
       const recentRecScores = (pastLogs || []).filter(l => l.log_type === 'sleep').slice(0, 3).map(l => l.data?.recovery_score || 50);
       const { risk_level: burnoutRisk, recovery_momentum } = detectBurnoutRisk(computedScore, sleepHours, safeNumber(profile.streak_count), safeNumber(energyStats?.deficit), recentRecScores);
 
-      // 2. Central Source of Truth Score Calculation (V2 Engine)
+    // 2. Central Source of Truth Score Calculation (V2 Engine)
       const scoreConfig = {
         sleepHours,
         recoveryScore: computedScore,
@@ -703,11 +715,29 @@ interface AdaptiveAIContext extends AIContext {
         isV1: false
       };
       
-      console.log("Score Config Values", { sleepHours: scoreConfig.sleepHours, recoveryScore: scoreConfig.recoveryScore, streakCount: scoreConfig.streakCount, burnoutRisk: scoreConfig.burnoutRisk, isV1: scoreConfig.isV1 });
+      console.log("========== ENGINE INPUT ==========");
+      console.log({ logs, scoreConfig });
+
+      console.table(
+        logs.map((log: any) => ({
+          created_at: log.created_at,
+          log_type: log.log_type,
+          data: log.data
+        }))
+      );
+
+      console.log("========== RAW SCORE INPUT ==========");
+      console.log({
+        sleepHours,
+        computedScore,
+        burnoutRisk,
+        profileStreak: profile.streak_count,
+        logsLength: logs.length
+      });
+
       // 🧠 BUG FIX: Extract 'totals' to resolve Vercel "Cannot find name" TS deployment errors 
       // and prevent runtime ReferenceErrors that cause the dummy 0-data UI crash.
       const { finalScore: calculatedScore, breakdown: scoreBreakdown, totals } = calculateDailyScore(logs || [], scoreConfig);
-
       console.log("Engine Output", { calculatedScore, breakdown: scoreBreakdown, totals });
       
       // 🧠 BUG FIX: Re-assign existing local variables WITHOUT re-declaring them.
