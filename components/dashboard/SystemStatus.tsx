@@ -8,11 +8,11 @@ export const SystemStatusHero = React.memo(function SystemStatusHero({ score, le
   const rounded = useTransform(count, Math.round);
   const shouldReduceMotion = useReducedMotion();
 
-  useEffect(() => {
+    useEffect(() => {
     const controls = animate(count, score || 0, { duration: shouldReduceMotion ? 0 : 1.5, ease: "easeOut", delay: 0.2 });
-    return controls.stop;
+    return () => controls.stop();
   }, [score, count, shouldReduceMotion]);
-    const TrendIcon = trend === 'improving' ? TrendingUp : trend === 'declining' ? TrendingDown : Minus;
+  const TrendIcon = trend === 'improving' ? TrendingUp : trend === 'declining' ? TrendingDown : Minus;
   
   return (
     <motion.section 
