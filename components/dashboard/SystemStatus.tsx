@@ -8,9 +8,9 @@ export const SystemStatusHero = React.memo(function SystemStatusHero({ score, le
   const rounded = useTransform(count, Math.round);
   const shouldReduceMotion = useReducedMotion();
 
-    useEffect(() => {
-    console.log("Hero received score:", score);
-    console.log("Animating to score:", score);
+      useEffect(() => {
+    console.log("========== HERO ==========");
+    console.log({ receivedScore: score });
     const controls = animate(count, score || 0, { duration: shouldReduceMotion ? 0 : 1.5, ease: "easeOut", delay: 0.2 });
     return () => controls.stop();
   }, [score, count, shouldReduceMotion]);
