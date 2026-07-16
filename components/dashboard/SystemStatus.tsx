@@ -47,20 +47,20 @@ export const SystemStatusHero = React.memo(function SystemStatusHero({ score, le
         </div>
       </div>
 
-       <div className="w-full max-w-[280px] flex justify-between px-6 py-2 bg-white/[0.02] border border-white/5 rounded-full backdrop-blur-sm">
+       <div className="w-full max-w-[280px] flex justify-between px-6 py-2.5 bg-[#050505]/50 border border-white/5 rounded-[16px] backdrop-blur-md shadow-sm">
         <div className="text-center relative overflow-hidden">
           {!shouldReduceMotion && <motion.div initial={{ x: '-100%' }} animate={{ x: '200%' }} transition={{ duration: 1.5, delay: 1, ease: "easeInOut" }} className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12 pointer-events-none" />}
-          <div className="flex items-baseline gap-1"><span className="text-[14px] font-bold text-white">{level}</span><span className="text-[10px] text-white/40 font-medium">Lvl</span></div>
+          <div className="flex items-baseline gap-1"><span className="text-[15px] font-semibold text-white tracking-tight">{level}</span><span className="text-[12px] text-white/40 font-medium">Level</span></div>
         </div>
-        <div className="w-px h-full bg-white/10" />
+        <div className="w-px h-full bg-white/5" />
         <div className="text-center relative overflow-hidden">
           {!shouldReduceMotion && <motion.div initial={{ x: '-100%' }} animate={{ x: '200%' }} transition={{ duration: 1.5, delay: 1.2, ease: "easeInOut" }} className="absolute inset-0 bg-gradient-to-r from-transparent via-[#A855F7]/30 to-transparent skew-x-12 pointer-events-none" />}
-          <div className="flex items-baseline gap-1"><span className="text-[14px] font-bold text-[#A855F7]">{xp}</span><span className="text-[10px] text-white/40 font-medium">XP</span></div>
+          <div className="flex items-baseline gap-1"><span className="text-[15px] font-semibold text-[#A855F7] tracking-tight">{xp}</span><span className="text-[12px] text-white/40 font-medium">XP</span></div>
         </div>
-        <div className="w-px h-full bg-white/10" />
-        <div className="text-center flex items-center justify-center gap-1">
-          <TrendIcon size={12} className={trend === 'improving' ? 'text-[#00FFA3]' : trend === 'declining' ? 'text-red-400' : 'text-white/50'} />
-          <span className="text-[14px] font-bold text-white">{momentum}</span>
+        <div className="w-px h-full bg-white/5" />
+        <div className="text-center flex items-center justify-center gap-1.5">
+          <TrendIcon size={14} className={trend === 'improving' ? 'text-[#00FFA3]' : trend === 'declining' ? 'text-red-400' : 'text-white/50'} />
+          <span className="text-[15px] font-semibold text-white tracking-tight">{momentum}</span>
         </div>
       </div>
     </motion.section>
@@ -137,13 +137,29 @@ export const DecisionBudgetCard = React.memo(function DecisionBudgetCard({ dbp }
 export const BehaviorTrendCard = React.memo(function BehaviorTrendCard({ tp }: any) {
   if (!tp) return null;
   return (
-    <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-[#0A0A0A] border border-white/10 rounded-[1.5rem] p-5 shadow-xl">
-     <h3 className="text-white/40 text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 mb-4"><Zap size={12} /> Weekly Progress</h3>
-      <div className="grid grid-cols-2 gap-4">
-         <div><span className="block text-[9px] text-white/40 font-bold uppercase tracking-widest mb-1">7-Day Trajectory</span><span className="text-xs font-black text-white capitalize">{tp.weekly_trend}</span></div>
-         <div><span className="block text-[9px] text-white/40 font-bold uppercase tracking-widest mb-1">Habit Consistency</span><span className="text-xs font-black text-white capitalize">{tp.behavior_drift?.replace(/_/g, ' ')}</span></div>
-         <div className="col-span-2 border-t border-white/5 pt-3"><span className="block text-[9px] text-white/40 font-bold uppercase tracking-widest mb-1">Looking Ahead</span><span className="text-sm font-medium text-[#00FFA3] capitalize">{tp.trajectory}</span></div>
+    <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-[#050505] border border-white/5 rounded-[24px] p-5">
+     <div className="flex items-center gap-2 mb-6">
+        <div className="w-6 h-6 rounded-full bg-purple-500/10 flex items-center justify-center">
+          <Zap size={12} className="text-purple-400" />
+        </div>
+        <h3 className="text-white/60 text-[13px] font-medium">Weekly Progress</h3>
+      </div>
+      
+      <div className="grid grid-cols-2 gap-x-4 gap-y-6">
+         <div className="flex flex-col gap-1">
+           <span className="text-[12px] text-white/40 font-medium">7-Day Trajectory</span>
+           <span className="text-[15px] font-semibold text-white tracking-tight capitalize">{tp.weekly_trend}</span>
+         </div>
+         <div className="flex flex-col gap-1">
+           <span className="text-[12px] text-white/40 font-medium">Habit Consistency</span>
+           <span className="text-[15px] font-semibold text-white tracking-tight capitalize">{tp.behavior_drift?.replace(/_/g, ' ')}</span>
+         </div>
+         <div className="col-span-2 flex flex-col gap-1 pt-4 border-t border-white/5">
+           <span className="text-[12px] text-white/40 font-medium">Looking Ahead</span>
+           <span className="text-[15px] font-semibold text-[#00FFA3] tracking-tight capitalize">{tp.trajectory}</span>
+         </div>
       </div>
     </motion.div>
   );
 });
+
