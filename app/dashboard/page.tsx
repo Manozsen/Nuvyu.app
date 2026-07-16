@@ -28,7 +28,7 @@ import { BottomNav } from '../../components/dashboard/BottomNav';
 import { AdaptiveMissionHero } from '../../components/dashboard/AdaptiveMissionHero';
 import { CoachIntelligencePanel } from '../../components/dashboard/CoachIntelligencePanel';
 import { AIExecutionCard, CommitmentContract, ActiveChallenge } from '../../components/dashboard/ActionCenter';
-import { SystemStatusHero, CapacityBudgetCard, DecisionBudgetCard, BehaviorTrendCard } from '../../components/dashboard/SystemStatus';
+import { SystemStatusHero } from '../../components/dashboard/SystemStatus';
 import { AdaptiveGoalGrid } from '../../components/dashboard/AdaptiveGoalGrid';
 import { RecoveryForecastCard, WeeklyStory, BehaviorMemoryHighlights } from '../../components/dashboard/Narrative';
 import { BehaviorTimeline } from '../../components/dashboard/Timeline';
@@ -968,16 +968,10 @@ interface AdaptiveAIContext extends AIContext {
            <ActiveChallenge chp={chp} />
         </div>
 
-        {/* 🧠 SECTION 5: SYSTEM STATUS EXPERIENCE */}
-        <div className="space-y-6 pt-2">
-          <div className="grid grid-cols-2 gap-4">
-            <CapacityBudgetCard cap={cap} cab={cab} />
-            <DecisionBudgetCard dbp={dbp} />
-          </div>
-          <BehaviorTrendCard tp={tp} />
-        </div>
+        {/* SECTION 5: SYSTEM STATUS EXPERIENCE (Analytics UI Relocated) */}
 
          {/* 🧠 SECTION 6: ADAPTIVE GOAL GRID */}
+
         <div className="flex justify-between items-end mb-2">
            <h3 className="text-white/60 font-bold uppercase tracking-widest text-[10px] ml-2">Daily Targets</h3>
         </div>
@@ -986,7 +980,7 @@ interface AdaptiveAIContext extends AIContext {
           energyColorClass={energyColorClass} targetCalories={targetCalories} 
         />
 
-                {/* 🧠 SECTION 7 & 8: BEHAVIORAL NARRATIVE & TIMELINE */}
+        {/* 🧠 SECTION 7 & 8: BEHAVIORAL NARRATIVE & TIMELINE */}
         <div className="space-y-6 pt-6">
           <RecoveryForecastCard fp={fp} burnoutRisk={metrics.burnout_risk} />
           <BehaviorMemoryHighlights mem={metrics.behavioral_memory_packet} tp={tp} />
