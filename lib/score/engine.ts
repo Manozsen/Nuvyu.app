@@ -94,7 +94,18 @@ export function calculateDailyScore(logs: any[], config: any = {}) {
     if (screenHours >= 8) penalty -= 15;
     else if (screenHours >= 5) penalty -= 5;
 
-    let finalScore = Math.max(0, Math.min(100, Math.round(base_score + penalty)));
+        let finalScore = Math.max(0, Math.min(100, Math.round(base_score + penalty)));
+
+    console.log("Score Engine Result", {
+      movement_score,
+      physiological_score,
+      nutrition_score,
+      consistency_score,
+      base_score,
+      penalty,
+      finalScore,
+      totals
+    });
 
     return { 
       finalScore, 
