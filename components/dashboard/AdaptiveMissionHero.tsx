@@ -12,56 +12,39 @@ export function AdaptiveMissionHero({ goalPacket, recoveryRoi, operatingState }:
   const shouldReduceMotion = useReducedMotion();
   // Haptic feedback can be added later on native platforms.
   
-  return (
+    return (
     <motion.section 
-      initial={{ opacity: 0, y: 15 }} 
+      initial={{ opacity: 0, y: 10 }} 
       animate={{ opacity: 1, y: 0 }} 
       transition={{ delay: 0.1, duration: 0.4 }}
-      className="px-2"
+      className="px-4 w-full"
     >
-      <div className="flex items-center justify-between mb-5 mt-4">
-        <h2 className="text-3xl font-black tracking-tighter text-white">Today's Mission</h2>
-        <span className="text-[10px] font-bold uppercase tracking-widest text-[#00FFA3] bg-[#00FFA3]/10 px-2.5 py-1 rounded-md border border-[#00FFA3]/20">
-          Ready
-        </span>
-      </div>
-
-      <div className="bg-[#0A0A0A] border border-white/10 rounded-[2rem] p-6 shadow-xl relative overflow-hidden">
-        {/* Premium ambient success glow based on state */}
-        <motion.div 
-          animate={shouldReduceMotion ? { opacity: 0.2, scale: 1 } : { opacity: [0.15, 0.3, 0.15], scale: [1, 1.1, 1] }}
-          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-          className={`absolute -top-10 -right-10 w-32 h-32 blur-[60px] rounded-full pointer-events-none ${goalPacket?.challenge_difficulty === 'Low' ? 'bg-orange-500' : 'bg-[#00FFA3]'}`} 
-        />
-        
+      <div className="w-full bg-[#0A0A0A]/40 border border-white/5 rounded-3xl p-5 shadow-xl relative overflow-hidden backdrop-blur-md">
          <div className="space-y-4 relative z-10">
-          <div className="flex items-start gap-4">
-            <div className="w-8 h-8 rounded-full bg-[#00FFA3]/10 border border-[#00FFA3]/20 flex items-center justify-center shrink-0 mt-1">
-              <Footprints size={14} className="text-[#00FFA3]" />
+          <div className="flex items-center gap-4">
+            <div className="w-1.5 h-1.5 rounded-full bg-[#00FFA3] shadow-[0_0_8px_rgba(0,255,163,0.8)]" />
+            <div className="flex-1 flex justify-between items-baseline">
+              <span className="text-[16px] font-medium text-white/90">Walk</span>
+              <span className="text-[15px] font-bold text-white">{goalPacket?.target_steps || 6000} <span className="text-[12px] font-medium text-white/40">steps</span></span>
             </div>
-            <div>
-              <div className="text-lg font-bold text-white tracking-tight">{goalPacket?.target_steps || 6000} Steps</div>
-              <div className="text-[11px] text-white/40 font-medium">Daily target</div>
+          </div>
+          
+          <div className="w-full h-px bg-white/5" />
+          
+          <div className="flex items-center gap-4">
+            <div className="w-1.5 h-1.5 rounded-full bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.8)]" />
+            <div className="flex-1 flex justify-between items-baseline">
+              <span className="text-[16px] font-medium text-white/90">Hydrate</span>
+              <span className="text-[15px] font-bold text-white">{goalPacket?.target_water || 3000} <span className="text-[12px] font-medium text-white/40">ml</span></span>
             </div>
           </div>
 
-          <div className="flex items-start gap-4">
-            <div className="w-8 h-8 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0 mt-1">
-              <Droplets size={14} className="text-blue-400" />
-            </div>
-            <div>
-              <div className="text-lg font-bold text-white tracking-tight">{goalPacket?.target_water || 3000} ml Water</div>
-              <div className="text-[11px] text-white/40 font-medium">Daily target</div>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-4">
-            <div className="w-8 h-8 rounded-full bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0 mt-1">
-              <Activity size={14} className="text-purple-400" />
-            </div>
-            <div>
-              <div className="text-lg font-bold text-white tracking-tight capitalize">{recoveryRoi?.roi_action || 'Consistency'}</div>
-              <div className="text-[11px] text-white/40 font-medium">Helps you recover</div>
+          <div className="w-full h-px bg-white/5" />
+          
+          <div className="flex items-center gap-4">
+            <div className="w-1.5 h-1.5 rounded-full bg-purple-400 shadow-[0_0_8px_rgba(192,132,252,0.8)]" />
+            <div className="flex-1 flex justify-between items-baseline">
+              <span className="text-[16px] font-medium text-white/90 capitalize">{recoveryRoi?.roi_action || 'Consistency'}</span>
             </div>
           </div>
         </div>
