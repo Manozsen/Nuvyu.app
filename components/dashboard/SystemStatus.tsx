@@ -15,47 +15,54 @@ export const SystemStatusHero = React.memo(function SystemStatusHero({ score, le
   const TrendIcon = trend === 'improving' ? TrendingUp : trend === 'declining' ? TrendingDown : Minus;
   
   return (
+    return (
     <motion.section 
-      initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5, ease: "easeOut" }}
-      className="bg-[#0A0A0A] border border-white/10 rounded-[2rem] p-6 flex flex-col items-center relative shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
+      initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+      className="w-full flex flex-col items-center relative pt-2 pb-4"
     >
-       <div className="w-full flex justify-between items-center mb-4 px-2">
-        <h3 className="text-white/40 text-[10px] font-bold uppercase tracking-widest">Today's Progress</h3>
-      </div>
-
-      <div className="relative w-48 h-48 flex items-center justify-center mb-4">
+      <div className="relative w-56 h-56 flex items-center justify-center mb-6">
+        {/* Ambient Hero Glow */}
+        <motion.div 
+          animate={shouldReduceMotion ? { opacity: 0.1, scale: 1 } : { opacity: [0.1, 0.2, 0.1], scale: [1, 1.05, 1] }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute inset-0 blur-[60px] rounded-full pointer-events-none bg-[#00FFA3]" 
+        />
         <svg className="absolute w-full h-full transform -rotate-90">
-          <circle cx="96" cy="96" r="84" stroke="rgba(255,255,255,0.05)" strokeWidth="10" fill="transparent" />
+          <circle cx="112" cy="112" r="100" stroke="rgba(255,255,255,0.03)" strokeWidth="4" fill="transparent" />
           <motion.circle 
-            cx="96" cy="96" r="84" stroke="#00FFA3" strokeWidth="10" fill="transparent"
-            strokeDasharray={527} strokeLinecap="round"
-            initial={{ strokeDashoffset: 527, filter: "drop-shadow(0px 0px 0px rgba(0,255,163,0))" }} 
+            cx="112" cy="112" r="100" stroke="#00FFA3" strokeWidth="4" fill="transparent"
+            strokeDasharray={628} strokeLinecap="round"
+            initial={{ strokeDashoffset: 628, filter: "drop-shadow(0px 0px 0px rgba(0,255,163,0))" }} 
             animate={{ 
-              strokeDashoffset: 527 - (527 * score) / 100,
-              filter: score >= 80 ? "drop-shadow(0px 0px 25px rgba(0,255,163,0.7))" : "drop-shadow(0px 0px 10px rgba(0,255,163,0.3))"
+              strokeDashoffset: 628 - (628 * score) / 100,
+              filter: score >= 80 ? "drop-shadow(0px 0px 25px rgba(0,255,163,0.4))" : "drop-shadow(0px 0px 10px rgba(0,255,163,0.2))"
             }}
             transition={{ duration: shouldReduceMotion ? 0 : 1.5, delay: 0.2, ease: "easeOut" }}
           />
         </svg>
-         <div className="text-center z-10">
-          <motion.span className="text-6xl font-black tracking-tighter drop-shadow-lg text-white">
+         <div className="text-center z-10 flex flex-col items-center">
+          <motion.span className="text-7xl font-black tracking-tighter text-white drop-shadow-md">
             {rounded}
           </motion.span>
-          <p className="text-[#00FFA3] text-[10px] font-bold uppercase tracking-widest mt-1">Daily Score</p>
+          <span className="text-[12px] font-medium text-white/40 mt-1 capitalize">{operatingState?.replace('_', ' ') || 'Ready'}</span>
         </div>
       </div>
 
-       <div className="w-full grid grid-cols-4 gap-2 pt-4 border-t border-white/5">
-        <div className="text-center relative overflow-hidden rounded-lg">
+       <div className="w-full max-w-[280px] flex justify-between px-6 py-2 bg-white/[0.02] border border-white/5 rounded-full backdrop-blur-sm">
+        <div className="text-center relative overflow-hidden">
           {!shouldReduceMotion && <motion.div initial={{ x: '-100%' }} animate={{ x: '200%' }} transition={{ duration: 1.5, delay: 1, ease: "easeInOut" }} className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12 pointer-events-none" />}
-          <span className="block text-[9px] text-white/40 font-bold uppercase tracking-widest mb-1">Level</span><span className="text-sm font-black text-white">{level}</span>
+          <div className="flex items-baseline gap-1"><span className="text-[14px] font-bold text-white">{level}</span><span className="text-[10px] text-white/40 font-medium">Lvl</span></div>
         </div>
-        <div className="text-center relative overflow-hidden rounded-lg">
+        <div className="w-px h-full bg-white/10" />
+        <div className="text-center relative overflow-hidden">
           {!shouldReduceMotion && <motion.div initial={{ x: '-100%' }} animate={{ x: '200%' }} transition={{ duration: 1.5, delay: 1.2, ease: "easeInOut" }} className="absolute inset-0 bg-gradient-to-r from-transparent via-[#A855F7]/30 to-transparent skew-x-12 pointer-events-none" />}
-          <span className="block text-[9px] text-white/40 font-bold uppercase tracking-widest mb-1">XP</span><span className="text-sm font-black text-[#A855F7]">{xp}</span>
+          <div className="flex items-baseline gap-1"><span className="text-[14px] font-bold text-[#A855F7]">{xp}</span><span className="text-[10px] text-white/40 font-medium">XP</span></div>
         </div>
-        <div className="text-center"><span className="block text-[9px] text-white/40 font-bold uppercase tracking-widest mb-1">Momentum</span><span className="text-sm font-black text-[#00FFA3]">{momentum}</span></div>
-        <div className="text-center flex flex-col items-center justify-center"><span className="block text-[9px] text-white/40 font-bold uppercase tracking-widest mb-1">Trend</span><TrendIcon size={16} className={trend === 'improving' ? 'text-[#00FFA3]' : trend === 'declining' ? 'text-red-400' : 'text-white/50'} /></div>
+        <div className="w-px h-full bg-white/10" />
+        <div className="text-center flex items-center justify-center gap-1">
+          <TrendIcon size={12} className={trend === 'improving' ? 'text-[#00FFA3]' : trend === 'declining' ? 'text-red-400' : 'text-white/50'} />
+          <span className="text-[14px] font-bold text-white">{momentum}</span>
+        </div>
       </div>
     </motion.section>
   );
