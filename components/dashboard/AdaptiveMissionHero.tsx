@@ -12,7 +12,7 @@ export function AdaptiveMissionHero({ goalPacket, recoveryRoi, operatingState }:
   const shouldReduceMotion = useReducedMotion();
   // Haptic feedback can be added later on native platforms.
   
-    return (
+      return (
     <motion.section 
       initial={{ opacity: 0, y: 10 }} 
       animate={{ opacity: 1, y: 0 }} 
