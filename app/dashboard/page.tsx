@@ -71,6 +71,10 @@ export default function Dashboard() {
   // Retention Engine State
   const [retention, setRetention] = useState({ xp: 0, level: 1, todayXP: 0 });
 
+  useEffect(() => {
+    console.log("metrics.score state =", metrics.score);
+  }, [metrics.score]);
+
     const getScoreSummary = (breakdown: any) => {
     if (!breakdown) return "";
     const parts = [];
@@ -622,6 +626,10 @@ interface AdaptiveAIContext extends AIContext {
 
       const logs = rawLogs || [];
 
+      console.log("RAW LOGS FROM SUPABASE", rawLogs);
+      console.log("LOGS PASSED TO ENGINE", logs);
+      console.log("LOG COUNT", logs.length);
+
       let totalSteps = 0;
       let totalWater = 0;
       let energyIntake = 0;
@@ -686,7 +694,7 @@ interface AdaptiveAIContext extends AIContext {
       const recentRecScores = (pastLogs || []).filter(l => l.log_type === 'sleep').slice(0, 3).map(l => l.data?.recovery_score || 50);
       const { risk_level: burnoutRisk, recovery_momentum } = detectBurnoutRisk(computedScore, sleepHours, safeNumber(profile.streak_count), safeNumber(energyStats?.deficit), recentRecScores);
 
-      // 2. Central Source of Truth Score Calculation (V2 Engine)
+            // 2. Central Source of Truth Score Calculation (V2 Engine)
       const scoreConfig = {
         sleepHours,
         recoveryScore: computedScore,
@@ -695,9 +703,12 @@ interface AdaptiveAIContext extends AIContext {
         isV1: false
       };
       
+      console.log("Score Config Values", { sleepHours: scoreConfig.sleepHours, recoveryScore: scoreConfig.recoveryScore, streakCount: scoreConfig.streakCount, burnoutRisk: scoreConfig.burnoutRisk, isV1: scoreConfig.isV1 });
       // 🧠 BUG FIX: Extract 'totals' to resolve Vercel "Cannot find name" TS deployment errors 
       // and prevent runtime ReferenceErrors that cause the dummy 0-data UI crash.
       const { finalScore: calculatedScore, breakdown: scoreBreakdown, totals } = calculateDailyScore(logs || [], scoreConfig);
+
+      console.log("Engine Output", { calculatedScore, breakdown: scoreBreakdown, totals });
       
       // 🧠 BUG FIX: Re-assign existing local variables WITHOUT re-declaring them.
       // (Removing 'const' here permanently fixes the Vercel build crash)
@@ -708,6 +719,7 @@ interface AdaptiveAIContext extends AIContext {
 
        // 🚀 FUTURE-PROOF ARCHITECTURE UPGRADE:
       // Commit FULL React State HERE before ANY complex AI/ABOS logic executes.
+      console.log("Updating metrics.score", calculatedScore);
       setMetrics(prev => ({
         ...prev,
         score: calculatedScore,
