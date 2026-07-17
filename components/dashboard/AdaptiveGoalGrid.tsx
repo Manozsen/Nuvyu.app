@@ -129,12 +129,8 @@ export const FuelAndBurnInsight = React.memo(function FuelAndBurnInsight({ metri
             <span className="text-2xl font-semibold text-orange-400 tracking-tight">{metrics.energy_stats?.intakeCalories || 0}</span>
             <span className="text-white/40 text-[13px] font-medium">/ {metrics.energy_stats?.targetCalories || targetCalories} In</span>
           </div>
-          <div className="text-white/40 text-[12px] font-medium mt-1">{metrics.energy_stats?.deficit ? 'Deficit' : 'Surplus'}</div>
+         <div className="text-white/40 text-[12px] font-medium mt-1">{metrics.energy_stats?.deficit ? 'Deficit' : 'Surplus'}</div>
         </div>
-      </div>
-      <div className="flex justify-between items-center text-[13px] font-medium tracking-tight">
-        <span className="text-white/60">Protein: <span className={np?.protein_target_hit ? "text-[#00FFA3]" : "text-orange-400"}>{np?.protein_target_hit ? 'Hit' : 'Pending'}</span></span>
-        <span className="text-white/60">Sugar-free: <span className="text-white">{np?.sugar_avoidance_streak || 0} Days</span></span>
       </div>
     </motion.div>
   );
