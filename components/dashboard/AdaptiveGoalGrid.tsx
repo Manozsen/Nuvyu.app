@@ -83,7 +83,7 @@ const ProgressCard = ({ icon: Icon, title, current, target, unit, color }: any) 
           <span className="text-[12px] font-bold text-white/90">{Math.round(progress)}%</span>
         </div>
 
-        {/* Premium Animated Progress Bar */}
+      {/* Premium Animated Progress Bar */}
         <div className="w-full h-1.5 bg-white/10 rounded-full relative">
           <motion.div
             initial={{ width: 0 }}
@@ -97,3 +97,87 @@ const ProgressCard = ({ icon: Icon, title, current, target, unit, color }: any) 
     </div>
   );
 };
+
+// 🧠 SYSTEM 4: FUEL & BURN (METABOLIC STATE)
+// Independent dashboard insight. Represents metabolic state, not behavior completion.
+export const FuelAndBurnInsight = React.memo(function FuelAndBurnInsight({ metrics, targetCalories, np, energyColorClass }: any) {
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }} 
+      whileInView={{ opacity: 1, y: 0 }} 
+      viewport={{ once: true, margin: "-20px" }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ delay: 0.2, type: "spring", stiffness: 300, damping: 25 }} 
+      className="bg-[#050505] border border-white/5 rounded-[24px] p-5 flex flex-col justify-between shadow-sm cursor-pointer"
+    >
+      <div className="flex items-center gap-2 mb-5">
+        <div className="w-6 h-6 rounded-full bg-orange-500/10 flex items-center justify-center">
+          <Flame size={12} className={energyColorClass || "text-orange-400"} />
+        </div>
+        <span className="text-white/60 text-[13px] font-medium tracking-tight">Fuel & Burn</span>
+      </div>
+      <div className="flex justify-between items-end mb-5 border-b border-white/5 pb-5">
+        <div className="flex flex-col">
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-4xl font-semibold text-white tracking-tight">{metrics.energy_stats?.totalBurn || 0}</span>
+            <span className="text-white/40 text-[13px] font-medium">Out</span>
+          </div>
+          <div className="text-[#00FFA3] text-[12px] font-medium mt-1">{metrics.energy_stats?.activityBurn || 0} Active</div>
+        </div>
+        <div className="text-right flex flex-col">
+          <div className="flex items-baseline gap-1.5 justify-end">
+            <span className="text-2xl font-semibold text-orange-400 tracking-tight">{metrics.energy_stats?.intakeCalories || 0}</span>
+            <span className="text-white/40 text-[13px] font-medium">/ {metrics.energy_stats?.targetCalories || targetCalories} In</span>
+          </div>
+          <div className="text-white/40 text-[12px] font-medium mt-1">{metrics.energy_stats?.deficit ? 'Deficit' : 'Surplus'}</div>
+        </div>
+      </div>
+      <div className="flex justify-between items-center text-[13px] font-medium tracking-tight">
+        <span className="text-white/60">Protein: <span className={np?.protein_target_hit ? "text-[#00FFA3]" : "text-orange-400"}>{np?.protein_target_hit ? 'Hit' : 'Pending'}</span></span>
+        <span className="text-white/60">Sugar-free: <span className="text-white">{np?.sugar_avoidance_streak || 0} Days</span></span>
+      </div>
+    </motion.div>
+  );
+});
+
+// 🧠 SCORE ENGINE V3 ARCHITECTURE (EXPLAINABLE AI)
+// Prepared for future Gemini provider. Does not modify current logic.
+// Architecture: Base Score + Earned Score - Penalties = Final Score
+export interface ScoreV3Breakdown {
+  baseScore: number;     // e.g. 60 (Morning readiness: Recovery, Sleep, Stress)
+  earnedScore: number;   // e.g. +22 (Walk +6, Water +4, Protein +5, Sleep +7)
+  penalties: number;     // e.g. -5 (Late Sleep -3, High Screen Time -2)
+  finalScore: number;
+  earnedDetails?: Array<{ label: string; points: number }>;
+  penaltyDetails?: Array<{ label: string; points: number }>;
+}
+
+// Reusable UI component for Future Analytics (Section 8 & 9)
+// Unexposed on main dashboard until Engine V3 is fully populated.
+export const ExplainableScoreBreakdown = React.memo(function ExplainableScoreBreakdown({ breakdown }: { breakdown: ScoreV3Breakdown }) {
+  if (!breakdown) return null;
+  return (
+    <div className="bg-[#050505] border border-white/5 rounded-[24px] p-5">
+      <h3 className="text-white/90 font-medium text-[15px] mb-4">Today's Score Breakdown</h3>
+      <div className="space-y-3">
+        <div className="flex justify-between items-center pb-3 border-b border-white/5">
+          <span className="text-white/60 text-[13px]">Morning Base Score</span>
+          <span className="text-white font-semibold">{breakdown.baseScore}</span>
+        </div>
+        <div className="flex justify-between items-center pb-3 border-b border-white/5">
+          <span className="text-white/60 text-[13px]">Earned Today</span>
+          <span className="text-[#00FFA3] font-semibold">+{breakdown.earnedScore}</span>
+        </div>
+        <div className="flex justify-between items-center pb-3 border-b border-white/5">
+          <span className="text-white/60 text-[13px]">Penalties</span>
+          <span className="text-red-400 font-semibold">{breakdown.penalties < 0 ? breakdown.penalties : `-${breakdown.penalties}`}</span>
+        </div>
+        <div className="flex justify-between items-center pt-1">
+          <span className="text-white/90 font-medium text-[14px]">Final Score</span>
+          <span className="text-white font-bold text-[18px]">{breakdown.finalScore}</span>
+        </div>
+      </div>
+    </div>
+  );
+});
+
