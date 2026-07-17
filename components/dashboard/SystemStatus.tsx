@@ -41,7 +41,7 @@ export const SystemStatusHero = React.memo(function SystemStatusHero({ score, le
             transition={{ duration: shouldReduceMotion ? 0 : 1.5, delay: 0.2, ease: "easeOut" }}
           />
         </svg>
-                 <div className="text-center z-10 flex flex-col items-center">
+          <div className="text-center z-10 flex flex-col items-center">
           <span className="text-[11px] font-bold text-white/40 uppercase tracking-widest mb-1">TODAY'S SCORE</span>
           <motion.span className="text-7xl font-black tracking-tighter text-white drop-shadow-md leading-none">
             {rounded}
