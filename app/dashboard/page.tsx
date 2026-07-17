@@ -29,7 +29,7 @@ import { AdaptiveMissionHero } from '../../components/dashboard/AdaptiveMissionH
 import { CoachIntelligencePanel } from '../../components/dashboard/CoachIntelligencePanel';
 import { AIExecutionCard, CommitmentContract, ActiveChallenge } from '../../components/dashboard/ActionCenter';
 import { SystemStatusHero } from '../../components/dashboard/SystemStatus';
-import { NuvyuTargets, TodayProgress } from '../../components/dashboard/AdaptiveGoalGrid';
+import { NuvyuTargets, TodayProgress, FuelAndBurnInsight, ExplainableScoreBreakdown } from '../../components/dashboard/AdaptiveGoalGrid';
 import { RecoveryForecastCard, WeeklyStory, BehaviorMemoryHighlights } from '../../components/dashboard/Narrative';
 import { BehaviorTimeline } from '../../components/dashboard/Timeline';
 
@@ -998,13 +998,20 @@ interface AdaptiveAIContext extends AIContext {
           <NuvyuTargets gp={gp} np={np} sp={sp} targetCalories={targetCalories} />
         </div>
 
-        {/* 🧠 SYSTEM 3: TODAY'S PROGRESS (EXECUTION) */}
+         {/* 🧠 SYSTEM 3: TODAY'S PROGRESS (EXECUTION) */}
         <div className="px-1 mb-8 w-full">
           <div className="mb-4">
              <h3 className="text-white font-medium text-[16px] tracking-tight ml-2">Today's Progress</h3>
           </div>
           <TodayProgress 
             metrics={metrics} gp={gp} np={np} sp={sp} targetCalories={targetCalories} 
+          />
+        </div>
+
+        {/* 🧠 SYSTEM 4: FUEL & BURN (METABOLIC STATE) */}
+        <div className="px-1 mb-10 w-full">
+          <FuelAndBurnInsight 
+            metrics={metrics} targetCalories={targetCalories} np={np} energyColorClass={energyColorClass}
           />
         </div>
 
