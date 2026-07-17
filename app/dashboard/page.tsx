@@ -29,7 +29,7 @@ import { AdaptiveMissionHero } from '../../components/dashboard/AdaptiveMissionH
 import { CoachIntelligencePanel } from '../../components/dashboard/CoachIntelligencePanel';
 import { AIExecutionCard, CommitmentContract, ActiveChallenge } from '../../components/dashboard/ActionCenter';
 import { SystemStatusHero } from '../../components/dashboard/SystemStatus';
-import { AdaptiveGoalGrid } from '../../components/dashboard/AdaptiveGoalGrid';
+import { NuvyuTargets, TodayProgress } from '../../components/dashboard/AdaptiveGoalGrid';
 import { RecoveryForecastCard, WeeklyStory, BehaviorMemoryHighlights } from '../../components/dashboard/Narrative';
 import { BehaviorTimeline } from '../../components/dashboard/Timeline';
 
@@ -985,21 +985,26 @@ interface AdaptiveAIContext extends AIContext {
            </div>
         </div>
 
-        {/* 🧠 SYSTEM 2: NUVYU TARGETS (FUTURE DECOUPLED AI ARCHITECTURE) */}
+        {/* 🧠 SYSTEM 2: NUVYU TARGETS (PLAN) */}
         {/* 
           FUTURE NUVYU INTELLIGENCE REASONING ENGINE:
           - Gemini API evaluates full user context (identity, sleep, trends, burnout risk)
           - Outputs dynamic, personalized targets optimizing for adherence and recovery
-          - Supports "WHY" reasoning (e.g. "Lighter walking goal to improve recovery")
-          - This completely replaces static defaults later
         */}
-        <div className="px-1 mb-8 mt-2 w-full">
+        <div className="px-1 mb-10 mt-2 w-full">
           <div className="mb-4">
              <h3 className="text-white font-medium text-[16px] tracking-tight ml-2">NUVYU Set Today's Targets For You</h3>
           </div>
-          <AdaptiveGoalGrid 
-            metrics={metrics} gp={gp} np={np} sp={sp} 
-            energyColorClass={energyColorClass} targetCalories={targetCalories} 
+          <NuvyuTargets gp={gp} np={np} sp={sp} targetCalories={targetCalories} />
+        </div>
+
+        {/* 🧠 SYSTEM 3: TODAY'S PROGRESS (EXECUTION) */}
+        <div className="px-1 mb-8 w-full">
+          <div className="mb-4">
+             <h3 className="text-white font-medium text-[16px] tracking-tight ml-2">Today's Progress</h3>
+          </div>
+          <TodayProgress 
+            metrics={metrics} gp={gp} np={np} sp={sp} targetCalories={targetCalories} 
           />
         </div>
 
