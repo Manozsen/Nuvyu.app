@@ -999,13 +999,13 @@ interface AdaptiveAIContext extends AIContext {
         </div>
 
         {/* --- BELOW THE FOLD (ACTION & NARRATIVE) --- */}
-        <div className="space-y-8 pt-8 border-t border-white/5 relative w-full">
+        <div className="space-y-12 pt-10 border-t border-white/5 relative w-full">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
           
         {/* 🧠 ACTION CENTER & DAILY PROMISES */}
-        <div className="space-y-6 opacity-90 w-full">
+        <div className="space-y-8 opacity-90 w-full">
            {/* Primary Action CTA */}
-           <div className="w-full px-2 mb-8">
+           <div className="w-full px-2 mb-10">
              <Link href="/log" className="block w-full group relative">
                <motion.div animate={{ opacity: [0.1, 0.25, 0.1] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} className="absolute inset-0 bg-[#00FFA3] rounded-[9999px] blur-xl opacity-20 group-hover:opacity-40 transition-opacity duration-500" />
                <motion.button whileTap={{ scale: 0.96 }} className="relative w-full bg-[#00FFA3] text-black font-bold text-[16px] py-4 rounded-[9999px] flex items-center justify-center gap-2 shadow-[0_0_0_1px_rgba(0,255,163,0.5)_inset]">
