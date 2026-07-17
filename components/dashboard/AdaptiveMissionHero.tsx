@@ -12,7 +12,13 @@ export function AdaptiveMissionHero({ goalPacket, recoveryRoi, operatingState }:
   const shouldReduceMotion = useReducedMotion();
   // Haptic feedback can be added later on native platforms.
   
-      return (
+  // 🧠 FUTURE AI PLACEHOLDER
+  // This component is preserved for future Gemini-generated adaptive missions.
+  // Render is currently hidden behind a feature flag to prevent visual duplication.
+  const FEATURE_MISSIONS_ENABLED = false;
+  if (!FEATURE_MISSIONS_ENABLED) return null;
+
+  return (
     <motion.section 
       initial={{ opacity: 0, y: 10 }} 
       animate={{ opacity: 1, y: 0 }} 
