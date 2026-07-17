@@ -175,36 +175,19 @@ export default function Dashboard() {
     return "consistent";
   };
 
-      // 3. RULE-BASED FALLBACK
+  // 3. RULE-BASED FALLBACK (PREMIUM AI COACH)
+  // Structure: Observation -> Encouragement -> Next Action -> Positive Ending
   const generateRuleNudge = (metrics: any, behavior: string, pattern: any) => {
-    const isFatLoss = metrics.goal === 'Lean & Fit' || (metrics.primary_target || '').includes('fat');
-    const isMuscle = metrics.goal === 'Muscular' || (metrics.primary_target || '').includes('muscle');
-    const isOlder = (metrics.age || 25) >= 40;
-    const target = (metrics.primary_target || '').toLowerCase();
-    
-    // 🧠 TIME-AWARE ENGINE
     const hour = new Date().getHours();
-    const timeOfDay = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : hour < 21 ? 'evening' : 'night';
-
-    if (timeOfDay === 'morning' && behavior === 'inactive') return "Good morning! Din shuru ho chuka hai, let's get some steps in early.";
-    if (timeOfDay === 'night' && behavior !== 'sleep_deprived') return "Great work today. Ab screen time kam karo aur recovery pe focus karo.";
-    if (timeOfDay === 'night' && behavior === 'sleep_deprived') return "Pichli raat neend kam thi. Aaj jaldi so jao, recovery is where muscle grows.";
-    if (timeOfDay === 'afternoon' && behavior === 'improving') return "Solid afternoon momentum! Evening tak streak maintain rakhna.";
-
-    // Target-Based Behavior Priorities
-    if (target.includes('six_pack') && behavior === "consistent") return "Abs kitchen mein bante hain! Nutrition aur hydration maintain karo.";
-    if (target.includes('fit_in_30_days') && behavior === "inactive") return "30 days challenge on hai! Time waste nahi karna, get up and move!";
-    if (target.includes('height') && behavior === "sleep_deprived") return "Height aur posture ke liye recovery crucial hai. Need better sleep tonight.";
-
-    // Memory Pattern Logic
-    if (pattern?.repeating_low_steps) return "Pichhle kuch din se steps low hain, aaj improve karo.";
-    if (pattern?.hydration_issue) return "Hydration lagatar low hai, ispe focus karo.";
-    if (pattern?.improving_trend) return "Kal se better ho, momentum maintain rakho.";
-    if (behavior === "low_hydration") return `Hydration critical hai. Ek glass paani abhi piyo!`;
-    if (behavior === "inactive") return isOlder ? `Kafi time rest ho gaya. Thoda light walk kar lo.` : `Time is ticking bhai. Get moving, no excuses!`;
-    if (behavior === "low_activity") return isFatLoss ? `Calorie burn low hai aaj. Thoda step it up karo!` : `Activity drop ho rahi hai. Move a bit!`;
-    if (behavior === "improving") return `Great momentum today! Aise hi push karte raho.`;
-    return isMuscle ? `Solid consistency. Recovery aur protein pe focus rakhna.` : `On track! Yeh discipline maintain karna hai.`;
+    
+    if (behavior === "low_hydration") return "Hydration is looking a bit low right now. Your overall progress is steady though. Ek glass paani abhi piyo to keep the momentum going. Recovery will thank you tomorrow.";
+    if (behavior === "inactive" || behavior === "low_activity") return "Activity has been relatively light so far. Every movement counts towards your goal. Ek short 10-minute walk le lo to break the friction. You've got this.";
+    if (behavior === "sleep_deprived") return "Your recovery trend shows you didn't get enough rest. Your body needs time to rebuild. Aaj raat jaldi sone ka plan karo. Deep sleep is your best performance enhancer.";
+    if (behavior === "improving") return "You've built excellent momentum today. Bahut sahi jaa rahe ho. Just finish your remaining daily targets to secure a great score. Keep pushing!";
+    if (hour < 12) return "Good morning. The day is just starting and your system is ready. Early hydration aur thode steps cover kar lo to set a strong baseline. Make today count.";
+    if (hour > 20) return "Solid effort today. You've put in the work. Ab screen time kam karo and start winding down. Quality sleep will lock in today's gains.";
+    
+    return "Consistency is your biggest strength right now. Har healthy action add up ho raha hai. Complete your next target to keep the streak alive. You are doing great.";
   };
 
 // 🧠 LOCAL SCHEMA EXTENSION: Safely supports AI Memory Graph & Real AI Coach Runtime
