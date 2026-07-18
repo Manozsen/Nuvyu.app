@@ -22,23 +22,47 @@ export interface CanonicalTarget {
   confidence: ConfidenceLevel;
   source: TargetSource;
   expiresAt: string;
-  ui: {
-    action: string;
-    focus: string;
-    link: string;
-    icon: string;
-    color: string;
-  };
+  // UI object explicitly removed. Domain owns data. Presentation owns UI.
+}
+
+export interface UserProfileContext {
+  age: number;
+  weightKg: number;
+  heightCm: number;
+  gender: 'male' | 'female' | 'other';
+  goal: 'fat_loss' | 'muscle_gain' | 'longevity' | 'maintenance';
+  activityLevel: 'sedentary' | 'light' | 'moderate' | 'active' | 'athlete';
 }
 
 export interface TargetEngineContext {
+  profile: UserProfileContext;
   water: number;
   steps: number;
   proteinHit: boolean;
-  targetWater: number;
-  targetSteps: number;
   fatigueRisk: string;
   recoveryState: string;
+  momentumScore: number;
+}
+
+// 🧠 SMART DETERMINISTIC CALCULATOR
+// Computes hyper-personalized clinical targets when AI is offline.
+export class DeterministicTargetCalculator {
+  static calculate(profile: UserProfileContext, context: TargetEngineContext) {
+    const isMale = profile.gender === 'male';
+    const bmr = (10 * profile.weightKg) + (6.25 * profile.heightCm) - (5 * profile.age) + (isMale ? 5 : -161);
+    
+    let targetProtein = profile.goal === 'muscle_gain' ? Math.round(profile.weightKg * 2.2) : Math.round(profile.weightKg * 1.6);
+    let targetWater = Math.round((profile.weightKg * 35) + (context.fatigueRisk === 'high' ? 500 : 0));
+    let targetSteps = profile.goal === 'fat_loss' ? 10000 : 7500;
+    let targetSleep = context.recoveryState === 'poor' ? 8.5 : 7.5;
+    
+    // Algorithmic Friction Adjustment
+    if (context.momentumScore < 30) {
+       targetSteps = Math.max(5000, targetSteps * 0.8); // Reduce friction to rebuild momentum
+    }
+
+    return { targetProtein, targetWater, targetSteps, targetSleep };
+  }
 }
 
 export interface PipelineStage {
@@ -81,27 +105,99 @@ class SafetyEngineStage implements PipelineStage {
   }
 }
 
-class RuleEngineStage implements PipelineStage {
-  execute(context: TargetEngineContext, currentTarget: CanonicalTarget | null): CanonicalTarget | null {
-    // Immutable Pipeline Rule: Rule Engine NEVER overrides Safety Engine
-    if (currentTarget?.source === 'safety_engine') return currentTarget; 
+// 🧠 EXTENSIBLE RULE REGISTRY
+export class RuleRegistry {
+  private rules: PipelineStage[] = [];
+  public register(rule: PipelineStage) { this.rules.push(rule); }
+  public getRules() { return this.rules; }
+}
 
-    if (context.water < context.targetWater) {
+class HydrationRule implements PipelineStage {
+  execute(context: TargetEngineContext, currentTarget: CanonicalTarget | null): CanonicalTarget | null {
+    if (currentTarget?.source === 'safety_engine') return currentTarget;
+    const dynamicTargets = DeterministicTargetCalculator.calculate(context.profile, context);
+    
+    if (context.water < dynamicTargets.targetWater) {
       return {
         id: `target_water_${Date.now()}`,
         category: 'hydration',
         priority: 'high',
         lifecycle: 'active',
-        progress: { current: context.water, target: context.targetWater, percentage: Math.min(100, (context.water / Math.max(1, context.targetWater)) * 100) },
-        value: context.targetWater - context.water,
+        progress: { current: context.water, target: dynamicTargets.targetWater, percentage: Math.min(100, (context.water / Math.max(1, dynamicTargets.targetWater)) * 100) },
+        value: dynamicTargets.targetWater - context.water,
         unit: 'ml',
-        reason: 'Your body needs water to maintain metabolic baseline and systemic recovery today.',
+        reason: 'Calculated hydration baseline for your metabolic weight and current strain.',
         confidence: 'high',
         source: 'rule_engine',
-        expiresAt: new Date(new Date().setHours(23, 59, 59, 999)).toISOString(),
-        ui: { action: 'Log Water', focus: 'Hydration Priority', link: '/log', icon: 'droplets', color: 'text-blue-400' }
+        expiresAt: new Date(new Date().setHours(23, 59, 59, 999)).toISOString()
       };
     }
+    return null;
+  }
+}
+
+class MovementRule implements PipelineStage {
+  execute(context: TargetEngineContext, currentTarget: CanonicalTarget | null): CanonicalTarget | null {
+    if (currentTarget) return currentTarget; // Hydration took priority
+    const dynamicTargets = DeterministicTargetCalculator.calculate(context.profile, context);
+
+    if (context.steps < dynamicTargets.targetSteps) {
+      return {
+        id: `target_steps_${Date.now()}`,
+        category: 'movement',
+        priority: 'high',
+        lifecycle: 'active',
+        progress: { current: context.steps, target: dynamicTargets.targetSteps, percentage: Math.min(100, (context.steps / Math.max(1, dynamicTargets.targetSteps)) * 100) },
+        value: dynamicTargets.targetSteps - context.steps,
+        unit: 'steps',
+        reason: 'Personalized step target adapted for your current behavioral momentum.',
+        confidence: 'high',
+        source: 'rule_engine',
+        expiresAt: new Date(new Date().setHours(23, 59, 59, 999)).toISOString()
+      };
+    }
+    return null;
+  }
+}
+
+class RecoveryRule implements PipelineStage {
+  execute(context: TargetEngineContext, currentTarget: CanonicalTarget | null): CanonicalTarget | null {
+    if (currentTarget) return currentTarget;
+    const dynamicTargets = DeterministicTargetCalculator.calculate(context.profile, context);
+
+    return {
+      id: `target_sleep_${Date.now()}`,
+      category: 'sleep',
+      priority: 'medium',
+      lifecycle: 'pending',
+      progress: { current: 0, target: dynamicTargets.targetSleep, percentage: 0 },
+      value: dynamicTargets.targetSleep,
+      unit: 'hours',
+      reason: 'All daily outputs met. Wind down to lock in today\'s physiological gains.',
+      confidence: 'high',
+      source: 'rule_engine',
+      expiresAt: new Date(new Date().setHours(23, 59, 59, 999)).toISOString()
+    };
+  }
+}
+
+class RuleEngineStage implements PipelineStage {
+  private registry = new RuleRegistry();
+  constructor() {
+    this.registry.register(new HydrationRule());
+    this.registry.register(new MovementRule());
+    this.registry.register(new RecoveryRule());
+  }
+
+  execute(context: TargetEngineContext, currentTarget: CanonicalTarget | null): CanonicalTarget | null {
+    if (currentTarget?.source === 'safety_engine') return currentTarget; 
+    for (const rule of this.registry.getRules()) {
+      const result = rule.execute(context, currentTarget);
+      if (result) return result;
+    }
+    return currentTarget;
+  }
+}
     if (context.steps < context.targetSteps) {
       return {
         id: `target_steps_${Date.now()}`,
