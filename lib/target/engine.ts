@@ -250,38 +250,39 @@ export class TargetIntelligenceEngine {
   // 🧠 SINGLE SOURCE OF TRUTH: Full Daily Plan Generation
   public getDailyTargets(context: TargetEngineContext): CanonicalTarget[] {
     const expiresAt = new Date(new Date().setHours(23, 59, 59, 999)).toISOString();
+    const dynamicTargets = DeterministicTargetCalculator.calculate(context.profile, context);
     
-       // 1. Generate Raw Candidates deterministically
-        const rawTargets: CanonicalTarget[] = [
-          {
-            id: `target_steps_${Date.now()}`, category: 'movement', priority: 'high',
-            lifecycle: context.steps >= context.targetSteps ? 'completed' : 'active',
-            progress: { current: context.steps, target: context.targetSteps, percentage: Math.min(100, (context.steps / Math.max(1, context.targetSteps)) * 100) },
-            value: context.targetSteps, unit: 'steps', reason: 'Maintains cardiovascular baseline and metabolic health.',
-            confidence: 'high', source: 'rule_engine', expiresAt
-          },
-          {
-            id: `target_water_${Date.now()}`, category: 'hydration', priority: 'critical',
-            lifecycle: context.water >= context.targetWater ? 'completed' : 'active',
-            progress: { current: context.water, target: context.targetWater, percentage: Math.min(100, (context.water / Math.max(1, context.targetWater)) * 100) },
-            value: context.targetWater, unit: 'ml', reason: 'Essential for cellular recovery and nervous system repair.',
-            confidence: 'high', source: 'rule_engine', expiresAt
-          },
-          {
-            id: `target_protein_${Date.now()}`, category: 'nutrition', priority: 'high',
-            lifecycle: context.proteinHit ? 'completed' : 'active',
-            progress: { current: context.proteinHit ? 100 : 0, target: 100, percentage: context.proteinHit ? 100 : 0 },
-            value: 'Goal', unit: 'hit', reason: 'Critical for muscular adaptation following daily strain.',
-            confidence: 'high', source: 'rule_engine', expiresAt
-          },
-          {
-            id: `target_sleep_${Date.now()}`, category: 'sleep', priority: 'high',
-            lifecycle: 'pending', // Sleep is pending until night
-            progress: { current: 0, target: 8, percentage: 0 },
-            value: 8, unit: 'hours', reason: 'Deep rest secures the physiological adaptations earned today.',
-            confidence: 'high', source: 'rule_engine', expiresAt
-          }
-        ];
+    // 1. Generate Raw Candidates deterministically
+    const rawTargets: CanonicalTarget[] = [
+      {
+        id: `target_steps_${Date.now()}`, category: 'movement', priority: 'high',
+        lifecycle: context.steps >= dynamicTargets.targetSteps ? 'completed' : 'active',
+        progress: { current: context.steps, target: dynamicTargets.targetSteps, percentage: Math.min(100, (context.steps / Math.max(1, dynamicTargets.targetSteps)) * 100) },
+        value: dynamicTargets.targetSteps, unit: 'steps', reason: 'Maintains cardiovascular baseline and metabolic health.',
+        confidence: 'high', source: 'rule_engine', expiresAt
+      },
+      {
+        id: `target_water_${Date.now()}`, category: 'hydration', priority: 'critical',
+        lifecycle: context.water >= dynamicTargets.targetWater ? 'completed' : 'active',
+        progress: { current: context.water, target: dynamicTargets.targetWater, percentage: Math.min(100, (context.water / Math.max(1, dynamicTargets.targetWater)) * 100) },
+        value: dynamicTargets.targetWater, unit: 'ml', reason: 'Essential for cellular recovery and nervous system repair.',
+        confidence: 'high', source: 'rule_engine', expiresAt
+      },
+      {
+        id: `target_protein_${Date.now()}`, category: 'nutrition', priority: 'high',
+        lifecycle: context.proteinHit ? 'completed' : 'active',
+        progress: { current: context.proteinHit ? 100 : 0, target: 100, percentage: context.proteinHit ? 100 : 0 },
+        value: dynamicTargets.targetProtein, unit: 'g', reason: 'Critical for muscular adaptation following daily strain.',
+        confidence: 'high', source: 'rule_engine', expiresAt
+      },
+      {
+        id: `target_sleep_${Date.now()}`, category: 'sleep', priority: 'high',
+        lifecycle: 'pending', // Sleep is pending until night
+        progress: { current: 0, target: dynamicTargets.targetSleep, percentage: 0 },
+        value: dynamicTargets.targetSleep, unit: 'hours', reason: 'Deep rest secures the physiological adaptations earned today.',
+        confidence: 'high', source: 'rule_engine', expiresAt
+      }
+    ];
     
     // 2. Validate, AI-Optimize, and Apply Safety Modifiers to collection
     const validatedTargets = rawTargets.map(t => this.validator.validate(this.aiOptimization.execute(context, t) || t));
