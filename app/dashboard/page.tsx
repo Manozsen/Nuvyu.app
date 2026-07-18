@@ -939,10 +939,10 @@ interface AdaptiveAIContext extends AIContext {
   const tp = (metrics as any).trend_packet || { today_trend: 'stable', weekly_trend: 'stable', behavior_drift: 'stable', momentum_score: 50 };
   const cap = (metrics as any).capacity_packet || { capacity_score: 100, capacity_level: 'optimal', limiting_factor: 'none' };
   const cab = (metrics as any).capacity_budget || { available_effort_units: 10, max_friction_tolerance: 'high' };
-  const dbp = (metrics as any).decision_fatigue_packet?.decision_budget || { budget_status: 'Optimal', mental_load: 'Manageable', recommendation: 'Maintain standard load', reason_chain: ['System optimal'] };
+    const dbp = (metrics as any).decision_fatigue_packet?.decision_budget || { budget_status: 'Optimal', mental_load: 'Manageable', recommendation: 'Maintain standard load', reason_chain: ['System optimal'] };
 
   // 🧠 SYSTEM 5: TARGET ENGINE CONSUMPTION
-  // The Dashboard strictly consumes the final published target. It performs ZERO business logic.
+  // The Dashboard strictly consumes the final published targets. It performs ZERO business logic.
   const targetContext: TargetEngineContext = {
     water: metrics.water || 0,
     steps: metrics.steps || 0,
@@ -953,9 +953,10 @@ interface AdaptiveAIContext extends AIContext {
     recoveryState: metrics.recovery_state || 'moderate'
   };
   
-  const publishedTarget = targetIntelligenceEngine.getDailyTarget(targetContext);
+  const publishedPriority = targetIntelligenceEngine.getPrimaryPriority(targetContext);
+  const publishedTargets = targetIntelligenceEngine.getDailyTargets(targetContext);
   const FEATURE_MISSIONS_ENABLED = false;
-  
+
   const resolveIcon = (name: string) => {
     if (name === 'droplets') return Droplets;
     if (name === 'footprints') return Footprints;
@@ -963,7 +964,7 @@ interface AdaptiveAIContext extends AIContext {
     if (name === 'moon') return Moon;
     return Activity;
   };
-  const TargetIcon = resolveIcon(publishedTarget.ui.icon);
+  const TargetIcon = resolveIcon(publishedPriority.ui.icon);
 
   return (
     <div className="relative min-h-screen bg-black text-white pb-28 overflow-hidden selection:bg-[#00FFA3]/30">
@@ -1003,7 +1004,7 @@ interface AdaptiveAIContext extends AIContext {
           <div className="mb-4">
              <h3 className="text-white font-medium text-[16px] tracking-tight ml-2">NUVYU Set Today's Targets For You</h3>
           </div>
-          <NuvyuTargets gp={gp} np={np} sp={sp} targetCalories={targetCalories} />
+          <NuvyuTargets targets={publishedTargets} />
         </div>
 
          {/* 🧠 SYSTEM 3: TODAY'S PROGRESS (EXECUTION) */}
@@ -1011,9 +1012,7 @@ interface AdaptiveAIContext extends AIContext {
           <div className="mb-4">
              <h3 className="text-white font-medium text-[16px] tracking-tight ml-2">Today's Progress</h3>
           </div>
-          <TodayProgress 
-            metrics={metrics} gp={gp} np={np} sp={sp} targetCalories={targetCalories} 
-          />
+          <TodayProgress targets={publishedTargets} />
         </div>
 
         {/* 🧠 SYSTEM 4: FUEL & BURN (METABOLIC STATE) */}
@@ -1023,7 +1022,7 @@ interface AdaptiveAIContext extends AIContext {
           />
         </div>
 
-       {/* --- BELOW THE FOLD (ACTION & NARRATIVE) --- */}
+        {/* --- BELOW THE FOLD (ACTION & NARRATIVE) --- */}
         <div className="space-y-12 pt-10 border-t border-white/5 relative w-full">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
           
@@ -1032,14 +1031,14 @@ interface AdaptiveAIContext extends AIContext {
            
            {/* Dynamic Primary CTA */}
            <div className="w-full px-2">
-             <Link href={publishedTarget.ui.link} className="block w-full group relative">
+             <Link href={publishedPriority.ui.link} className="block w-full group relative">
                <motion.div animate={{ opacity: [0.1, 0.25, 0.1] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} className="absolute inset-0 bg-[#00FFA3] rounded-[9999px] blur-xl opacity-20 group-hover:opacity-40 transition-opacity duration-500" />
                <motion.button 
-                 disabled={publishedTarget.priority === 'blocked'}
+                 disabled={publishedPriority.priority === 'blocked'}
                  whileTap={{ scale: 0.96 }} 
-                 className={`relative w-full text-black font-bold text-[16px] py-4 rounded-[9999px] flex items-center justify-center gap-2 transition-all ${publishedTarget.priority === 'blocked' ? 'bg-white/20 text-white/40 cursor-not-allowed' : 'bg-[#00FFA3] shadow-[0_0_0_1px_rgba(0,255,163,0.5)_inset]'}`}
+                 className={`relative w-full text-black font-bold text-[16px] py-4 rounded-[9999px] flex items-center justify-center gap-2 transition-all ${publishedPriority.priority === 'blocked' ? 'bg-white/20 text-white/40 cursor-not-allowed' : 'bg-[#00FFA3] shadow-[0_0_0_1px_rgba(0,255,163,0.5)_inset]'}`}
                >
-                 {publishedTarget.ui.action} <TargetIcon size={18} strokeWidth={3} />
+                 {publishedPriority.ui.action} <TargetIcon size={18} strokeWidth={3} />
                </motion.button>
              </Link>
            </div>
@@ -1052,15 +1051,15 @@ interface AdaptiveAIContext extends AIContext {
                    <Brain size={10} fill="currentColor" /> Today's Focus
                  </h3>
                  <span className="bg-[#00FFA3]/20 text-[#00FFA3] px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest">
-                   {publishedTarget.source.replace('_', ' ')}
+                   {publishedPriority.source.replace('_', ' ')}
                  </span>
                </div>
                <div className="mb-2">
                  <div className="text-[18px] font-semibold text-white tracking-tight capitalize mb-2">
-                   {publishedTarget.ui.focus}
+                   {publishedPriority.ui.focus}
                  </div>
                  <p className="text-[13px] font-medium text-white/60 leading-relaxed">
-                   {publishedTarget.reason}
+                   {publishedPriority.reason}
                  </p>
                </div>
              </div>
