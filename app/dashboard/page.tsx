@@ -1026,9 +1026,21 @@ interface AdaptiveAIContext extends AIContext {
 
         {/* 🧠 SECTION 7 & 8: BEHAVIORAL NARRATIVE & TIMELINE */}
         <div className="space-y-6 pt-6">
-          <RecoveryForecastCard fp={fp} burnoutRisk={metrics.burnout_risk} />
-          <BehaviorMemoryHighlights mem={metrics.behavioral_memory_packet} tp={tp} />
-          <WeeklyStory tp={tp} mem={metrics.behavioral_memory_packet} fp={fp} />
+          {/*
+            FUTURE ANALYTICS VIEW PLACEHOLDER
+            RecoveryForecastCard, BehaviorMemoryHighlights, and WeeklyStory
+            contain valuable but dense analytical data. 
+            They are safely preserved here in the render tree behind a feature flag 
+            to keep the daily dashboard breathable. They will be migrated to a 
+            dedicated Insights page in a future update.
+          */}
+          {false && (
+            <>
+              <RecoveryForecastCard fp={fp} burnoutRisk={metrics.burnout_risk} />
+              <BehaviorMemoryHighlights mem={metrics.behavioral_memory_packet} tp={tp} />
+              <WeeklyStory tp={tp} mem={metrics.behavioral_memory_packet} fp={fp} />
+            </>
+          )}
           
           <BehaviorTimeline 
             logs={metrics.today_logs} 
