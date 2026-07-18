@@ -32,6 +32,7 @@ import { SystemStatusHero } from '../../components/dashboard/SystemStatus';
 import { NuvyuTargets, TodayProgress, FuelAndBurnInsight, ExplainableScoreBreakdown } from '../../components/dashboard/AdaptiveGoalGrid';
 import { RecoveryForecastCard, WeeklyStory, BehaviorMemoryHighlights } from '../../components/dashboard/Narrative';
 import { BehaviorTimeline } from '../../components/dashboard/Timeline';
+import { targetIntelligenceEngine, TargetEngineContext } from '../../lib/target/engine';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -940,6 +941,30 @@ interface AdaptiveAIContext extends AIContext {
   const cab = (metrics as any).capacity_budget || { available_effort_units: 10, max_friction_tolerance: 'high' };
   const dbp = (metrics as any).decision_fatigue_packet?.decision_budget || { budget_status: 'Optimal', mental_load: 'Manageable', recommendation: 'Maintain standard load', reason_chain: ['System optimal'] };
 
+  // 🧠 SYSTEM 5: TARGET ENGINE CONSUMPTION
+  // The Dashboard strictly consumes the final published target. It performs ZERO business logic.
+  const targetContext: TargetEngineContext = {
+    water: metrics.water || 0,
+    steps: metrics.steps || 0,
+    proteinHit: np?.protein_target_hit || false,
+    targetWater: gp?.target_water || 3000,
+    targetSteps: gp?.target_steps || 6000,
+    fatigueRisk: metrics.fatigue_risk || 'low',
+    recoveryState: metrics.recovery_state || 'moderate'
+  };
+  
+  const publishedTarget = targetIntelligenceEngine.getDailyTarget(targetContext);
+  const FEATURE_MISSIONS_ENABLED = false;
+  
+  const resolveIcon = (name: string) => {
+    if (name === 'droplets') return Droplets;
+    if (name === 'footprints') return Footprints;
+    if (name === 'flame') return Flame;
+    if (name === 'moon') return Moon;
+    return Activity;
+  };
+  const TargetIcon = resolveIcon(publishedTarget.ui.icon);
+
   return (
     <div className="relative min-h-screen bg-black text-white pb-28 overflow-hidden selection:bg-[#00FFA3]/30">
       
@@ -998,30 +1023,66 @@ interface AdaptiveAIContext extends AIContext {
           />
         </div>
 
-        {/* --- BELOW THE FOLD (ACTION & NARRATIVE) --- */}
+       {/* --- BELOW THE FOLD (ACTION & NARRATIVE) --- */}
         <div className="space-y-12 pt-10 border-t border-white/5 relative w-full">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
           
-        {/* 🧠 ACTION CENTER & DAILY PROMISES */}
+        {/* 🧠 SYSTEM 5: DYNAMIC PRIMARY CTA & TODAY'S FOCUS */}
         <div className="space-y-8 opacity-90 w-full">
-           {/* Primary Action CTA */}
-           <div className="w-full px-2 mb-10">
-             <Link href="/log" className="block w-full group relative">
+           
+           {/* Dynamic Primary CTA */}
+           <div className="w-full px-2">
+             <Link href={publishedTarget.ui.link} className="block w-full group relative">
                <motion.div animate={{ opacity: [0.1, 0.25, 0.1] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} className="absolute inset-0 bg-[#00FFA3] rounded-[9999px] blur-xl opacity-20 group-hover:opacity-40 transition-opacity duration-500" />
-               <motion.button whileTap={{ scale: 0.96 }} className="relative w-full bg-[#00FFA3] text-black font-bold text-[16px] py-4 rounded-[9999px] flex items-center justify-center gap-2 shadow-[0_0_0_1px_rgba(0,255,163,0.5)_inset]">
-                 Log Today <Plus size={18} strokeWidth={3} />
+               <motion.button 
+                 disabled={publishedTarget.priority === 'blocked'}
+                 whileTap={{ scale: 0.96 }} 
+                 className={`relative w-full text-black font-bold text-[16px] py-4 rounded-[9999px] flex items-center justify-center gap-2 transition-all ${publishedTarget.priority === 'blocked' ? 'bg-white/20 text-white/40 cursor-not-allowed' : 'bg-[#00FFA3] shadow-[0_0_0_1px_rgba(0,255,163,0.5)_inset]'}`}
+               >
+                 {publishedTarget.ui.action} <TargetIcon size={18} strokeWidth={3} />
                </motion.button>
              </Link>
            </div>
 
-           <AdaptiveMissionHero 
-             goalPacket={gp} 
-             recoveryRoi={recovery_roi} 
-             operatingState={operating_state_engine}
-           />
-           <AIExecutionCard recoveryRoi={recovery_roi} interventionEngine={intervention_engine} strainPacket={sp} />
-           <CommitmentContract cp={cp} />
-           <ActiveChallenge chp={chp} />
+           {/* Today's Focus (Replaces "Up Next") */}
+           <div className="w-full px-2 mb-10">
+             <div className="bg-gradient-to-br from-[#00FFA3]/10 to-transparent border border-[#00FFA3]/20 rounded-[2rem] p-6 shadow-xl relative overflow-hidden">
+                <div className="flex justify-between items-start mb-4">
+                 <h3 className="text-[#00FFA3]/80 text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5">
+                   <Brain size={10} fill="currentColor" /> Today's Focus
+                 </h3>
+                 <span className="bg-[#00FFA3]/20 text-[#00FFA3] px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest">
+                   {publishedTarget.source.replace('_', ' ')}
+                 </span>
+               </div>
+               <div className="mb-2">
+                 <div className="text-[18px] font-semibold text-white tracking-tight capitalize mb-2">
+                   {publishedTarget.ui.focus}
+                 </div>
+                 <p className="text-[13px] font-medium text-white/60 leading-relaxed">
+                   {publishedTarget.reason}
+                 </p>
+               </div>
+             </div>
+           </div>
+
+           {/* 
+             FUTURE AI PLACEHOLDER 
+             Preserved safely behind a feature flag for future Gemini-generated adaptive missions.
+           */}
+           {FEATURE_MISSIONS_ENABLED && (
+             <AdaptiveMissionHero 
+               goalPacket={gp} 
+               recoveryRoi={recovery_roi} 
+               operatingState={operating_state_engine}
+             />
+           )}
+           
+           {/* 
+             NOTE: Daily Promises (CommitmentContract) and ActiveChallenge 
+             have been permanently moved to the Identity/Profile domains 
+             to eliminate cognitive duplication on the Dashboard. 
+           */}
         </div>
 
         {/* 🧠 SECTION 7 & 8: BEHAVIORAL NARRATIVE & TIMELINE */}
