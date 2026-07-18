@@ -33,6 +33,8 @@ import { NuvyuTargets, TodayProgress, FuelAndBurnInsight, ExplainableScoreBreakd
 import { RecoveryForecastCard, WeeklyStory, BehaviorMemoryHighlights } from '../../components/dashboard/Narrative';
 import { BehaviorTimeline } from '../../components/dashboard/Timeline';
 import { targetIntelligenceEngine, TargetEngineContext } from '../../lib/target/engine';
+import { DashboardTargetMapper } from '../../lib/presentation/mappers';
+import { EventBus, SyncService } from '../../lib/infrastructure/core';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -941,20 +943,45 @@ interface AdaptiveAIContext extends AIContext {
   const cab = (metrics as any).capacity_budget || { available_effort_units: 10, max_friction_tolerance: 'high' };
     const dbp = (metrics as any).decision_fatigue_packet?.decision_budget || { budget_status: 'Optimal', mental_load: 'Manageable', recommendation: 'Maintain standard load', reason_chain: ['System optimal'] };
 
-  // 🧠 SYSTEM 5: TARGET ENGINE CONSUMPTION
+  // 🧠 EVENT-DRIVEN SYNC INITIALIZATION
+  // Prepares the Dashboard to react to background syncs (e.g., Android Health Connect)
+  useEffect(() => {
+    if (userProfile?.id) {
+      SyncService.initializeOrchestration(userProfile.id);
+      const sub = EventBus.subscribe('StateUpdated', () => {
+        // In Phase 4, this will replace the massive imperative data fetch below.
+        console.log("Canonical State invalidated. UI re-rendering.");
+      });
+      return () => sub.unsubscribe();
+    }
+  }, [userProfile]);
+
+  // 🧠 SYSTEM 5: TARGET ENGINE CONSUMPTION & UI MAPPING
   // The Dashboard strictly consumes the final published targets. It performs ZERO business logic.
   const targetContext: TargetEngineContext = {
+    profile: {
+      age: userProfile?.age || 25,
+      weightKg: userProfile?.weight || 70,
+      heightCm: userProfile?.height || 170,
+      gender: userProfile?.gender || 'male',
+      goal: (userProfile?.goal || 'maintenance') as any,
+      activityLevel: (userProfile?.activity_level || 'moderate') as any,
+    },
     water: metrics.water || 0,
     steps: metrics.steps || 0,
     proteinHit: np?.protein_target_hit || false,
-    targetWater: gp?.target_water || 3000,
-    targetSteps: gp?.target_steps || 6000,
     fatigueRisk: metrics.fatigue_risk || 'low',
-    recoveryState: metrics.recovery_state || 'moderate'
+    recoveryState: metrics.recovery_state || 'moderate',
+    momentumScore: tp?.momentum_score || 50
   };
   
-  const publishedPriority = targetIntelligenceEngine.getPrimaryPriority(targetContext);
-  const publishedTargets = targetIntelligenceEngine.getDailyTargets(targetContext);
+  // Isolate Domain
+  const rawPriority = targetIntelligenceEngine.getPrimaryPriority(targetContext);
+  const rawTargets = targetIntelligenceEngine.getDailyTargets(targetContext);
+  
+  // Map to Presentation
+  const publishedPriority = DashboardTargetMapper.map(rawPriority);
+  const publishedTargets = DashboardTargetMapper.mapCollection(rawTargets);
   const FEATURE_MISSIONS_ENABLED = false;
 
   const resolveIcon = (name: string) => {
