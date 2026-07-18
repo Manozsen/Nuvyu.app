@@ -24,14 +24,10 @@ export const BehaviorTimeline = React.memo(function BehaviorTimeline({ logs, sp,
         <h3 className="text-white/60 font-bold uppercase tracking-widest text-[10px] ml-2">Today's Activity</h3>
       </div>
 
-      {/* Timeline Filters */}
+       {/* Timeline Filters */}
       <div className="flex gap-2 mb-6">
         <button onClick={() => handleFilter('today')} className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all ${activeFilter === 'today' ? 'bg-white text-black' : 'bg-white/5 text-white/40'}`}>Today</button>
-        <button onClick={() => handleFilter('7day')} className="px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest bg-white/5 text-white/20 border border-white/5 flex items-center gap-1"><Lock size={10}/> 7 Days</button>
-        <button onClick={() => handleFilter('30day')} className="px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest bg-white/5 text-white/20 border border-white/5 flex items-center gap-1"><Lock size={10}/> 30 Days</button>
       </div>
-      
-      {filterMsg && <div className="text-[10px] text-orange-400 font-bold uppercase tracking-widest mb-4 text-center bg-orange-500/10 py-2 rounded-lg">{filterMsg}</div>}
 
       <div className="space-y-6 relative before:absolute before:inset-0 before:ml-[19px] before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-white/10 before:to-transparent">
         {(!logs || logs.length === 0) ? (
@@ -62,7 +58,7 @@ export const BehaviorTimeline = React.memo(function BehaviorTimeline({ logs, sp,
                   <div className="flex items-center justify-between mb-1">
                     <span className="font-bold text-white text-sm tracking-tight">{title}</span>
                   </div>
-                  <div className="text-[9px] font-black text-white/40 uppercase tracking-widest">{timeStr} • {log.log_type}</div>
+                  <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest">{timeStr}</div>
                 </div>
               </motion.div>
             );
