@@ -899,6 +899,18 @@ interface AdaptiveAIContext extends AIContext {
     window.location.href = '/login';
   };
 
+  // 🧠 EVENT-DRIVEN SYNC INITIALIZATION
+  // Must be called before any early returns to obey React Hook rules.
+  useEffect(() => {
+    if (userProfile?.id) {
+      SyncService.initializeOrchestration(userProfile.id);
+      const sub = EventBus.subscribe('StateUpdated', () => {
+        console.log("Canonical State invalidated. UI re-rendering.");
+      });
+      return () => sub.unsubscribe();
+    }
+  }, [userProfile]);
+
   if (isCheckingAuth) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -941,20 +953,7 @@ interface AdaptiveAIContext extends AIContext {
   const tp = (metrics as any).trend_packet || { today_trend: 'stable', weekly_trend: 'stable', behavior_drift: 'stable', momentum_score: 50 };
   const cap = (metrics as any).capacity_packet || { capacity_score: 100, capacity_level: 'optimal', limiting_factor: 'none' };
   const cab = (metrics as any).capacity_budget || { available_effort_units: 10, max_friction_tolerance: 'high' };
-    const dbp = (metrics as any).decision_fatigue_packet?.decision_budget || { budget_status: 'Optimal', mental_load: 'Manageable', recommendation: 'Maintain standard load', reason_chain: ['System optimal'] };
-
-  // 🧠 EVENT-DRIVEN SYNC INITIALIZATION
-  // Prepares the Dashboard to react to background syncs (e.g., Android Health Connect)
-  useEffect(() => {
-    if (userProfile?.id) {
-      SyncService.initializeOrchestration(userProfile.id);
-      const sub = EventBus.subscribe('StateUpdated', () => {
-        // In Phase 4, this will replace the massive imperative data fetch below.
-        console.log("Canonical State invalidated. UI re-rendering.");
-      });
-      return () => sub.unsubscribe();
-    }
-  }, [userProfile]);
+  const dbp = (metrics as any).decision_fatigue_packet?.decision_budget || { budget_status: 'Optimal', mental_load: 'Manageable', recommendation: 'Maintain standard load', reason_chain: ['System optimal'] };
 
   // 🧠 SYSTEM 5: TARGET ENGINE CONSUMPTION & UI MAPPING
   // The Dashboard strictly consumes the final published targets. It performs ZERO business logic.
