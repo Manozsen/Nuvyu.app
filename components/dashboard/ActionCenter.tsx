@@ -16,12 +16,12 @@ export const AIExecutionCard = React.memo(function AIExecutionCard({ recoveryRoi
           <Play size={10} fill="currentColor" /> Up Next
         </h3>
       </div>
-      <div className="mb-6">
-        <div className="text-2xl font-black text-white tracking-tight capitalize mb-2">
-          {recoveryRoi?.roi_action || 'Maintain Routine'}
+       <div className="mb-6">
+        <div className="text-[18px] font-semibold text-white tracking-tight capitalize mb-2">
+          {recoveryRoi?.roi_action?.replace(/_/g, ' ') || 'Maintain Routine'}
         </div>
-        <div className="text-[11px] font-bold text-white/50 uppercase tracking-widest flex items-center gap-2">
-           <span className="bg-black/40 px-2 py-1 rounded-md border border-white/5">~ 15 MIN</span>
+        <div className="text-[11px] font-medium text-white/50 uppercase tracking-widest flex items-center gap-2">
+           <span className="bg-white/5 px-2 py-1 rounded border border-white/10 text-white/70">Recommended</span>
         </div>
       </div>
       <button className="w-full bg-[#00FFA3] text-black font-black uppercase tracking-widest text-[11px] py-4 rounded-xl flex items-center justify-center gap-2 hover:shadow-[0_0_20px_rgba(0,255,163,0.3)] transition-all active:scale-95">
