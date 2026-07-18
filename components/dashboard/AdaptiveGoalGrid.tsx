@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Footprints, Droplets, Moon, Flame, CheckCircle, Activity } from 'lucide-react';
-import type { CanonicalTarget } from '../../lib/target/engine';
+import type { DashboardUITarget } from '../../lib/presentation/mappers';
 
 const resolveIcon = (name: string) => {
   if (name === 'droplets') return Droplets;
@@ -12,8 +12,8 @@ const resolveIcon = (name: string) => {
 };
 
 // 🧠 SYSTEM 2: NUVYU TARGETS (PLAN)
-// Receives pre-computed, pre-ordered CanonicalTargets. Absolutely no rendering logic.
-export const NuvyuTargets = React.memo(function NuvyuTargets({ targets }: { targets: CanonicalTarget[] }) {
+// Receives pre-computed, pre-ordered DashboardUITargets. Absolutely no rendering logic.
+export const NuvyuTargets = React.memo(function NuvyuTargets({ targets }: { targets: DashboardUITarget[] }) {
   if (!targets || targets.length === 0) return null;
   return (
     <div className="space-y-3 px-1">
@@ -39,8 +39,8 @@ const TargetItem = ({ icon: Icon, text, isCompleted }: any) => (
 );
 
 // 🧠 SYSTEM 3: TODAY'S PROGRESS (EXECUTION ENGINE)
-// Generic Progress Engine mapping CanonicalTargets. 
-export const TodayProgress = React.memo(function TodayProgress({ targets }: { targets: CanonicalTarget[] }) {
+// Generic Progress Engine mapping DashboardUITargets. 
+export const TodayProgress = React.memo(function TodayProgress({ targets }: { targets: DashboardUITarget[] }) {
   if (!targets || targets.length === 0) return null;
   return (
     <div className="grid grid-cols-2 gap-3 px-1">
@@ -52,7 +52,7 @@ export const TodayProgress = React.memo(function TodayProgress({ targets }: { ta
 });
 
 // Generic Progress Card UI Component (Logic-free)
-const ProgressCard = ({ target }: { target: CanonicalTarget }) => {
+const ProgressCard = ({ target }: { target: DashboardUITarget }) => {
   const Icon = resolveIcon(target.ui.icon);
   const { current, target: targetAmount, percentage } = target.progress;
   const isCompleted = target.lifecycle === 'completed';
