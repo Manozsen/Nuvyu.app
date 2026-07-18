@@ -97,10 +97,9 @@ class SafetyEngineStage implements PipelineStage {
         reason: 'Critical fatigue risk detected. High-intensity output is blocked to protect central nervous system.',
         confidence: 'high',
         source: 'safety_engine',
-        expiresAt: new Date(new Date().setHours(23, 59, 59, 999)).toISOString(),
-        ui: { action: 'Rest Required', focus: 'Nervous System Recovery', link: '/log', icon: 'activity', color: 'text-orange-400' }
-      };
-    }
+        expiresAt: new Date(new Date().setHours(23, 59, 59, 999)).toISOString()
+       };
+     }
     return currentTarget;
   }
 }
@@ -198,55 +197,7 @@ class RuleEngineStage implements PipelineStage {
     return currentTarget;
   }
 }
-    if (context.steps < context.targetSteps) {
-      return {
-        id: `target_steps_${Date.now()}`,
-        category: 'movement',
-        priority: 'high',
-        lifecycle: 'active',
-        progress: { current: context.steps, target: context.targetSteps, percentage: Math.min(100, (context.steps / Math.max(1, context.targetSteps)) * 100) },
-        value: context.targetSteps - context.steps,
-        unit: 'steps',
-        reason: 'Walking will safely bridge your active calorie deficit without central nervous system strain.',
-        confidence: 'high',
-        source: 'rule_engine',
-        expiresAt: new Date(new Date().setHours(23, 59, 59, 999)).toISOString(),
-        ui: { action: 'Complete Walk', focus: 'Movement Priority', link: '/log', icon: 'footprints', color: 'text-[#00FFA3]' }
-      };
-    }
-    if (!context.proteinHit) {
-      return {
-        id: `target_protein_${Date.now()}`,
-        category: 'nutrition',
-        priority: 'high',
-        lifecycle: 'active',
-        progress: { current: 0, target: 100, percentage: 0 },
-        value: 'Remaining',
-        unit: 'g',
-        reason: 'Protein is strictly required to repair nervous system strain and support hypertrophy.',
-        confidence: 'high',
-        source: 'rule_engine',
-        expiresAt: new Date(new Date().setHours(23, 59, 59, 999)).toISOString(),
-        ui: { action: 'Log Protein', focus: 'Recovery Fuel', link: '/log', icon: 'flame', color: 'text-orange-400' }
-      };
-    }
-
-    return {
-      id: `target_sleep_${Date.now()}`,
-      category: 'sleep',
-      priority: 'medium',
-      lifecycle: 'pending',
-      progress: { current: 0, target: 8, percentage: 0 },
-      value: 8,
-      unit: 'hours',
-      reason: 'All daily outputs met. Wind down to lock in today\'s physiological gains.',
-      confidence: 'high',
-      source: 'rule_engine',
-      expiresAt: new Date(new Date().setHours(23, 59, 59, 999)).toISOString(),
-      ui: { action: 'Prioritize Sleep', focus: 'System Recovery', link: '/log', icon: 'moon', color: 'text-indigo-400' }
-    };
-  }
-}
+// Orphaned code removed to restore syntax tree.
 
 class AIOptimizationStage implements PipelineStage {
   constructor(private provider: AIOptimizerProvider) {}
@@ -259,7 +210,7 @@ class AIOptimizationStage implements PipelineStage {
 
 class TargetValidator {
   validate(target: CanonicalTarget | null): CanonicalTarget {
-    if (!target || !target.id || !target.reason || !target.ui) {
+    if (!target || !target.id || !target.reason) {
       return this.getFallbackTarget();
     }
     return target;
@@ -277,8 +228,7 @@ class TargetValidator {
       reason: 'Operating in fallback mode to ensure system stability.',
       confidence: 'low',
       source: 'fallback_engine',
-      expiresAt: new Date(new Date().setHours(23, 59, 59, 999)).toISOString(),
-      ui: { action: 'Log Progress', focus: 'System Offline', link: '/log', icon: 'activity', color: 'text-white' }
+      expiresAt: new Date(new Date().setHours(23, 59, 59, 999)).toISOString()
     };
   }
 }
@@ -301,42 +251,38 @@ export class TargetIntelligenceEngine {
   public getDailyTargets(context: TargetEngineContext): CanonicalTarget[] {
     const expiresAt = new Date(new Date().setHours(23, 59, 59, 999)).toISOString();
     
-    // 1. Generate Raw Candidates deterministically
-    const rawTargets: CanonicalTarget[] = [
-      {
-        id: `target_steps_${Date.now()}`, category: 'movement', priority: 'high',
-        lifecycle: context.steps >= context.targetSteps ? 'completed' : 'active',
-        progress: { current: context.steps, target: context.targetSteps, percentage: Math.min(100, (context.steps / Math.max(1, context.targetSteps)) * 100) },
-        value: context.targetSteps, unit: 'steps', reason: 'Maintains cardiovascular baseline and metabolic health.',
-        confidence: 'high', source: 'rule_engine', expiresAt,
-        ui: { action: 'Complete Walk', focus: 'Walk', link: '/log', icon: 'footprints', color: 'text-[#00FFA3]' }
-      },
-      {
-        id: `target_water_${Date.now()}`, category: 'hydration', priority: 'critical',
-        lifecycle: context.water >= context.targetWater ? 'completed' : 'active',
-        progress: { current: context.water, target: context.targetWater, percentage: Math.min(100, (context.water / Math.max(1, context.targetWater)) * 100) },
-        value: context.targetWater, unit: 'ml', reason: 'Essential for cellular recovery and nervous system repair.',
-        confidence: 'high', source: 'rule_engine', expiresAt,
-        ui: { action: 'Log Water', focus: 'Stay Hydrated', link: '/log', icon: 'droplets', color: 'text-blue-400' }
-      },
-      {
-        id: `target_protein_${Date.now()}`, category: 'nutrition', priority: 'high',
-        lifecycle: context.proteinHit ? 'completed' : 'active',
-        progress: { current: context.proteinHit ? 100 : 0, target: 100, percentage: context.proteinHit ? 100 : 0 },
-        value: 'Goal', unit: 'hit', reason: 'Critical for muscular adaptation following daily strain.',
-        confidence: 'high', source: 'rule_engine', expiresAt,
-        ui: { action: 'Log Protein', focus: 'Protein Baseline', link: '/log', icon: 'flame', color: 'text-orange-400' }
-      },
-      {
-        id: `target_sleep_${Date.now()}`, category: 'sleep', priority: 'high',
-        lifecycle: 'pending', // Sleep is pending until night
-        progress: { current: 0, target: 8, percentage: 0 },
-        value: 8, unit: 'hours', reason: 'Deep rest secures the physiological adaptations earned today.',
-        confidence: 'high', source: 'rule_engine', expiresAt,
-        ui: { action: 'Prioritize Sleep', focus: 'Deep Rest', link: '/log', icon: 'moon', color: 'text-indigo-400' }
-      }
-    ];
-
+       // 1. Generate Raw Candidates deterministically
+        const rawTargets: CanonicalTarget[] = [
+          {
+            id: `target_steps_${Date.now()}`, category: 'movement', priority: 'high',
+            lifecycle: context.steps >= context.targetSteps ? 'completed' : 'active',
+            progress: { current: context.steps, target: context.targetSteps, percentage: Math.min(100, (context.steps / Math.max(1, context.targetSteps)) * 100) },
+            value: context.targetSteps, unit: 'steps', reason: 'Maintains cardiovascular baseline and metabolic health.',
+            confidence: 'high', source: 'rule_engine', expiresAt
+          },
+          {
+            id: `target_water_${Date.now()}`, category: 'hydration', priority: 'critical',
+            lifecycle: context.water >= context.targetWater ? 'completed' : 'active',
+            progress: { current: context.water, target: context.targetWater, percentage: Math.min(100, (context.water / Math.max(1, context.targetWater)) * 100) },
+            value: context.targetWater, unit: 'ml', reason: 'Essential for cellular recovery and nervous system repair.',
+            confidence: 'high', source: 'rule_engine', expiresAt
+          },
+          {
+            id: `target_protein_${Date.now()}`, category: 'nutrition', priority: 'high',
+            lifecycle: context.proteinHit ? 'completed' : 'active',
+            progress: { current: context.proteinHit ? 100 : 0, target: 100, percentage: context.proteinHit ? 100 : 0 },
+            value: 'Goal', unit: 'hit', reason: 'Critical for muscular adaptation following daily strain.',
+            confidence: 'high', source: 'rule_engine', expiresAt
+          },
+          {
+            id: `target_sleep_${Date.now()}`, category: 'sleep', priority: 'high',
+            lifecycle: 'pending', // Sleep is pending until night
+            progress: { current: 0, target: 8, percentage: 0 },
+            value: 8, unit: 'hours', reason: 'Deep rest secures the physiological adaptations earned today.',
+            confidence: 'high', source: 'rule_engine', expiresAt
+          }
+        ];
+    
     // 2. Validate, AI-Optimize, and Apply Safety Modifiers to collection
     const validatedTargets = rawTargets.map(t => this.validator.validate(this.aiOptimization.execute(context, t) || t));
 
