@@ -185,12 +185,7 @@ class SafetyEngineStage implements PipelineStage {
   }
 }
 
-// 🧠 EXTENSIBLE RULE REGISTRY
-export class RuleRegistry {
-  private rules: PipelineStage[] = [];
-  public register(rule: PipelineStage) { this.rules.push(rule); }
-  public getRules() { return this.rules; }
-}
+// Old simple registry removed in favor of the Phase 4 Auto-Discovery Singleton below.
 
 class HydrationRule implements PipelineStage {
   execute(context: TargetEngineContext, currentTarget: CanonicalTarget | null): CanonicalTarget | null {
