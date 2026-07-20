@@ -1,30 +1,59 @@
 import { BehavioralStateStore } from '../infrastructure/store';
 
-// 🧠 ANDROID NATIVE INTEGRATION LAYER
-// Adapts proprietary OS hardware signals into NUVYU Canonical Domain Events.
+// 🧠 OS INTEGRATION LAYER (Android/Wearables)
+// Enforces Dependency Inversion for all hardware and proprietary software APIs.
 
-export interface NativeSensorAdapter {
-  requestPermissions(): Promise<boolean>;
-  startForegroundService(): void;
-  syncBackgroundTelemetry(): Promise<void>;
+export interface IHealthDataAdapter {
+  authenticate(): Promise<boolean>;
+  syncTelemetry(): Promise<void>;
 }
 
-export class HealthConnectAdapter implements NativeSensorAdapter {
-  async requestPermissions() { return true; }
-  startForegroundService() {}
-  
-  async syncBackgroundTelemetry() {
-    // Translates Google Health Connect data -> NUVYU Canonical Event
-    BehavioralStateStore.dispatch({
-      type: 'TelemetrySynced',
-      payload: { source: 'HealthConnect', status: 'success' },
-      timestamp: Date.now()
-    });
+export interface IHardwareSensorAdapter {
+  startListening(): void;
+  stopListening(): void;
+}
+
+export interface IOSWorkerAdapter {
+  scheduleBackgroundSync(intervalMinutes: number): void;
+  startForegroundService(title: string, body: string): void;
+  cancelAllWorkers(): void;
+}
+
+export interface INotificationAdapter {
+  schedule(id: string, title: string, body: string, triggerAt: number): void;
+  cancel(id: string): void;
+}
+
+export interface IPermissionManager {
+  requestAllRequired(): Promise<boolean>;
+  checkBatteryOptimization(): Promise<boolean>;
+}
+
+// Concrete Implementations (Injected at Runtime)
+export class HealthConnectAdapter implements IHealthDataAdapter {
+  async authenticate() { return true; }
+  async syncTelemetry() {
+    BehavioralStateStore.dispatch({ type: 'TelemetrySynced', payload: { source: 'HealthConnect' }, timestamp: Date.now() });
   }
 }
 
-export class ActivityRecognitionAdapter {
-  static onStateChanged(state: 'WALKING' | 'RUNNING' | 'STILL') {
-    // Pushes continuous sensor states to the Behavioral Store
-  }
+export class LegacyGoogleFitAdapter implements IHealthDataAdapter {
+  async authenticate() { return true; }
+  async syncTelemetry() { /* Fallback for older Android versions */ }
+}
+
+export class WearOSAdapter implements IHealthDataAdapter {
+  async authenticate() { return true; }
+  async syncTelemetry() { /* Direct watch syncing */ }
+}
+
+export class ActivityRecognitionAdapter implements IHardwareSensorAdapter {
+  startListening() {}
+  stopListening() {}
+}
+
+export class AndroidWorkerManager implements IOSWorkerAdapter {
+  scheduleBackgroundSync(interval: number) {}
+  startForegroundService(title: string, body: string) {}
+  cancelAllWorkers() {}
 }
