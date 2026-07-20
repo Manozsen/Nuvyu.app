@@ -1,24 +1,34 @@
 import { createBrowserClient } from '@supabase/ssr';
 
-// 🧠 REPOSITORY LAYER
-// The Dashboard MUST NOT communicate directly with databases.
-export class DashboardRepository {
-  static getClient() {
+// 🧠 INTERFACE-BASED REPOSITORY ARCHITECTURE
+// Enforces Dependency Inversion. The UI depends on the abstraction, not the implementation.
+
+export interface IDashboardRepository {
+  getClient(): any; // Maintained temporarily for legacy coach integration
+  getUser(): Promise<any>;
+  getProfile(userId: string): Promise<any>;
+  getLogs(userId: string, start: string, end: string): Promise<any>;
+  getPastLogs(userId: string, start: string, end: string): Promise<any>;
+  getLatestSleep(userId: string): Promise<any>;
+}
+
+export class SupabaseDashboardRepository implements IDashboardRepository {
+  getClient() {
     return createBrowserClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
   }
 
-  static async getUser() {
+  async getUser() {
     return await this.getClient().auth.getUser();
   }
 
-  static async getProfile(userId: string) {
+  async getProfile(userId: string) {
     return await this.getClient().from('profiles').select('*').eq('id', userId).single();
   }
 
-  static async getLogs(userId: string, start: string, end: string) {
+  async getLogs(userId: string, start: string, end: string) {
     return await this.getClient()
       .from('daily_logs')
       .select('*')
@@ -27,7 +37,7 @@ export class DashboardRepository {
       .lte('created_at', end);
   }
 
-  static async getPastLogs(userId: string, start: string, end: string) {
+  async getPastLogs(userId: string, start: string, end: string) {
     return await this.getClient()
       .from('daily_logs')
       .select('log_type, data')
@@ -36,7 +46,7 @@ export class DashboardRepository {
       .lt('created_at', end);
   }
 
-  static async getLatestSleep(userId: string) {
+  async getLatestSleep(userId: string) {
     return await this.getClient()
       .from('sleep_logs')
       .select('*')
@@ -46,3 +56,16 @@ export class DashboardRepository {
       .single();
   }
 }
+
+export class SQLiteDashboardRepository implements IDashboardRepository {
+  // 🧠 Placeholder for true Offline-First execution
+  getClient() { throw new Error("Not implemented"); }
+  async getUser() { throw new Error("Not implemented"); }
+  async getProfile() { throw new Error("Not implemented"); }
+  async getLogs() { throw new Error("Not implemented"); }
+  async getPastLogs() { throw new Error("Not implemented"); }
+  async getLatestSleep() { throw new Error("Not implemented"); }
+}
+
+// Global singleton instance for Dependency Injection
+export const dashboardRepository: IDashboardRepository = new SupabaseDashboardRepository();
