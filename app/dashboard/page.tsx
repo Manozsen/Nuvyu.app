@@ -35,6 +35,7 @@ import { BehaviorTimeline } from '../../components/dashboard/Timeline';
 import { targetIntelligenceEngine, TargetEngineContext } from '../../lib/target/engine';
 import { DashboardTargetMapper } from '../../lib/presentation/mappers';
 import { EventBus, SyncService } from '../../lib/infrastructure/core';
+import { dashboardRepository } from '../../lib/repositories/dashboard.repository';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -101,10 +102,9 @@ export default function Dashboard() {
     return parts.length > 0 ? parts.join(" • ") : "Ready to track";
   };
 
-      const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  // 🧠 DB Client abstracted to Repository Layer (Phase 4). 
+  // Maintained here ONLY to pass to legacy coach memory functions until Phase 5 refactor.
+  const supabase = DashboardRepository.getClient();
 
   // --- FUTURE CHAT SYSTEM PREP ---
   const ai_chat_enabled = true;
@@ -584,18 +584,14 @@ interface AdaptiveAIContext extends AIContext {
     useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
+      const { data: { user }, error: authError } = await DashboardRepository.getUser();
         
         if (authError || !user) {
           router.push('/login');
           return;
         }
 
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
+      const { data: profile, error: profileError } = await DashboardRepository.getProfile(user.id);
 
       if (profileError || !profile) {
         router.push('/onboarding');
@@ -609,13 +605,8 @@ interface AdaptiveAIContext extends AIContext {
       const { start_utc, end_utc } = getLocalMidnightRange();
       const todayDateStr = getUserLocalToday();
 
-            // Fetch perfectly clamped local logs
-      const { data: rawLogs, error: logsError } = await supabase
-        .from('daily_logs')
-        .select('*')
-        .eq('user_id', user.id)
-        .gte('created_at', start_utc)
-        .lte('created_at', end_utc);
+      // Fetch perfectly clamped local logs via Repository
+      const { data: rawLogs, error: logsError } = await DashboardRepository.getLogs(user.id, start_utc, end_utc);
 
       const logs = rawLogs || [];
 
@@ -659,18 +650,11 @@ interface AdaptiveAIContext extends AIContext {
       const threeDaysAgo = new Date();
       threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
       
-      const { data: pastLogs } = await supabase
-        .from('daily_logs')
-        .select('log_type, data')
-        .eq('user_id', user.id)
-        .gte('created_at', threeDaysAgo.toISOString())
-        .lt('created_at', start_utc); // Time Engine synced
+      const { data: pastLogs } = await DashboardRepository.getPastLogs(user.id, threeDaysAgo.toISOString(), start_utc);
 
       // Fetch Recovery Data strictly from sleep_logs (Synced to local date)
-      const { data: latestSleep } = await supabase.from('sleep_logs')
-        .select('*').eq('user_id', user.id)
-        .order('date', { ascending: false }).limit(1).single();
-      
+      const { data: latestSleep } = await DashboardRepository.getLatestSleep(user.id);
+
       // Find legacy timeline sleep as safe fallback for backward compatibility
       const timelineSleep = (logs || []).find((l: any) => l.log_type === 'sleep');
       
