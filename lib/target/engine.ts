@@ -168,7 +168,7 @@ class SafetyEngineStage implements PipelineStage {
   execute(context: TargetEngineContext, currentTarget: CanonicalTarget | null): CanonicalTarget | null {
     if (context.fatigueRisk === 'high' || context.fatigueRisk === 'critical_warning') {
       return {
-        id: `target_safety_${Date.now()}`,
+        id: 'recovery_safety_override',
         category: 'recovery',
         priority: 'blocked',
         lifecycle: 'active',
@@ -199,7 +199,7 @@ class HydrationRule implements PipelineStage {
     
     if (context.water < dynamicTargets.water) {
       return {
-        id: `target_water_${Date.now()}`,
+        id: 'hydration_daily',
         category: 'hydration',
         priority: 'high',
         lifecycle: 'active',
@@ -223,7 +223,7 @@ class MovementRule implements PipelineStage {
 
     if (context.steps < dynamicTargets.steps) {
       return {
-        id: `target_steps_${Date.now()}`,
+        id: 'movement_daily',
         category: 'movement',
         priority: 'high',
         lifecycle: 'active',
@@ -246,7 +246,7 @@ class RecoveryRule implements PipelineStage {
     const dynamicTargets = DeterministicTargetCalculator.calculate(context.profile, context);
 
     return {
-      id: `target_sleep_${Date.now()}`,
+      id: 'sleep_daily',
       category: 'sleep',
       priority: 'medium',
       lifecycle: 'pending',
@@ -297,9 +297,9 @@ class TargetValidator {
     return target;
   }
   
-  private getFallbackTarget(): CanonicalTarget {
+    private getFallbackTarget(): CanonicalTarget {
     return {
-      id: `target_fallback_${Date.now()}`,
+      id: 'system_fallback',
       category: 'system',
       priority: 'low',
       lifecycle: 'active',
@@ -333,34 +333,34 @@ export class TargetIntelligenceEngine {
     const expiresAt = new Date(new Date().setHours(23, 59, 59, 999)).toISOString();
     const dynamicTargets = DeterministicTargetCalculator.calculate(context.profile, context);
     
-    // 1. Generate Raw Candidates deterministically
+     // 1. Generate Raw Candidates deterministically
     const rawTargets: CanonicalTarget[] = [
       {
-        id: `target_steps_${Date.now()}`, category: 'movement', priority: 'high',
-        lifecycle: context.steps >= dynamicTargets.targetSteps ? 'completed' : 'active',
-        progress: { current: context.steps, target: dynamicTargets.targetSteps, percentage: Math.min(100, (context.steps / Math.max(1, dynamicTargets.targetSteps)) * 100) },
-        value: dynamicTargets.targetSteps, unit: 'steps', reason: 'Maintains cardiovascular baseline and metabolic health.',
+        id: 'movement_daily', category: 'movement', priority: 'high',
+        lifecycle: context.steps >= dynamicTargets.steps ? 'completed' : 'active',
+        progress: { current: context.steps, target: dynamicTargets.steps, percentage: Math.min(100, (context.steps / Math.max(1, dynamicTargets.steps)) * 100) },
+        value: dynamicTargets.steps, unit: 'steps', reason: 'Maintains cardiovascular baseline and metabolic health.',
         confidence: 'high', source: 'rule_engine', expiresAt
       },
       {
-        id: `target_water_${Date.now()}`, category: 'hydration', priority: 'critical',
-        lifecycle: context.water >= dynamicTargets.targetWater ? 'completed' : 'active',
-        progress: { current: context.water, target: dynamicTargets.targetWater, percentage: Math.min(100, (context.water / Math.max(1, dynamicTargets.targetWater)) * 100) },
-        value: dynamicTargets.targetWater, unit: 'ml', reason: 'Essential for cellular recovery and nervous system repair.',
+        id: 'hydration_daily', category: 'hydration', priority: 'critical',
+        lifecycle: context.water >= dynamicTargets.water ? 'completed' : 'active',
+        progress: { current: context.water, target: dynamicTargets.water, percentage: Math.min(100, (context.water / Math.max(1, dynamicTargets.water)) * 100) },
+        value: dynamicTargets.water, unit: 'ml', reason: 'Essential for cellular recovery and nervous system repair.',
         confidence: 'high', source: 'rule_engine', expiresAt
       },
       {
-        id: `target_protein_${Date.now()}`, category: 'nutrition', priority: 'high',
+        id: 'protein_daily', category: 'nutrition', priority: 'high',
         lifecycle: context.proteinHit ? 'completed' : 'active',
         progress: { current: context.proteinHit ? 100 : 0, target: 100, percentage: context.proteinHit ? 100 : 0 },
-        value: dynamicTargets.targetProtein, unit: 'g', reason: 'Critical for muscular adaptation following daily strain.',
+        value: dynamicTargets.protein, unit: 'g', reason: 'Critical for muscular adaptation following daily strain.',
         confidence: 'high', source: 'rule_engine', expiresAt
       },
       {
-        id: `target_sleep_${Date.now()}`, category: 'sleep', priority: 'high',
+        id: 'sleep_daily', category: 'sleep', priority: 'high',
         lifecycle: 'pending', // Sleep is pending until night
-        progress: { current: 0, target: dynamicTargets.targetSleep, percentage: 0 },
-        value: dynamicTargets.targetSleep, unit: 'hours', reason: 'Deep rest secures the physiological adaptations earned today.',
+        progress: { current: 0, target: dynamicTargets.sleep, percentage: 0 },
+        value: dynamicTargets.sleep, unit: 'hours', reason: 'Deep rest secures the physiological adaptations earned today.',
         confidence: 'high', source: 'rule_engine', expiresAt
       }
     ];
