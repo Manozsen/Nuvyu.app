@@ -104,7 +104,7 @@ export default function Dashboard() {
 
   // 🧠 DB Client abstracted to Repository Layer (Phase 4). 
   // Maintained here ONLY to pass to legacy coach memory functions until Phase 5 refactor.
-  const supabase = DashboardRepository.getClient();
+  const supabase = dashboardRepository.getClient();
 
   // --- FUTURE CHAT SYSTEM PREP ---
   const ai_chat_enabled = true;
@@ -584,14 +584,14 @@ interface AdaptiveAIContext extends AIContext {
     useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-      const { data: { user }, error: authError } = await DashboardRepository.getUser();
+     const { data: { user }, error: authError } = await dashboardRepository.getUser();
         
         if (authError || !user) {
           router.push('/login');
           return;
         }
 
-      const { data: profile, error: profileError } = await DashboardRepository.getProfile(user.id);
+      const { data: profile, error: profileError } = await dashboardRepository.getProfile(user.id);
 
       if (profileError || !profile) {
         router.push('/onboarding');
@@ -606,7 +606,7 @@ interface AdaptiveAIContext extends AIContext {
       const todayDateStr = getUserLocalToday();
 
       // Fetch perfectly clamped local logs via Repository
-      const { data: rawLogs, error: logsError } = await DashboardRepository.getLogs(user.id, start_utc, end_utc);
+      const { data: rawLogs, error: logsError } = await dashboardRepository.getLogs(user.id, start_utc, end_utc);
 
       const logs = rawLogs || [];
 
@@ -646,14 +646,14 @@ interface AdaptiveAIContext extends AIContext {
       const energyBurned = energyStats?.totalBurn || 0;
       const safeEnergyIntake = energyStats?.intakeCalories || 0;
 
-      // INTEGRATION CHECK: Connect to 3-day history for accurate context
+     // INTEGRATION CHECK: Connect to 3-day history for accurate context
       const threeDaysAgo = new Date();
       threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
       
-      const { data: pastLogs } = await DashboardRepository.getPastLogs(user.id, threeDaysAgo.toISOString(), start_utc);
+      const { data: pastLogs } = await dashboardRepository.getPastLogs(user.id, threeDaysAgo.toISOString(), start_utc);
 
       // Fetch Recovery Data strictly from sleep_logs (Synced to local date)
-      const { data: latestSleep } = await DashboardRepository.getLatestSleep(user.id);
+      const { data: latestSleep } = await dashboardRepository.getLatestSleep(user.id);
 
       // Find legacy timeline sleep as safe fallback for backward compatibility
       const timelineSleep = (logs || []).find((l: any) => l.log_type === 'sleep');
