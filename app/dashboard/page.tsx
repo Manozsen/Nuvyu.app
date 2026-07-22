@@ -36,7 +36,7 @@ import { targetIntelligenceEngine, TargetEngineContext } from '../../lib/target/
 import { DashboardTargetMapper } from '../../lib/presentation/mappers';
 import { EventBus, SyncService } from '../../lib/infrastructure/core';
 import { dashboardRepository } from '../../lib/repositories/dashboard.repository';
-import { ContextEngine, CoachBrain } from '../../lib/intelligence/brain';
+import { ContextEngine, coachBrain } from '../../lib/intelligence/brain';
 
 export default function Dashboard() {
   const router = useRouter();
