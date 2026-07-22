@@ -1,7 +1,81 @@
-// 🧠 NUVYU AUTONOMOUS INTELLIGENCE PLATFORM (PHASE 5)
-// Independent cognitive subsystem for behavioral understanding, prediction, and intervention.
+// 🧠 NUVYU AUTONOMOUS INTELLIGENCE PLATFORM (PHASE 5 - ENTERPRISE REFINEMENT)
+// A probabilistic, strictly-typed, and model-agnostic Behavioral Operating System.
 
+// ============================================================================
+// COGNITIVE DOMAIN MODELS (The Stripe Standard)
+// ============================================================================
+
+export type MotivationDriver = 'aesthetic' | 'longevity' | 'performance' | 'mental_clarity' | 'discipline';
+export type CognitiveLoad = 'optimal' | 'accumulating' | 'overloaded' | 'depleted';
+export type InterventionType = 'physiological_rest' | 'micro_friction' | 'momentum_push' | 'identity_anchor';
+
+export interface IdentityArchetype {
+  primaryDriver: MotivationDriver;
+  frictionTolerance: number; // 0.0 to 1.0
+  resilienceScore: number;   // 0.0 to 1.0
+  adaptabilityIndex: number; // 0.0 to 1.0
+}
+
+export interface BehavioralVelocity {
+  momentum: number;          // 0.0 to 1.0
+  systemicStrain: number;    // 0.0 to 1.0
+  cognitiveLoad: CognitiveLoad;
+  adherenceDecayRate: number;// 0.0 to 1.0
+}
+
+export interface RiskVector {
+  domain: 'burnout' | 'streak_loss' | 'injury' | 'apathy';
+  probability: number;       // 0.0 to 1.0
+  severity: number;          // 0.0 to 1.0
+  timeToImpactHours: number;
+}
+
+export interface InterventionStrategy {
+  type: InterventionType;
+  urgency: 'routine' | 'elevated' | 'critical';
+  targetDomain: string;
+  frictionBarrier: 'low' | 'moderate' | 'high';
+}
+
+export interface TimeBlock {
+  window: 'morning' | 'midday' | 'afternoon' | 'evening' | 'night';
+  action: string;
+  flexibility: 'rigid' | 'fluid';
+}
+
+export interface CognitiveSnapshot {
+  timestamp: number;
+  identity: IdentityArchetype;
+  velocity: BehavioralVelocity;
+  risks: RiskVector[];
+  strategy: InterventionStrategy;
+}
+
+// ============================================================================
+// DEPENDENCY INVERSION: AI PROVIDER
+// ============================================================================
+
+export interface IAIProvider {
+  generateIntervention(prompt: string, snapshot: CognitiveSnapshot): Promise<string>;
+}
+
+export class GeminiOSProvider implements IAIProvider {
+  async generateIntervention(prompt: string, snapshot: CognitiveSnapshot): Promise<string> {
+    const res = await fetch('/api/ai/coach', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      // Compress snapshot to prevent context dilution
+      body: JSON.stringify({ prompt, context: { velocity: snapshot.velocity, strategy: snapshot.strategy } })
+    });
+    if (!res.ok) throw new Error("AI Integration Failed");
+    const data = await res.json();
+    return data.nudge;
+  }
+}
+
+// ============================================================================
 // 1. IDENTITY ENGINE
+// ============================================================================
 export class IdentityEngine {
   static extractIdentity(profile: any) {
     return {
