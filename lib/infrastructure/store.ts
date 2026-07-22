@@ -1,8 +1,20 @@
 // 🧠 CANONICAL BEHAVIOR STATE STORE
 // Centralized, observable state engine. Replaces scattered React component state.
 
-export type CommandType = 'LOG_ACTION' | 'SYNC_TELEMETRY' | 'OVERRIDE_TARGET';
-export type EventType = 'ActionLogged' | 'TelemetrySynced' | 'TargetOverridden' | 'StateUpdated';
+export type CommandType = 'LOG_ACTION' | 'SYNC_TELEMETRY' | 'OVERRIDE_TARGET' | 'START_EXECUTION' | 'PAUSE_EXECUTION';
+export type EventType = 
+  | 'ActionLogged' 
+  | 'TelemetrySynced' 
+  | 'TargetOverridden' 
+  | 'StateUpdated'
+  | 'ExecutionStarted'
+  | 'ExecutionPaused'
+  | 'ExecutionCompleted'
+  | 'ExecutionFailed'
+  | 'WorkflowExpired'
+  | 'ReflectionCompleted'
+  | 'MemoryUpdated'
+  | 'NotificationQueued';
 
 export interface DomainCommand {
   type: CommandType;
