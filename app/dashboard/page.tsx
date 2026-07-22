@@ -313,11 +313,11 @@ interface AdaptiveAIContext extends AIContext {
     // 6. CORE HYBRID ENGINE
     const generateCoachNudge = async (userId: string, profile: any, todayLogs: any[], pastLogs: any[], currentScore: number, recoveryData: any = null, energyBalance: number = 0, burnoutRisk: string = "low", adaptiveGoals: any = null) => {
     
-    // 🧠 PHASE 5: AUTONOMOUS INTELLIGENCE PLATFORM INTEGRATION
+        // 🧠 PHASE 5: AUTONOMOUS INTELLIGENCE PLATFORM INTEGRATION
     // Submits user state to the isolated Cognitive Engine to predict risk and format safe AI interventions.
     try {
-      const osContext = ContextEngine.build(profile, currentScore, todayLogs, pastLogs, recoveryData);
-      const brainOutput = await CoachBrain.executePipeline(userId, osContext, profile?.coach_tone);
+      const snapshot = ContextEngine.buildSnapshot(profile, currentScore, todayLogs, pastLogs, recoveryData);
+      const brainOutput = await coachBrain.executePipeline(snapshot, profile?.coach_tone);
       
       // If the Brain succeeds, we merge it with the legacy metrics object to satisfy UI prop requirements.
       if (brainOutput) {
