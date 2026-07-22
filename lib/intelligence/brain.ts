@@ -43,33 +43,132 @@ export interface TimeBlock {
   flexibility: 'rigid' | 'fluid';
 }
 
+export interface UserProfile {
+  desired_identity?: string;
+  personality_style?: string;
+  consistency_type?: string;
+  motivation_reason?: string;
+  streak_count?: number;
+  coach_tone?: string;
+  [key: string]: unknown; // Strict dictionary fallback for schema drift
+}
+
+export interface BehaviorLog {
+  log_type: string;
+  data?: {
+    amount?: number;
+    streak?: number;
+    [key: string]: unknown;
+  };
+  created_at: string;
+}
+
+export interface RecoverySnapshot {
+  recovery_score?: number;
+  recovery_state?: string;
+  fatigue_risk?: string;
+  sleep_hours?: number;
+}
+
+export interface MemorySnapshot {
+  permanent: Record<string, unknown>;
+  behavioral: BehaviorLog[];
+  failures: BehaviorLog[];
+  achievements: BehaviorLog[];
+  relevanceSummary: string;
+  compressedContext: string;
+}
+
+export interface InterventionResult {
+  message: string;
+  type: "ai" | "rule";
+  strategy: InterventionStrategy;
+  executionPlan: TimeBlock[];
+}
+
+export interface AIRequest {
+  prompt: string;
+  snapshot: CognitiveSnapshot;
+}
+
+export interface AIResponse {
+  nudge: string;
+}
+
 export interface CognitiveSnapshot {
   timestamp: number;
   identity: IdentityArchetype;
   velocity: BehavioralVelocity;
   risks: RiskVector[];
   strategy: InterventionStrategy;
+  memory: MemorySnapshot;
 }
 
 // ============================================================================
-// DEPENDENCY INVERSION: AI PROVIDER
+// AI ORCHESTRATOR & DEPENDENCY INVERSION
 // ============================================================================
 
 export interface IAIProvider {
-  generateIntervention(prompt: string, snapshot: CognitiveSnapshot): Promise<string>;
+  getProviderName(): string;
+  generateIntervention(request: AIRequest): Promise<string>;
 }
 
 export class GeminiOSProvider implements IAIProvider {
-  async generateIntervention(prompt: string, snapshot: CognitiveSnapshot): Promise<string> {
+  getProviderName(): string { return "Gemini_1.5_Flash"; }
+  async generateIntervention(request: AIRequest): Promise<string> {
     const res = await fetch('/api/ai/coach', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      // Compress snapshot to prevent context dilution
-      body: JSON.stringify({ prompt, context: { velocity: snapshot.velocity, strategy: snapshot.strategy } })
+      body: JSON.stringify({ 
+        prompt: request.prompt, 
+        context: { velocity: request.snapshot.velocity, strategy: request.snapshot.strategy } 
+      })
     });
-    if (!res.ok) throw new Error("AI Integration Failed");
-    const data = await res.json();
+    if (!res.ok) throw new Error(`${this.getProviderName()} Integration Failed`);
+    const data: AIResponse = await res.json();
     return data.nudge;
+  }
+}
+
+// Enterprise Placeholders
+export class ClaudeProvider implements IAIProvider {
+  getProviderName(): string { return "Claude_3.5_Sonnet"; }
+  async generateIntervention(request: AIRequest): Promise<string> { throw new Error("Not Implemented"); }
+}
+
+export class OpenAIProvider implements IAIProvider {
+  getProviderName(): string { return "GPT_4o"; }
+  async generateIntervention(request: AIRequest): Promise<string> { throw new Error("Not Implemented"); }
+}
+
+export class OnDeviceProvider implements IAIProvider {
+  getProviderName(): string { return "Local_NPU_Model"; }
+  async generateIntervention(request: AIRequest): Promise<string> { throw new Error("Not Implemented"); }
+}
+
+export class AIOrchestrator {
+  private primary: IAIProvider;
+  private fallbacks: IAIProvider[];
+
+  constructor(primary: IAIProvider, fallbacks: IAIProvider[] = []) {
+    this.primary = primary;
+    this.fallbacks = fallbacks;
+  }
+
+  async processRequest(request: AIRequest): Promise<string> {
+    try {
+      return await this.primary.generateIntervention(request);
+    } catch (e) {
+      console.warn(`[AIOrchestrator] Primary provider (${this.primary.getProviderName()}) failed. Attempting failover.`);
+      for (const fallback of this.fallbacks) {
+        try {
+          return await fallback.generateIntervention(request);
+        } catch (fallbackError) {
+          console.warn(`[AIOrchestrator] Failover (${fallback.getProviderName()}) failed.`);
+        }
+      }
+      throw new Error("AIOrchestrator: All providers exhausted.");
+    }
   }
 }
 
@@ -77,16 +176,16 @@ export class GeminiOSProvider implements IAIProvider {
 // 1. IDENTITY ENGINE
 // ============================================================================
 export class IdentityEngine {
-  static synthesize(profile: any): IdentityArchetype {
-    // Translates flat profile data into a multidimensional psychological profile
+  static synthesize(profile: UserProfile | null | undefined): IdentityArchetype {
+    const safeProfile = profile || {};
     const experienceMap: Record<string, number> = { beginner: 0.3, intermediate: 0.6, advanced: 0.9 };
-    const baseFriction = experienceMap[profile?.consistency_type || 'beginner'] || 0.3;
+    const baseFriction = experienceMap[safeProfile.consistency_type || 'beginner'] || 0.3;
     
     return {
-      primaryDriver: (profile?.motivation_reason as MotivationDriver) || 'longevity',
+      primaryDriver: (safeProfile.motivation_reason as MotivationDriver) || 'longevity',
       frictionTolerance: baseFriction,
-      resilienceScore: profile?.streak_count > 10 ? 0.8 : 0.4,
-      adaptabilityIndex: 0.5 // Baseline; mutates over time via MemoryEngine
+      resilienceScore: (safeProfile.streak_count || 0) > 10 ? 0.8 : 0.4,
+      adaptabilityIndex: 0.5 
     };
   }
 }
@@ -96,9 +195,7 @@ export class IdentityEngine {
 // ============================================================================
 export class BehaviorEngine {
   static calculateVelocity(recentScores: number[], logsCount: number, recoveryScore: number): BehavioralVelocity {
-    // Calculates the true mathematical vector of user adherence
     const consistency = recentScores.length > 0 ? recentScores.reduce((a, b) => a + b, 0) / recentScores.length / 100 : 0.5;
-    
     const systemicStrain = Math.max(0, 1 - (recoveryScore / 100));
     
     let cognitiveLoad: CognitiveLoad = 'optimal';
@@ -122,23 +219,16 @@ export class PredictionEngine {
   static forecastRisks(velocity: BehavioralVelocity): RiskVector[] {
     const risks: RiskVector[] = [];
 
-    // Burnout Prediction Vector
     if (velocity.systemicStrain > 0.75) {
       risks.push({
-        domain: 'burnout',
-        probability: velocity.systemicStrain * 0.9,
-        severity: 0.95,
+        domain: 'burnout', probability: velocity.systemicStrain * 0.9, severity: 0.95,
         timeToImpactHours: velocity.cognitiveLoad === 'overloaded' ? 12 : 48
       });
     }
 
-    // Apathy/Streak Loss Prediction Vector
     if (velocity.adherenceDecayRate > 0.6 && velocity.momentum < 0.5) {
       risks.push({
-        domain: 'apathy',
-        probability: velocity.adherenceDecayRate,
-        severity: 0.8,
-        timeToImpactHours: 24
+        domain: 'apathy', probability: velocity.adherenceDecayRate, severity: 0.8, timeToImpactHours: 24
       });
     }
 
@@ -151,19 +241,13 @@ export class PredictionEngine {
 // ============================================================================
 export class DecisionEngine {
   static triage(velocity: BehavioralVelocity, risks: RiskVector[]): InterventionStrategy {
-    const highestRisk = risks[0]; // Pre-sorted by severity * probability
-    
-    // Priority 1: Prevent Systemic Burnout
+    const highestRisk = risks[0]; 
     if (highestRisk && highestRisk.domain === 'burnout' && highestRisk.probability > 0.7) {
       return { type: 'physiological_rest', urgency: 'critical', targetDomain: 'sleep', frictionBarrier: 'low' };
     }
-    
-    // Priority 2: Prevent Habit Collapse
     if (highestRisk && highestRisk.domain === 'apathy' && highestRisk.probability > 0.6) {
       return { type: 'micro_friction', urgency: 'elevated', targetDomain: 'hydration', frictionBarrier: 'low' };
     }
-    
-    // Priority 3: Optimization
     return { type: 'momentum_push', urgency: 'routine', targetDomain: 'movement', frictionBarrier: 'moderate' };
   }
 }
@@ -172,9 +256,8 @@ export class DecisionEngine {
 // 5. INTERVENTION ENGINE
 // ============================================================================
 export class InterventionEngine {
-  static formulate(strategy: InterventionStrategy, identity: IdentityArchetype) {
-    // Maps cognitive strategy to concrete OS operations
-    const interventionMap = {
+  static formulate(strategy: InterventionStrategy, identity: IdentityArchetype): string {
+    const interventionMap: Record<InterventionType, string> = {
       'physiological_rest': 'Override active targets. Enforce minimum hydration and early sleep schedule.',
       'micro_friction': 'Reduce target thresholds by 50%. Guarantee an adherence win today.',
       'momentum_push': 'Standard progressive overload. Maintain caloric and output baselines.',
@@ -185,14 +268,34 @@ export class InterventionEngine {
 }
 
 // ============================================================================
-// 6. MEMORY INTELLIGENCE
+// 6. MEMORY ENGINE (Dedicated Pipeline)
 // ============================================================================
-export class MemoryIntelligence {
-  static extractRelevance(pastLogs: any[]): string {
-    // Concept: Future iteration will map to embeddings. 
-    // Current: Extracts highest frequency failure vectors.
-    const failures = pastLogs.filter(l => l.data?.amount === 0).length;
+export class MemoryEngine {
+  static extractRelevance(pastLogs: BehaviorLog[]): string {
+    const failures = pastLogs.filter(l => (Number(l.data?.amount) || 0) === 0).length;
     return failures > 3 ? 'Historical pattern of mid-week friction detected.' : 'Historical baseline stable.';
+  }
+
+  static rankMemories(logs: BehaviorLog[]): BehaviorLog[] {
+    // Architecture for future vector ranking based on temporal decay
+    return logs.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }
+
+  static compressContext(ranked: BehaviorLog[]): string {
+    // Future embeddings compression entrypoint
+    return ranked.length > 0 ? 'Context compressed for LLM context window.' : 'No context available.';
+  }
+
+  static prepareCoachMemory(pastLogs: BehaviorLog[]): MemorySnapshot {
+    const ranked = this.rankMemories(pastLogs);
+    return {
+      permanent: { goal: 'long_term_health' },
+      behavioral: ranked.filter(l => l.log_type === 'steps' || l.log_type === 'water'),
+      failures: ranked.filter(l => (Number(l.data?.amount) || 0) === 0),
+      achievements: ranked.filter(l => (Number(l.data?.streak) || 0) > 5),
+      relevanceSummary: this.extractRelevance(ranked),
+      compressedContext: this.compressContext(ranked)
+    };
   }
 }
 
@@ -200,18 +303,20 @@ export class MemoryIntelligence {
 // 7. CONTEXT ENGINE
 // ============================================================================
 export class ContextEngine {
-  static buildSnapshot(profile: any, score: number, todayLogs: any[], pastLogs: any[], recoveryData: any): CognitiveSnapshot {
+  static buildSnapshot(profile: UserProfile | null | undefined, score: number, todayLogs: BehaviorLog[], pastLogs: BehaviorLog[], recoveryData: RecoverySnapshot | null | undefined): CognitiveSnapshot {
     const identity = IdentityEngine.synthesize(profile);
     const velocity = BehaviorEngine.calculateVelocity([score], todayLogs.length, recoveryData?.recovery_score || 50);
     const risks = PredictionEngine.forecastRisks(velocity);
     const strategy = DecisionEngine.triage(velocity, risks);
+    const memory = MemoryEngine.prepareCoachMemory(pastLogs);
     
     return {
       timestamp: Date.now(),
       identity,
       velocity,
       risks,
-      strategy
+      strategy,
+      memory
     };
   }
 }
@@ -268,13 +373,13 @@ export class AISafetyLayer {
 // 10. COACH BRAIN (The Autonomous Orchestrator)
 // ============================================================================
 export class CoachBrain {
-  private aiProvider: IAIProvider;
+  private orchestrator: AIOrchestrator;
 
-  constructor(aiProvider: IAIProvider = new GeminiOSProvider()) {
-    this.aiProvider = aiProvider; // Dependency Injection
+  constructor(orchestrator: AIOrchestrator = new AIOrchestrator(new GeminiOSProvider(), [new ClaudeProvider(), new OnDeviceProvider()])) {
+    this.orchestrator = orchestrator;
   }
 
-  async executePipeline(snapshot: CognitiveSnapshot, fallbackTone: string = 'supportive') {
+  async executePipeline(snapshot: CognitiveSnapshot, fallbackTone: string = 'supportive'): Promise<InterventionResult> {
     const intervention = InterventionEngine.formulate(snapshot.strategy, snapshot.identity);
     const executionPlan = ExecutionPlanner.generateTimeline(snapshot.strategy);
     
@@ -282,18 +387,20 @@ export class CoachBrain {
     const prompt = `System Rule: You are the voice of an Autonomous Behavioral OS. 
     State: User momentum is ${(snapshot.velocity.momentum * 100).toFixed(0)}%. 
     Strain: ${(snapshot.velocity.systemicStrain * 100).toFixed(0)}%.
+    Memory Context: ${snapshot.memory.relevanceSummary}
     OS Strategy: ${intervention}
     Task: Write 2 sentences. Tone: ${fallbackTone}. Translate the OS Strategy into empathetic human instruction. Do not list numbers.`;
 
     try {
-      const rawAIOutput = await this.aiProvider.generateIntervention(prompt, snapshot);
+      const request: AIRequest = { prompt, snapshot };
+      const rawAIOutput = await this.orchestrator.processRequest(request);
       const safeMessage = AISafetyLayer.validateBounds(rawAIOutput, snapshot.strategy);
       
       return { message: safeMessage, type: "ai", strategy: snapshot.strategy, executionPlan };
     } catch (e) {
-      console.warn("[CoachBrain] Provider Failed, returning deterministic fallback.");
+      console.warn("[CoachBrain] Orchestrator Failed, returning deterministic fallback.");
       return { 
-        message: AISafetyLayer.validateBounds('', snapshot.strategy), // Forced fallback
+        message: AISafetyLayer.validateBounds('', snapshot.strategy),
         type: "rule", 
         strategy: snapshot.strategy, 
         executionPlan 
