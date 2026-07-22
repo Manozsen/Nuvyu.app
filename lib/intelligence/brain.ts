@@ -77,152 +77,230 @@ export class GeminiOSProvider implements IAIProvider {
 // 1. IDENTITY ENGINE
 // ============================================================================
 export class IdentityEngine {
-  static extractIdentity(profile: any) {
+  static synthesize(profile: any): IdentityArchetype {
+    // Translates flat profile data into a multidimensional psychological profile
+    const experienceMap: Record<string, number> = { beginner: 0.3, intermediate: 0.6, advanced: 0.9 };
+    const baseFriction = experienceMap[profile?.consistency_type || 'beginner'] || 0.3;
+    
     return {
-      coreIdentity: profile?.desired_identity || 'improver',
-      values: ['consistency', 'longevity'],
-      behaviorStyle: profile?.personality_style || 'methodical',
-      experienceLevel: profile?.consistency_type || 'beginner',
-      confidenceScore: 50, // Evolves over time
-      motivationType: profile?.motivation_reason || 'health'
+      primaryDriver: (profile?.motivation_reason as MotivationDriver) || 'longevity',
+      frictionTolerance: baseFriction,
+      resilienceScore: profile?.streak_count > 10 ? 0.8 : 0.4,
+      adaptabilityIndex: 0.5 // Baseline; mutates over time via MemoryEngine
     };
   }
 }
 
-// 2. BEHAVIOR ENGINE
+// ============================================================================
+// 2. BEHAVIOR ENGINE (The Whoop Standard)
+// ============================================================================
 export class BehaviorEngine {
-  static modelBehavior(logs: any[], recentScores: number[]) {
-    const consistencyScore = recentScores.reduce((a, b) => a + b, 0) / (recentScores.length || 1);
+  static calculateVelocity(recentScores: number[], logsCount: number, recoveryScore: number): BehavioralVelocity {
+    // Calculates the true mathematical vector of user adherence
+    const consistency = recentScores.length > 0 ? recentScores.reduce((a, b) => a + b, 0) / recentScores.length / 100 : 0.5;
+    
+    const systemicStrain = Math.max(0, 1 - (recoveryScore / 100));
+    
+    let cognitiveLoad: CognitiveLoad = 'optimal';
+    if (logsCount > 8 && systemicStrain > 0.6) cognitiveLoad = 'overloaded';
+    else if (logsCount > 5 || systemicStrain > 0.4) cognitiveLoad = 'accumulating';
+    else if (consistency < 0.3) cognitiveLoad = 'depleted';
+
     return {
-      momentum: consistencyScore > 75 ? 'high' : consistencyScore > 40 ? 'stable' : 'fragile',
-      decisionFatigue: logs.length > 5 ? 'elevated' : 'optimal',
-      routineStability: 'forming',
-      behavioralRisk: consistencyScore < 40 ? 'high_flight_risk' : 'low'
+      momentum: consistency,
+      systemicStrain,
+      cognitiveLoad,
+      adherenceDecayRate: consistency < 0.4 && systemicStrain > 0.7 ? 0.8 : 0.2
     };
   }
 }
 
-// 3. BEHAVIOR PREDICTION ENGINE
+// ============================================================================
+// 3. PREDICTION ENGINE
+// ============================================================================
 export class PredictionEngine {
-  static predictFailures(behavior: any, recovery: any) {
-    return {
-      workoutFailureRisk: recovery?.recovery_state === 'poor' ? 'critical' : 'low',
-      sleepFailureRisk: behavior.decisionFatigue === 'elevated' ? 'moderate' : 'low',
-      streakLossRisk: behavior.momentum === 'fragile' ? 'high' : 'low',
-      burnoutTrajectory: behavior.momentum === 'high' && recovery?.fatigue_risk === 'high' ? 'imminent' : 'stable'
-    };
+  static forecastRisks(velocity: BehavioralVelocity): RiskVector[] {
+    const risks: RiskVector[] = [];
+
+    // Burnout Prediction Vector
+    if (velocity.systemicStrain > 0.75) {
+      risks.push({
+        domain: 'burnout',
+        probability: velocity.systemicStrain * 0.9,
+        severity: 0.95,
+        timeToImpactHours: velocity.cognitiveLoad === 'overloaded' ? 12 : 48
+      });
+    }
+
+    // Apathy/Streak Loss Prediction Vector
+    if (velocity.adherenceDecayRate > 0.6 && velocity.momentum < 0.5) {
+      risks.push({
+        domain: 'apathy',
+        probability: velocity.adherenceDecayRate,
+        severity: 0.8,
+        timeToImpactHours: 24
+      });
+    }
+
+    return risks.sort((a, b) => (b.probability * b.severity) - (a.probability * a.severity));
   }
 }
 
-// 4. DECISION ENGINE
+// ============================================================================
+// 4. DECISION ENGINE (Matrix Evaluation)
+// ============================================================================
 export class DecisionEngine {
-  static triage(identity: any, behavior: any, predictions: any) {
-    if (predictions.burnoutTrajectory === 'imminent' || predictions.workoutFailureRisk === 'critical') {
-      return { action: 'intervene', focus: 'recovery', priority: 'critical', ignore: ['workout', 'caloric_deficit'] };
+  static triage(velocity: BehavioralVelocity, risks: RiskVector[]): InterventionStrategy {
+    const highestRisk = risks[0]; // Pre-sorted by severity * probability
+    
+    // Priority 1: Prevent Systemic Burnout
+    if (highestRisk && highestRisk.domain === 'burnout' && highestRisk.probability > 0.7) {
+      return { type: 'physiological_rest', urgency: 'critical', targetDomain: 'sleep', frictionBarrier: 'low' };
     }
-    if (predictions.streakLossRisk === 'high') {
-      return { action: 'protect', focus: 'micro_habit', priority: 'high', ignore: ['intensity'] };
+    
+    // Priority 2: Prevent Habit Collapse
+    if (highestRisk && highestRisk.domain === 'apathy' && highestRisk.probability > 0.6) {
+      return { type: 'micro_friction', urgency: 'elevated', targetDomain: 'hydration', frictionBarrier: 'low' };
     }
-    return { action: 'progress', focus: 'momentum_push', priority: 'standard', ignore: [] };
+    
+    // Priority 3: Optimization
+    return { type: 'momentum_push', urgency: 'routine', targetDomain: 'movement', frictionBarrier: 'moderate' };
   }
 }
 
+// ============================================================================
 // 5. INTERVENTION ENGINE
+// ============================================================================
 export class InterventionEngine {
-  static generate(decision: any) {
-    if (decision.focus === 'recovery') return { type: 'rest', action: 'Mandatory Nervous System Recovery', scope: 'immediate' };
-    if (decision.focus === 'micro_habit') return { type: 'hydration', action: 'Drink 1 Glass of Water', scope: 'immediate' };
-    return { type: 'execution', action: 'Complete Standard Targets', scope: 'daily' };
+  static formulate(strategy: InterventionStrategy, identity: IdentityArchetype) {
+    // Maps cognitive strategy to concrete OS operations
+    const interventionMap = {
+      'physiological_rest': 'Override active targets. Enforce minimum hydration and early sleep schedule.',
+      'micro_friction': 'Reduce target thresholds by 50%. Guarantee an adherence win today.',
+      'momentum_push': 'Standard progressive overload. Maintain caloric and output baselines.',
+      'identity_anchor': `Anchor motivation to ${identity.primaryDriver}. Remind user of long-term trajectory.`
+    };
+    return interventionMap[strategy.type] || interventionMap['momentum_push'];
   }
 }
 
+// ============================================================================
 // 6. MEMORY INTELLIGENCE
+// ============================================================================
 export class MemoryIntelligence {
-  static categorize(pastLogs: any[]) {
-    return {
-      permanent: { goal: 'long_term_health' },
-      behavioral: pastLogs.filter(l => l.log_type === 'steps' || l.log_type === 'water'),
-      failures: pastLogs.filter(l => l.data?.amount === 0), // Simplified representation
-      achievements: pastLogs.filter(l => l.data?.streak > 5)
-    };
+  static extractRelevance(pastLogs: any[]): string {
+    // Concept: Future iteration will map to embeddings. 
+    // Current: Extracts highest frequency failure vectors.
+    const failures = pastLogs.filter(l => l.data?.amount === 0).length;
+    return failures > 3 ? 'Historical pattern of mid-week friction detected.' : 'Historical baseline stable.';
   }
 }
 
+// ============================================================================
 // 7. CONTEXT ENGINE
+// ============================================================================
 export class ContextEngine {
-  static build(profile: any, score: number, todayLogs: any[], pastLogs: any[], recoveryData: any) {
-    const identity = IdentityEngine.extractIdentity(profile);
-    const behavior = BehaviorEngine.modelBehavior(todayLogs, [score]);
-    const predictions = PredictionEngine.predictFailures(behavior, recoveryData);
-    const decision = DecisionEngine.triage(identity, behavior, predictions);
-    const memory = MemoryIntelligence.categorize(pastLogs);
+  static buildSnapshot(profile: any, score: number, todayLogs: any[], pastLogs: any[], recoveryData: any): CognitiveSnapshot {
+    const identity = IdentityEngine.synthesize(profile);
+    const velocity = BehaviorEngine.calculateVelocity([score], todayLogs.length, recoveryData?.recovery_score || 50);
+    const risks = PredictionEngine.forecastRisks(velocity);
+    const strategy = DecisionEngine.triage(velocity, risks);
     
-    return { identity, behavior, predictions, decision, memory, timeOfDay: new Date().getHours() };
-  }
-}
-
-// 8. EXECUTION PLANNER
-export class ExecutionPlanner {
-  static generatePlan(decision: any, targets: any[]) {
-    // Translates targets into a chronological execution timeline
     return {
-      morning: 'Hydration & Light Movement',
-      afternoon: 'Deep Focus & Nutrition',
-      evening: decision.focus === 'recovery' ? 'Strict Wind Down' : 'Mobility & Sleep'
+      timestamp: Date.now(),
+      identity,
+      velocity,
+      risks,
+      strategy
     };
   }
 }
 
-// 9. AI SAFETY LAYER
+// ============================================================================
+// 8. EXECUTION PLANNER
+// ============================================================================
+export class ExecutionPlanner {
+  static generateTimeline(strategy: InterventionStrategy): TimeBlock[] {
+    const isRest = strategy.type === 'physiological_rest';
+    return [
+      { window: 'morning', action: isRest ? 'Hydration & Light Sunlight' : 'Primary Movement & Protein', flexibility: 'rigid' },
+      { window: 'midday', action: 'Metabolic Baseline Maintenance', flexibility: 'fluid' },
+      { window: 'evening', action: isRest ? 'Strict CNS Wind Down' : 'Mobility & Recovery', flexibility: 'rigid' }
+    ];
+  }
+}
+
+// ============================================================================
+// 9. AI SAFETY LAYER (Chain of Thought Validation)
+// ============================================================================
 export class AISafetyLayer {
-  static validate(rawOutput: string) {
-    if (!rawOutput) return "Focus on maintaining your daily baseline.";
-    const lower = rawOutput.toLowerCase();
+  static validateBounds(rawOutput: string, strategy: InterventionStrategy): string {
+    if (!rawOutput) return this.getFallback(strategy);
     
-    // Strict clinical boundary enforcement
-    const unsafeKeywords = ['diagnose', 'disease', 'cure', 'calories', 'prescribe', 'injury'];
-    for (const word of unsafeKeywords) {
-      if (lower.includes(word)) return "Prioritize your physiological recovery today.";
+    const lower = rawOutput.toLowerCase();
+    const unsafeKeywords = ['diagnose', 'disease', 'cure', 'calories', 'prescribe', 'injury', 'medical', 'doctor'];
+    
+    if (unsafeKeywords.some(word => lower.includes(word))) {
+      console.warn("[AISafetyLayer] Rejected output due to medical bounds violation.");
+      return this.getFallback(strategy);
     }
+    
+    // Cognitive bounds validation: Ensure AI doesn't demand high output during rest
+    if (strategy.type === 'physiological_rest' && (lower.includes('push hard') || lower.includes('max effort'))) {
+       return this.getFallback(strategy);
+    }
+    
     return rawOutput.trim();
   }
+
+  private static getFallback(strategy: InterventionStrategy): string {
+    const fallbacks = {
+      'physiological_rest': "System strain detected. Your only priority today is recovery and deep rest.",
+      'micro_friction': "Momentum is fragile. Just focus on one small win today. Drink a glass of water.",
+      'momentum_push': "System is primed. Execute today's targets to build compounding momentum.",
+      'identity_anchor': "Align today's actions with your long-term goals. Consistency is the strategy."
+    };
+    return fallbacks[strategy.type];
+  }
 }
 
-// 10. COACH BRAIN (The Orchestrator)
+// ============================================================================
+// 10. COACH BRAIN (The Autonomous Orchestrator)
+// ============================================================================
 export class CoachBrain {
-  static async executePipeline(userId: string, context: any, fallbackTone: string = 'supportive') {
-    const intervention = InterventionEngine.generate(context.decision);
-    const executionPlan = ExecutionPlanner.generatePlan(context.decision, []);
+  private aiProvider: IAIProvider;
+
+  constructor(aiProvider: IAIProvider = new GeminiOSProvider()) {
+    this.aiProvider = aiProvider; // Dependency Injection
+  }
+
+  async executePipeline(snapshot: CognitiveSnapshot, fallbackTone: string = 'supportive') {
+    const intervention = InterventionEngine.formulate(snapshot.strategy, snapshot.identity);
+    const executionPlan = ExecutionPlanner.generateTimeline(snapshot.strategy);
     
     // 🧠 PROMPT BUILDER
-    const prompt = `System: Autonomous Behavioral OS. Tone: ${fallbackTone}. 
-      Identity: ${context.identity.behaviorStyle}. Risk: ${context.predictions.streakLossRisk}. 
-      Intervention: ${intervention.action}.
-      Generate a 2-line personalized behavioral directive ensuring psychological adherence. No medical claims.`;
+    const prompt = `System Rule: You are the voice of an Autonomous Behavioral OS. 
+    State: User momentum is ${(snapshot.velocity.momentum * 100).toFixed(0)}%. 
+    Strain: ${(snapshot.velocity.systemicStrain * 100).toFixed(0)}%.
+    OS Strategy: ${intervention}
+    Task: Write 2 sentences. Tone: ${fallbackTone}. Translate the OS Strategy into empathetic human instruction. Do not list numbers.`;
 
     try {
-      // 🧠 AI INVOCATION (Abstracted from UI)
-      const res = await fetch('/api/ai/coach', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, userId })
-      });
+      const rawAIOutput = await this.aiProvider.generateIntervention(prompt, snapshot);
+      const safeMessage = AISafetyLayer.validateBounds(rawAIOutput, snapshot.strategy);
       
-      if (!res.ok) throw new Error("AI unreachable");
-      const data = await res.json();
-      
-      // 🧠 SAFETY & FORMATTER
-      const safeMessage = AISafetyLayer.validate(data.nudge);
-      return { message: safeMessage, type: "ai", intervention, executionPlan };
-      
+      return { message: safeMessage, type: "ai", strategy: snapshot.strategy, executionPlan };
     } catch (e) {
-      // Offline / Timeout Fallback
+      console.warn("[CoachBrain] Provider Failed, returning deterministic fallback.");
       return { 
-        message: `System Priority: ${intervention.action}. Let's maintain consistency.`, 
+        message: AISafetyLayer.validateBounds('', snapshot.strategy), // Forced fallback
         type: "rule", 
-        intervention, 
+        strategy: snapshot.strategy, 
         executionPlan 
       };
     }
   }
 }
+
+// Singleton for easy import in legacy UI while maintaining injection capabilities
+export const coachBrain = new CoachBrain();
