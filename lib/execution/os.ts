@@ -149,7 +149,7 @@ export class ExecutionTracker {
     this.history.push(workflow);
   }
 
-  static generateAnalytics(): ExecutionMetrics {
+    static generateAnalytics(): ExecutionMetrics {
     const total = this.history.length || 1;
     const completed = this.history.filter(w => w.state === 'completed').length;
     const skipped = this.history.filter(w => w.state === 'skipped').length;
@@ -158,7 +158,7 @@ export class ExecutionTracker {
       successRate: completed / total,
       completionRate: completed / total,
       skippedBehaviors: skipped,
-      retryFrequency: this.history.reduce((acc, curr) => acc + current.retryCount, 0) / total,
+      retryFrequency: this.history.reduce((acc, curr) => acc + curr.retryCount, 0) / total,
       executionConfidence: (completed / total) > 0.8 ? 0.9 : 0.5,
       behaviorStability: completed > skipped ? 0.8 : 0.3
     };
