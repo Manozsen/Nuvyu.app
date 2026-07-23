@@ -28,20 +28,43 @@ export interface DomainEvent {
   timestamp: number;
 }
 
+import { UserProfile, BehaviorLog, CognitiveSnapshot, InterventionStrategy, TimeBlock } from '../intelligence/brain';
+
+// 🧠 ARCHITECTURE FREEZE: STRICT DOMAIN SCHEMAS
+export interface EnergyStats {
+  targetCalories: number;
+  intakeCalories: number;
+  activityBurn: number;
+  totalBurn: number;
+  energyBalance: number;
+  deficit: number;
+}
+
+export interface GoalPacket {
+  target_steps: number;
+  target_water: number;
+  goal_source: string;
+}
+
+export interface CapacityBudget {
+  available_effort_units: number;
+  max_friction_tolerance: string;
+}
+
 // 🧠 ARCHITECTURE FREEZE: CANONICAL BEHAVIORAL STATE
 // The Single Source of Truth for the entire Operating System.
 export interface BehavioralState {
   session: { loadingState: 'loading' | 'ready' | 'syncing' | 'error' };
   sync: { isOffline: boolean; lastSync: number };
   runtime: { activeTasks: string[]; lastError: string | null };
-  user: { profile: any | null };
+  user: { profile: UserProfile | null };
   dashboard: { scoreSummary: string };
   score: { current: number };
-  coach: { message: string; type: string; strategy: any; executionPlan: any[] };
-  targets: { goal_packet: any; capacity_packet: any; capacity_budget: any; adaptation_mode: string };
-  progress: { logsCount: number; today_logs: any[] };
+  coach: { message: string; type: string; strategy: InterventionStrategy | null; executionPlan: TimeBlock[] };
+  targets: { goal_packet: GoalPacket | null; capacity_packet: unknown | null; capacity_budget: CapacityBudget | null; adaptation_mode: string };
+  progress: { logsCount: number; today_logs: BehaviorLog[] };
   activity: { steps: number; energy_burned: number };
-  nutrition: { energy_intake: number; energy_balance: number; energy_stats: any; proteinHit: boolean };
+  nutrition: { energy_intake: number; energy_balance: number; energy_stats: EnergyStats | null; proteinHit: boolean };
   hydration: { waterIntake: number };
   workout: { workoutLogsCount: number };
   recovery: { sleep_hours: number; recovery_score: number; recovery_state: string; fatigue_risk: string; burnout_risk: string };
