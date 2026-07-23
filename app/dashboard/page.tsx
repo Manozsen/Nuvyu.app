@@ -972,25 +972,13 @@ interface AdaptiveAIContext extends AIContext {
     fetchDashboardData();
   }, [router]);
 
-    const handleLogout = async () => {
+     const handleLogout = async () => {
     setIsLoggingOut(true);
-    await supabase.auth.signOut();
+    await dashboardRepository.getClient().auth.signOut();
     window.location.href = '/login';
   };
 
-  // 🧠 EVENT-DRIVEN SYNC INITIALIZATION
-  // Must be called before any early returns to obey React Hook rules.
-  useEffect(() => {
-    if (userProfile?.id) {
-      SyncService.initializeOrchestration(userProfile.id);
-      const sub = EventBus.subscribe('StateUpdated', () => {
-        console.log("Canonical State invalidated. UI re-rendering.");
-      });
-      return () => sub.unsubscribe();
-    }
-  }, [userProfile]);
-
-  if (isCheckingAuth) {
+  if (osState.loadingState === 'loading' || !osState.legacy_userProfile || !osState.legacy_metrics) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <Loader2 className="animate-spin text-[#00FFA3]" size={32} />
@@ -998,7 +986,11 @@ interface AdaptiveAIContext extends AIContext {
     );
   }
 
-   if (!mounted || !userProfile) return null;
+  // 🧠 UI Map to Canonical Store (Replaces local state entirely)
+  const userProfile = osState.legacy_userProfile;
+  const metrics = osState.legacy_metrics;
+  const retention = osState.legacy_retention;
+  const coachMessage = osState.legacy_coachMessage;
 
   // 🧠 ABOS PHASE 12.5: PURE CONSUMER ARCHITECTURE
   // The Dashboard UI now exclusively consumes pre-computed packets from React State.
