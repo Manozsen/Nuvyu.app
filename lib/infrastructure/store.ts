@@ -116,8 +116,8 @@ export class BehavioralStateStore {
     if (event.type === 'StateUpdated') {
       this.state = { ...this.state, ...event.payload, lastUpdated: Date.now(), loadingState: 'ready' };
     }
-    if (event.type === 'TelemetrySynced') {
-      this.state.syncStatus = { ...this.state.syncStatus, lastSync: event.timestamp };
+      if (event.type === 'TelemetrySynced') {
+      this.state.sync = { ...this.state.sync, lastSync: event.timestamp };
     }
     
     this.listeners.forEach(listener => listener(this.state));
