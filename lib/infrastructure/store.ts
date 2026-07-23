@@ -68,7 +68,16 @@ export interface BehavioralState {
   hydration: { waterIntake: number };
   workout: { workoutLogsCount: number };
   recovery: { sleep_hours: number; recovery_score: number; recovery_state: string; fatigue_risk: string; burnout_risk: string };
-  analytics: { xp: number; level: number; todayXP: number; streak_count: number; best_streak: number };
+  analytics: { 
+    xp: number; 
+    level: number; 
+    todayXP: number; 
+    streak_count: number; 
+    best_streak: number;
+    progress_percent: number;
+    xp_to_next_level: number;
+    next_level_threshold: number;
+  };
 }
 
 const initialState: BehavioralState = {
