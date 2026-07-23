@@ -102,7 +102,7 @@ export default function Dashboard() {
       age: Number(userProfile?.age) || 25,
       weightKg: Number(userProfile?.weight) || 70,
       heightCm: Number(userProfile?.height) || 170,
-      gender: (userProfile?.gender as string) || 'male',
+      gender: (userProfile?.gender as "male" | "female" | "other") || 'male',
       goal: (userProfile?.goal as any) || 'maintenance',
       activityLevel: (userProfile?.activity_level as any) || 'moderate',
     },
