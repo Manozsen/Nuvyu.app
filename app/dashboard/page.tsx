@@ -38,54 +38,125 @@ import { EventBus, SyncService } from '../../lib/infrastructure/core';
 import { dashboardRepository } from '../../lib/repositories/dashboard.repository';
 import { ContextEngine, coachBrain } from '../../lib/intelligence/brain';
 
+// 🧠 PHASE 7: PRODUCTION RUNTIME BINDING
+import { useBehavioralOS } from '../../lib/runtime/react';
+import { RuntimeManager } from '../../lib/runtime/core';
+import { AIRuntime } from '../../lib/runtime/ai';
+import { BehavioralStateStore } from '../../lib/infrastructure/store';
+
+// ============================================================================
+// OS BOOTLOADER (Headless Background Execution)
+// Completely isolated from React Render Cycle.
+// ============================================================================
+class OSRuntimeBootloader {
+  static async execute(router: any) {
+    try {
+      // 1. Identity Initialization
+      const { data: { user }, error: authError } = await dashboardRepository.getUser();
+      if (authError || !user) { router.push('/login'); return; }
+
+      const { data: profile } = await dashboardRepository.getProfile(user.id);
+      if (!profile) { router.push('/onboarding'); return; }
+      const userProfile = { ...profile, email: user.email };
+
+      // 2. Telemetry Ingestion
+      const { start_utc, end_utc } = getLocalMidnightRange();
+      const { data: rawLogs } = await dashboardRepository.getLogs(user.id, start_utc, end_utc);
+      const logs = rawLogs || [];
+      let totalSteps = 0, totalWater = 0, workoutLogsCount = 0;
+      logs.forEach(log => {
+        const val = Number(log.data?.amount) || 0;
+        if (log.log_type === 'steps') totalSteps += val;
+        if (log.log_type === 'water') totalWater += val;
+        if (log.log_type === 'workout') workoutLogsCount += 1;
+      });
+
+      // 3. System Engines Execution
+      const energyStats = calculateEnergyBalance(profile, logs);
+      const threeDaysAgo = new Date(); threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+      const { data: pastLogs } = await dashboardRepository.getPastLogs(user.id, threeDaysAgo.toISOString(), start_utc);
+      const { data: latestSleep } = await dashboardRepository.getLatestSleep(user.id);
+      
+      const timelineSleep = logs.find((l: any) => l.log_type === 'sleep');
+      const sleepHours = safeSleepHours(timelineSleep?.data, latestSleep);
+      const computedScore = safeRecoveryScore(latestSleep?.recovery_score, sleepHours);
+      const recState = calculateRecoveryState(sleepHours, safeSleepQuality(timelineSleep?.data, latestSleep), 'moderate', safeNumber(energyStats?.energyBalance));
+      
+      const recoveryData = (sleepHours > 0 || latestSleep) ? {
+        sleep_hours: sleepHours, recovery_score: computedScore, recovery_state: recState,
+        fatigue_risk: detectFatiguePattern(recState, sleepHours, safeNumber(energyStats?.activityBurn), safeNumber(energyStats?.energyBalance))
+      } : null;
+
+      const recentRecScores = (pastLogs || []).filter(l => l.log_type === 'sleep').slice(0, 3).map(l => l.data?.recovery_score || 50);
+      const { risk_level: burnoutRisk } = detectBurnoutRisk(computedScore, sleepHours, safeNumber(profile.streak_count), safeNumber(energyStats?.deficit), recentRecScores);
+
+      const scoreConfig = { sleepHours, recoveryScore: computedScore, streakCount: profile.streak_count || 0, burnoutRisk, isV1: false };
+      const { finalScore: calculatedScore, breakdown: scoreBreakdown } = calculateDailyScore(logs, scoreConfig);
+
+      // 4. Autonomous Intelligence Integration (Phase 5/6)
+      const adaptiveGoals = calculateAdaptiveGoals(safeNumber(profile.tdee, 2000), 6000, recState, burnoutRisk, "stable", "stable");
+      const snapshot = ContextEngine.buildSnapshot(profile, calculatedScore, logs, pastLogs || [], recoveryData);
+      
+      // 🧠 Phase 7: Protected AI Runtime Execution
+      const brainOutput = await AIRuntime.executeSafely(snapshot, profile?.coach_tone || 'supportive');
+
+      // 5. Final State Dispatch (Committing to Canonical Store)
+      const baseMetrics = {
+        score: calculatedScore, steps: totalSteps, water: totalWater, logsCount: logs.length,
+        today_logs: logs, energy_burned: energyStats?.totalBurn || 0, energy_intake: energyStats?.intakeCalories || 0,
+        energy_stats: energyStats, energy_balance: energyStats?.energyBalance || 0,
+        score_summary: breakdownToSummary(scoreBreakdown), xp: profile.xp || 0,
+        streak_count: profile.streak_count || 0, best_streak: profile.best_streak || 0, level: profile.level || 1,
+        sleep_hours: sleepHours, recovery_score: computedScore, recovery_state: recState,
+        fatigue_risk: recoveryData?.fatigue_risk || 'low', burnout_risk: burnoutRisk,
+        goal_packet: adaptiveGoals?.goal_packet, adaptation_mode: adaptiveGoals?.adaptation_mode,
+        capacity_packet: adaptiveGoals?.capacity_packet, capacity_budget: adaptiveGoals?.capacity_budget
+      };
+
+      BehavioralStateStore.dispatch({ 
+        type: 'StateUpdated', 
+        payload: {
+          loadingState: 'ready',
+          legacy_userProfile: userProfile,
+          legacy_metrics: baseMetrics,
+          legacy_coachMessage: brainOutput?.message || "Focus on maintaining your baseline today.",
+          legacy_coachType: brainOutput?.type || "rule",
+          legacy_retention: { xp: profile.xp || 0, level: profile.level || 1, todayXP: Math.min(logs.length, 3) * 5 }
+        },
+        timestamp: Date.now() 
+      });
+
+    } catch (e) {
+      BehavioralStateStore.dispatch({ type: 'StateUpdated', payload: { loadingState: 'error' }, timestamp: Date.now() });
+    }
+  }
+}
+
+// Internal helper for summary string formatting
+function breakdownToSummary(breakdown: any) {
+  if (!breakdown) return "";
+  const parts = [];
+  if (breakdown.movement_score) parts.push(`+${Math.round(breakdown.movement_score)} motion`);
+  if (breakdown.physiological_score) parts.push(`+${Math.round(breakdown.physiological_score)} body`);
+  if (breakdown.nutrition_score) parts.push(`+${Math.round(breakdown.nutrition_score)} fuel`);
+  if (breakdown.consistency_score) parts.push(`+${Math.round(breakdown.consistency_score)} habit`);
+  if (breakdown.penalty < 0) parts.push(`${breakdown.penalty} risk`);
+  return parts.length > 0 ? parts.join(" • ") : "Ready to track";
+}
+
+
+// ============================================================================
+// PURE PRESENTATION LAYER (100% Stateless UI)
+// ============================================================================
 export default function Dashboard() {
   const router = useRouter();
-  const [mounted, setMounted] = useState(false);
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const osState = useBehavioralOS();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [userProfile, setUserProfile] = useState<any>(null);
-  const [metrics, setMetrics] = useState<DashboardMetrics>({ 
-    score: 0, 
-    steps: 0, 
-    water: 0, 
-    logsCount: 0,
-    energy_burned: 0,
-    energy_intake: 0,
-    energy_stats: null,
-    energy_balance: 0,
-    sleep_hours: 0,
-    recovery_score: 0,
-    recovery_state: "moderate", // Fixed strict enum
-    fatigue_risk: "low", // Fixed strict enum
-    burnout_risk: "low", // 🧠 PHASE 13D.5: Missing State Initialization Fixed
-    score_summary: "",
-    streak_count: 0,
-    best_streak: 0,
-    reward_message: "",
-    xp: 0,
-    level: 1,
-    today_logs: [], // 🧠 PHASE 13C.8: Missing state added
-    behavioral_memory_packet: null, // 🧠 PHASE 13C.8: Missing state added
-  });
 
-    // Intelligence System State
-  const [coachMessage, setCoachMessage] = useState("Analyzing your progress...");
-  const [coachType, setCoachType] = useState<"ai" | "rule">("rule");
-  const [aiLimitHit, setAiLimitHit] = useState(false);
-  
-    // Retention Engine State
-  const [retention, setRetention] = useState({ xp: 0, level: 1, todayXP: 0 });
-
+  // 🧠 The OS is strictly booted and managed by the RuntimeManager in the background.
   useEffect(() => {
-    console.log("========== METRICS STATE ==========");
-    console.log(metrics);
-    console.log("metrics.score =", metrics.score);
-  }, [metrics]);
-
-  useEffect(() => {
-    console.log("========== SCORE CHANGED ==========");
-    console.log(metrics.score);
-  }, [metrics.score]);
+    RuntimeManager.execute('dashboard_boot', () => OSRuntimeBootloader.execute(router));
+  }, [router]);
 
     const getScoreSummary = (breakdown: any) => {
     if (!breakdown) return "";
