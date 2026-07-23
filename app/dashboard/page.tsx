@@ -54,7 +54,8 @@ export default function Dashboard() {
   // 3. UI Prop Mapping (Translates Canonical State into UI Component requirements)
   const userProfile = osState.user.profile;
   const coachMessage = osState.coach.message;
-  const retention = { xp: osState.analytics.xp, level: osState.analytics.level, todayXP: osState.analytics.todayXP };
+  // 🧠 Sends contextually relevant Level XP (e.g. 182/250) instead of raw DB totals
+  const retention = { xp: osState.analytics.xp_into_level, level: osState.analytics.level, todayXP: osState.analytics.todayXP };
   
   // Reconstruct legacy metrics object specifically to prevent UI component regressions
   const metrics = {
@@ -92,11 +93,16 @@ export default function Dashboard() {
   const tp = { today_trend: 'stable', weekly_trend: 'stable', behavior_drift: 'stable', momentum_score: 50 };
   
   // Conditionally render insight explanations for First Time Users (Issue 9)
-  const fp = hasSufficientData 
+    const fp = hasSufficientData 
     ? { transition_text: 'Stable trajectory.' } 
     : { transition_text: 'Not enough behavioral history yet. Continue logging for 3 days to unlock AI trend forecasting.' };
     
-  const np = { protein_target_hit: metrics.energy_stats?.proteinHit || false, water_target_hit: metrics.water >= 2000, sugar_avoidance_streak: 0, adherence_score: 0 };
+  const np = { 
+    protein_target_hit: osState.nutrition.proteinHit, 
+    water_target_hit: osState.hydration.waterIntake >= 2000, 
+    sugar_avoidance_streak: 0, 
+    adherence_score: 0 
+  };
 
   let energyColorClass = "text-[#00FFA3]";
   if (metrics.energy_intake > 0) {
