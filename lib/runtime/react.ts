@@ -1,18 +1,18 @@
 import { useState, useEffect } from 'react';
-import { BehavioralStateStore, CanonicalDashboardState } from '../infrastructure/store';
+import { BehavioralStateStore, BehavioralState } from '../infrastructure/store';
 
 // 🧠 RUNTIME BINDING LAYER
 // The React Presentation Layer strictly consumes this hook. Zero business logic.
-export function useBehavioralOS() {
-  const [state, setState] = useState<CanonicalDashboardState>(BehavioralStateStore.getState());
+export function useBehavioralOS(): BehavioralState {
+  const [state, setState] = useState<BehavioralState>(BehavioralStateStore.getState());
 
   useEffect(() => {
-    const unsubscribe = BehavioralStateStore.subscribe((newState: CanonicalDashboardState) => {
+    const unsubscribe = BehavioralStateStore.subscribe((newState: BehavioralState) => {
       setState({ ...newState });
     });
-    // Wrapping in block brackets forces a void return, satisfying React's types
     return () => { unsubscribe(); };
   }, []);
 
   return state;
 }
+
