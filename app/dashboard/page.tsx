@@ -82,7 +82,8 @@ export default function Dashboard() {
   };
 
   // 4. Target Engine Domain Mapping
-  const targetCalories = metrics.energy_stats?.targetCalories || userProfile.target_calories || userProfile.tdee || 2000;
+  // 🧠 Strict Type Cast: Enforces number type to satisfy strict TS math operations
+  const targetCalories = Number(metrics.energy_stats?.targetCalories || userProfile.target_calories || userProfile.tdee || 2000);
   const operating_state_engine = { operating_state: 'growth' }; // Controlled by global store
   const sp = { standing_hours: 0, walking_hours: 0, mental_load: 'low', dominant_driver: 'behavioral_friction', recommended_adjustment: 'Maintain normal intensity', confidence: 'low' };
   const tp = { today_trend: 'stable', weekly_trend: 'stable', behavior_drift: 'stable', momentum_score: 50 };
