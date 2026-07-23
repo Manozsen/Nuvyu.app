@@ -88,24 +88,6 @@ const initialState: BehavioralState = {
   recovery: { sleep_hours: 0, recovery_score: 0, recovery_state: 'moderate', fatigue_risk: 'low', burnout_risk: 'low' },
   analytics: { xp: 0, level: 1, todayXP: 0, streak_count: 0, best_streak: 0 }
 };
-  identity: { goal: 'maintenance', level: 1, xp: 0 },
-  recovery: { state: 'moderate', score: 50 },
-  fatigue: { risk: 'low', mentalLoad: 'optimal' },
-  momentum: { score: 50, trend: 'stable' },
-  nutrition: { caloriesIn: 0, proteinHit: false },
-  hydration: { waterIntake: 0 },
-  movement: { steps: 0, activeBurn: 0 },
-  sleep: { hours: 0 },
-  targets: [],
-  progress: { score: 0, scoreSummary: '' },
-  notifications: [],
-  syncStatus: { isOffline: false, lastSync: 0 },
-  aiContext: { coachMessage: '', interventionMode: 'stable' },
-  healthContext: {},
-  lastUpdated: 0,
-  loadingState: 'loading',
-  errorState: null
-};
 
 // 🧠 EVENT VALIDATION PIPELINE
 class EventValidator {
