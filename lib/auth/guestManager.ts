@@ -1,70 +1,57 @@
 import { createClient } from '@/lib/supabase/client';
 
-export const GUEST_STORAGE_KEY = 'nuvyu_guest_session';
-export const GUEST_LOGS_KEY = 'nuvyu_guest_logs';
-
-export interface GuestLog {
+export interface GuestLogEntry {
   id: string;
-  log_type: string;
-  data: any;
   timestamp: string;
+  action: string;
+  details?: Record<string, unknown>;
 }
 
-export class GuestManager {
-  static isGuest(): boolean {
-    if (typeof window === 'undefined') return false;
-    return localStorage.getItem(GUEST_STORAGE_KEY) === 'true';
+const GUEST_ID_KEY = 'nuvyu_guest_id';
+const GUEST_LOGS_KEY = 'nuvyu_guest_logs';
+const GUEST_MIGRATED_KEY = 'nuvyu_guest_migrated';
+
+export function getOrCreateGuestId(): string {
+  if (typeof window === 'undefined') return '';
+  let guestId = localStorage.getItem(GUEST_ID_KEY);
+  if (!guestId) {
+    guestId = crypto.randomUUID();
+    localStorage.setItem(GUEST_ID_KEY, guestId);
+  }
+  return guestId;
+}
+
+export async function migrateGuestDataToAccount(userId: string): Promise<void> {
+  if (typeof window === 'undefined') return;
+  
+  if (localStorage.getItem(GUEST_MIGRATED_KEY) === 'true') return;
+
+  const rawLogs = localStorage.getItem(GUEST_LOGS_KEY);
+  if (!rawLogs) {
+    localStorage.setItem(GUEST_MIGRATED_KEY, 'true');
+    return;
   }
 
-  static initGuestSession(): void {
-    if (typeof window === 'undefined') return;
-    localStorage.setItem(GUEST_STORAGE_KEY, 'true');
-    if (!localStorage.getItem(GUEST_LOGS_KEY)) {
-      localStorage.setItem(GUEST_LOGS_KEY, JSON.stringify([]));
-    }
+  const logs: GuestLogEntry[] = JSON.parse(rawLogs);
+  if (logs.length === 0) {
+    localStorage.setItem(GUEST_MIGRATED_KEY, 'true');
+    return;
   }
 
-  static logAsGuest(logType: string, data: any): void {
-    if (typeof window === 'undefined') return;
-    const existing = JSON.parse(localStorage.getItem(GUEST_LOGS_KEY) || '[]');
-    const newLog: GuestLog = {
-      id: 'guest_' + Math.random().toString(36.substring(2, 9)),
-      log_type: logType,
-      data,
-      timestamp: new Date().toISOString()
-    };
-    existing.push(newLog);
-    localStorage.setItem(GUEST_LOGS_KEY, JSON.stringify(existing));
-  }
+  const supabase = createClient();
+  const guestId = localStorage.getItem(GUEST_ID_KEY) || 'unknown_guest';
 
-  static getGuestLogs(): GuestLog[] {
-    if (typeof window === 'undefined') return [];
-    return JSON.parse(localStorage.getItem(GUEST_LOGS_KEY) || '[]');
-  }
+  const payload = logs.map((log) => ({
+    user_id: userId,
+    guest_id: guestId,
+    action: log.action,
+    details: log.details || {},
+    created_at: log.timestamp,
+  }));
 
-  static async migrateGuestDataToAccount(userId: string): Promise<void> {
-    const logs = this.getGuestLogs();
-    if (logs.length === 0) {
-      this.clearGuestSession();
-      return;
-    }
+  const { error } = await supabase.from('activity_logs').insert(payload);
+  if (error) throw new Error(`Migration failed: ${error.message}`);
 
-    const supabase = createClient();
-    for (const log of logs) {
-      await supabase.from('telemetry_logs').insert({
-        user_id: userId,
-        log_type: log.log_type,
-        data: log.data,
-        timestamp: log.timestamp
-      });
-    }
-
-    this.clearGuestSession();
-  }
-
-  static clearGuestSession(): void {
-    if (typeof window === 'undefined') return;
-    localStorage.removeItem(GUEST_STORAGE_KEY);
-    localStorage.removeItem(GUEST_LOGS_KEY);
-  }
+  localStorage.setItem(GUEST_MIGRATED_KEY, 'true');
+  localStorage.removeItem(GUEST_LOGS_KEY);
 }
