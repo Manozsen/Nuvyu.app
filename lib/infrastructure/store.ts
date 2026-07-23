@@ -75,6 +75,7 @@ export interface BehavioralState {
     streak_count: number; 
     best_streak: number;
     progress_percent: number;
+    xp_into_level: number;
     xp_to_next_level: number;
     next_level_threshold: number;
   };
@@ -95,7 +96,7 @@ const initialState: BehavioralState = {
   hydration: { waterIntake: 0 },
   workout: { workoutLogsCount: 0 },
   recovery: { sleep_hours: 0, recovery_score: 0, recovery_state: 'moderate', fatigue_risk: 'low', burnout_risk: 'low' },
-  analytics: { xp: 0, level: 1, todayXP: 0, streak_count: 0, best_streak: 0 }
+  analytics: { xp: 0, level: 1, todayXP: 0, streak_count: 0, best_streak: 0, progress_percent: 0, xp_into_level: 0, xp_to_next_level: 250, next_level_threshold: 250 }
 };
 
 // 🧠 EVENT VALIDATION PIPELINE
