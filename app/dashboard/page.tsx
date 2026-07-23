@@ -84,11 +84,19 @@ export default function Dashboard() {
   // 4. Target Engine Domain Mapping
   // 🧠 Strict Type Cast: Enforces number type to satisfy strict TS math operations
   const targetCalories = Number(metrics.energy_stats?.targetCalories || userProfile.target_calories || userProfile.tdee || 2000);
+  // 🧠 DATA DENSITY GATING (Issue 6)
+  const hasSufficientData = metrics.logsCount >= 3;
+
   const operating_state_engine = { operating_state: 'growth' }; // Controlled by global store
   const sp = { standing_hours: 0, walking_hours: 0, mental_load: 'low', dominant_driver: 'behavioral_friction', recommended_adjustment: 'Maintain normal intensity', confidence: 'low' };
   const tp = { today_trend: 'stable', weekly_trend: 'stable', behavior_drift: 'stable', momentum_score: 50 };
-  const fp = { transition_text: 'Stable trajectory.' };
-  const np = { protein_target_hit: false, water_target_hit: false, sugar_avoidance_streak: 0, adherence_score: 0 };
+  
+  // Conditionally render insight explanations for First Time Users (Issue 9)
+  const fp = hasSufficientData 
+    ? { transition_text: 'Stable trajectory.' } 
+    : { transition_text: 'Not enough behavioral history yet. Continue logging for 3 days to unlock AI trend forecasting.' };
+    
+  const np = { protein_target_hit: metrics.energy_stats?.proteinHit || false, water_target_hit: metrics.water >= 2000, sugar_avoidance_streak: 0, adherence_score: 0 };
 
   let energyColorClass = "text-[#00FFA3]";
   if (metrics.energy_intake > 0) {
