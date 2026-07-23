@@ -101,7 +101,7 @@ class EventValidator {
 }
 
 export class BehavioralStateStore {
-  private static state: CanonicalDashboardState = initialState;
+  private static state: BehavioralState = initialState;
   private static listeners: Set<Function> = new Set();
 
   static getState() { return this.state; }
