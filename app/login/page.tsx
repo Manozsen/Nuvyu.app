@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { createBrowserClient } from '@supabase/ssr';
-import { GuestManager } from '@/lib/auth/guestManager';
+import { GuestManager } from '../../lib/auth/guestManager';
 
 export default function Login() {
   const [error, setError] = useState<string | null>(null);
