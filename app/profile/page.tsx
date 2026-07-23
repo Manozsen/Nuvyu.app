@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Loader2, Save, User, Activity, Edit3, Target, Dumbbell, Clock, Weight, Ruler, Flame } from 'lucide-react';
 import { createBrowserClient } from '@supabase/ssr';
 import { useRouter } from 'next/navigation';
+import { SecuritySettings } from '@/components/settings/SecuritySettings';
+import { BackupRestoreSettings } from '@/components/settings/BackupRestoreSettings';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -236,6 +238,11 @@ export default function ProfilePage() {
                   <span className="text-white/50 text-sm font-medium">Workout Type</span>
                   <span className="font-bold">{userProfile.workout_type}</span>
                 </div>
+              </div>
+
+              <div className="pt-4 space-y-4">
+                <SecuritySettings />
+                <BackupRestoreSettings />
               </div>
             </motion.div>
           ) : (
