@@ -97,14 +97,14 @@ export default function Dashboard() {
     else if (intakeRatio >= 0.9) energyColorClass = "text-yellow-500";
   }
 
-  const targetContext: TargetEngineContext = {
+    const targetContext: TargetEngineContext = {
     profile: {
-      age: userProfile?.age || 25,
-      weightKg: userProfile?.weight || 70,
-      heightCm: userProfile?.height || 170,
-      gender: userProfile?.gender || 'male',
-      goal: (userProfile?.goal || 'maintenance') as any,
-      activityLevel: (userProfile?.activity_level || 'moderate') as any,
+      age: Number(userProfile?.age) || 25,
+      weightKg: Number(userProfile?.weight) || 70,
+      heightCm: Number(userProfile?.height) || 170,
+      gender: (userProfile?.gender as string) || 'male',
+      goal: (userProfile?.goal as any) || 'maintenance',
+      activityLevel: (userProfile?.activity_level as any) || 'moderate',
     },
     water: metrics.water || 0,
     steps: metrics.steps || 0,
