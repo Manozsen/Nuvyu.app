@@ -694,7 +694,7 @@ interface AdaptiveAIContext extends AIContext {
       }
 
       // Safely attach the user email for avatar fallback logic
-      setUserProfile({ ...profile, email: user.email });
+      const userProfile = { ...profile, email: user.email };
 
       // 🧠 TIME ENGINE: Strict Local Boundaries
       const { start_utc, end_utc } = getLocalMidnightRange();
