@@ -1,57 +1,86 @@
-import { createClient } from '@/lib/supabase/client';
-
-export interface GuestLogEntry {
-  id: string;
+export interface BackupPayload {
+  version: number;
   timestamp: string;
-  action: string;
-  details?: Record<string, unknown>;
+  guestId: string;
+  logs: Array<{
+    id: string;
+    timestamp: string;
+    action: string;
+    details?: Record<string, unknown>;
+  }>;
+  preferences?: Record<string, unknown>;
 }
 
 const GUEST_ID_KEY = 'nuvyu_guest_id';
 const GUEST_LOGS_KEY = 'nuvyu_guest_logs';
-const GUEST_MIGRATED_KEY = 'nuvyu_guest_migrated';
 
-export function getOrCreateGuestId(): string {
-  if (typeof window === 'undefined') return '';
-  let guestId = localStorage.getItem(GUEST_ID_KEY);
-  if (!guestId) {
-    guestId = crypto.randomUUID();
-    localStorage.setItem(GUEST_ID_KEY, guestId);
-  }
-  return guestId;
-}
-
-export async function migrateGuestDataToAccount(userId: string): Promise<void> {
-  if (typeof window === 'undefined') return;
-  
-  if (localStorage.getItem(GUEST_MIGRATED_KEY) === 'true') return;
-
-  const rawLogs = localStorage.getItem(GUEST_LOGS_KEY);
-  if (!rawLogs) {
-    localStorage.setItem(GUEST_MIGRATED_KEY, 'true');
-    return;
+export class GuestManager {
+  static getOrCreateGuestId(): string {
+    if (typeof window === 'undefined') return '';
+    let guestId = localStorage.getItem(GUEST_ID_KEY);
+    if (!guestId) {
+      guestId = crypto.randomUUID();
+      localStorage.setItem(GUEST_ID_KEY, guestId);
+    }
+    return guestId;
   }
 
-  const logs: GuestLogEntry[] = JSON.parse(rawLogs);
-  if (logs.length === 0) {
-    localStorage.setItem(GUEST_MIGRATED_KEY, 'true');
-    return;
+  static logAsGuest(action: string, details?: Record<string, unknown>): void {
+    if (typeof window === 'undefined') return;
+    const logs = this.getLocalLogs();
+    logs.push({
+      id: crypto.randomUUID(),
+      timestamp: new Date().toISOString(),
+      action,
+      details,
+    });
+    localStorage.setItem(GUEST_LOGS_KEY, JSON.stringify(logs));
   }
 
-  const supabase = createClient();
-  const guestId = localStorage.getItem(GUEST_ID_KEY) || 'unknown_guest';
+  static getLocalLogs(): Array<{ id: string; timestamp: string; action: string; details?: Record<string, unknown> }> {
+    if (typeof window === 'undefined') return [];
+    try {
+      return JSON.parse(localStorage.getItem(GUEST_LOGS_KEY) || '[]');
+    } catch {
+      return [];
+    }
+  }
 
-  const payload = logs.map((log) => ({
-    user_id: userId,
-    guest_id: guestId,
-    action: log.action,
-    details: log.details || {},
-    created_at: log.timestamp,
-  }));
+  // 🧠 PRIVACY POLICY: User-initiated encrypted/structured backup generation
+  static generateBackup(): string {
+    const backup: BackupPayload = {
+      version: 1,
+      timestamp: new Date().toISOString(),
+      guestId: this.getOrCreateGuestId(),
+      logs: this.getLocalLogs(),
+      preferences: {
+        coach_tone: localStorage.getItem('nuvyu_coach_tone') || 'supportive',
+      },
+    };
+    return JSON.stringify(backup, null, 2);
+  }
 
-  const { error } = await supabase.from('activity_logs').insert(payload);
-  if (error) throw new Error(`Migration failed: ${error.message}`);
+  // 🧠 PRIVACY POLICY: Integrity-checked backup restoration
+  static restoreBackup(backupJson: string): boolean {
+    try {
+      const parsed: BackupPayload = JSON.parse(backupJson);
+      if (!parsed.version || !Array.isArray(parsed.logs)) {
+        throw new Error('Invalid backup schema');
+      }
+      localStorage.setItem(GUEST_ID_KEY, parsed.guestId || crypto.randomUUID());
+      localStorage.setItem(GUEST_LOGS_KEY, JSON.stringify(parsed.logs));
+      if (parsed.preferences?.coach_tone) {
+        localStorage.setItem('nuvyu_coach_tone', String(parsed.preferences.coach_tone));
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  }
 
-  localStorage.setItem(GUEST_MIGRATED_KEY, 'true');
-  localStorage.removeItem(GUEST_LOGS_KEY);
+  static clearLocalData(): void {
+    if (typeof window === 'undefined') return;
+    localStorage.removeItem(GUEST_ID_KEY);
+    localStorage.removeItem(GUEST_LOGS_KEY);
+  }
 }
