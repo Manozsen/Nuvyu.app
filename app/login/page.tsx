@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { createBrowserClient } from '@supabase/ssr';
+import { GuestManager } from '@/lib/auth/guestManager';
 
 export default function Login() {
   const [error, setError] = useState<string | null>(null);
@@ -67,12 +68,18 @@ export default function Login() {
             />
           </div>
 
-          <div className="relative group">
+           <div className="relative group">
             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 group-focus-within:text-mint transition-colors" size={20} />
             <input 
               type="password" name="password" required placeholder="Password"
               className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white placeholder:text-white/30 focus:outline-none focus:border-mint focus:ring-1 focus:ring-mint transition-all backdrop-blur-md"
             />
+          </div>
+
+          <div className="flex justify-end mt-1">
+            <Link href="/auth/forgot-password" className="text-mint text-xs font-medium hover:underline">
+              Forgot password?
+            </Link>
           </div>
 
           {error && <p className="text-red-500 text-sm text-center font-medium bg-red-500/10 py-2 rounded-lg border border-red-500/20">{error}</p>}
@@ -85,9 +92,22 @@ export default function Login() {
           </button>
         </form>
 
-        <p className="text-center text-white/50 text-sm mt-8">
+         <p className="text-center text-white/50 text-sm mt-8">
           Don&apos;t have an account? <Link href="/signup" className="text-mint font-bold hover:underline">Level up here</Link>
         </p>
+
+        <div className="mt-8 pt-6 border-t border-white/10 w-full text-center">
+          <button
+            type="button"
+            onClick={() => {
+              GuestManager.getOrCreateGuestId();
+              window.location.href = '/dashboard';
+            }}
+            className="w-full bg-white/5 border border-white/10 text-white font-medium py-3 rounded-2xl text-sm hover:bg-white/10 transition-colors"
+          >
+            Continue as Guest
+          </button>
+        </div>
       </motion.div>
     </div>
   );
