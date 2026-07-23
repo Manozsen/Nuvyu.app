@@ -812,31 +812,9 @@ interface AdaptiveAIContext extends AIContext {
       logsCount = totals?.logsCount || logsCount;
       workoutLogsCount = totals?.workoutLogsCount || workoutLogsCount;
 
-       // 🚀 FUTURE-PROOF ARCHITECTURE UPGRADE:
-      // Commit FULL React State HERE before ANY complex AI/ABOS logic executes.
-      console.log("Updating metrics.score", calculatedScore);
-      setMetrics(prev => ({
-        ...prev,
-        score: calculatedScore,
-        steps: totalSteps,
-        water: totalWater,
-        logsCount: logsCount,
-        today_logs: logs, // 🧠 PHASE 13C.8: Inject missing Timeline dependency
-        energy_burned: energyStats?.totalBurn || 0,
-        energy_intake: energyStats?.intakeCalories || 0,
-        energy_stats: energyStats,
-        energy_balance: energyStats?.energyBalance || 0,
-        score_summary: getScoreSummary(scoreBreakdown),
-        xp: profile.xp || 0,
-        streak_count: profile.streak_count || 0,
-        best_streak: profile.best_streak || 0, // 🧠 FIX: Ensure Best Streak loads instantly
-        level: profile.level || 1,
-        sleep_hours: sleepHours,
-        recovery_score: computedScore,
-        recovery_state: recState as any,
-        fatigue_risk: detectFatiguePattern(recState, sleepHours, safeNumber(energyStats?.activityBurn), safeNumber(energyStats?.energyBalance)) as any,
-        burnout_risk: burnoutRisk
-      } as any));
+      // 🚀 ARCHITECTURE UPGRADE:
+      // State is now committed to the Canonical Store. Legacy React setters neutralized.
+      console.log("Legacy Engine processing score: ", calculatedScore);
 
       // Safe Upsert Explanation (Avoids duplicate writes)
       await supabase.from('score_explanations').upsert({
@@ -889,15 +867,10 @@ interface AdaptiveAIContext extends AIContext {
       let nudgeResponse: any = { message: "Keep up the discipline! Consistency builds over time.", type: "rule" };
       try {
         nudgeResponse = await generateCoachNudge(user.id, profile, logs || [], pastLogs || [], calculatedScore, recoveryData, safeNumber(energyStats?.energyBalance), burnoutRisk, adaptiveGoals);
-        setCoachMessage(nudgeResponse.message);
-        setCoachType(nudgeResponse.type as "ai" | "rule");
-        if (nudgeResponse.meta?.ai_limit_hit) {
-          setAiLimitHit(true);
-          console.log("AI limit reached, basic coaching active");
-        }
+        // Legacy AI state setters neutralized.
       } catch (e) {
         console.error("AI Engine Failed:", e);
-        setCoachMessage(nudgeResponse.message); // Clean fallback, no more frozen UI
+        // Legacy fallback state neutralized.
       }
 
       let habitData: any = null;
@@ -912,34 +885,8 @@ interface AdaptiveAIContext extends AIContext {
         console.error("Habit Engine Failed:", e);
       }
 
-      // 🧠 Append final background AI metrics safely
-      setMetrics(prev => ({
-        ...prev,
-        streak_count: safeNumber(habitData?.streak_count, profile.streak_count || 0),
-        best_streak: safeNumber(habitData?.best_streak, profile.best_streak || 0),
-        reward_message: String(habitData?.reward_message || ""),
-        lifeload_packet: nudgeResponse?.abos_metrics?.lifeload_packet,
-        cognitive_energy_packet: nudgeResponse?.abos_metrics?.cognitive_energy_packet,
-        decision_fatigue_packet: nudgeResponse?.abos_metrics?.decision_fatigue_packet,
-      // 🧠 PHASE 12.5: ORCHESTRATION LAYER STATE INJECTION
-        goal_packet: adaptiveGoals?.goal_packet,
-        adaptation_mode: adaptiveGoals?.adaptation_mode,
-        capacity_packet: adaptiveGoals?.capacity_packet, // 🧠 PHASE 13C.5: Restored Packet
-        capacity_budget: adaptiveGoals?.capacity_budget, // 🧠 PHASE 13C.5: Restored Packet
-        trend_packet: nudgeResponse?.abos_metrics?.trend_packet, // 🧠 PHASE 13C.7: Restored Packet
-        behavioral_memory_packet: nudgeResponse?.abos_metrics?.behavioral_memory_packet, // 🧠 PHASE 13C.8: Restored Packet
-        challenge_packet: habitData?.challenge_packet,
-        commitment_packet: habitData?.commitment_packet, // 🧠 PHASE 12.5A: Inject Missing Packet
-        nutrition_adherence_packet: habitData?.nutrition_adherence_packet,
-        strain_packet: nudgeResponse?.abos_metrics?.strain_packet, // 🧠 PHASE 12.5A: Inject Missing Packet
-        forecast_packet: nudgeResponse?.abos_metrics?.forecast_packet,
-        coach_context_packet: nudgeResponse?.abos_metrics?.coach_context_packet,
-        operating_state: nudgeResponse?.abos_metrics?.operating_state,
-        intervention_engine: nudgeResponse?.abos_metrics?.intervention_engine,
-        recovery_roi: nudgeResponse?.abos_metrics?.recovery_roi,
-        energy_allocation: nudgeResponse?.abos_metrics?.energy_allocation
-      } as any));
-
+      // 🧠 Legacy Background AI metrics block neutralized.
+      
       // 🧠 PART 3 & 8: CALCULATE TODAY XP
       const todayXP = (() => {
         let xp = Math.min(logsCount, 3) * 5;
@@ -952,20 +899,12 @@ interface AdaptiveAIContext extends AIContext {
         return Math.min(xp, 50);
       })();
 
-       // Safely bind retention metrics with fallbacks
-      setRetention({
-        xp: profile.xp || 0,
-        level: profile.level || 1,
-        todayXP
-      });
+      // Legacy retention metrics neutralized.
       
       } catch (error) {
-        console.error("Dashboard Engine Crash:", error);
-        // 🧠 FALLBACK: Never leave the user stuck on "Analyzing..."
-        setCoachMessage("System syncing... Keep focusing on your daily habits.");
+        console.error("Legacy Engine Crash:", error);
       } finally {
-        setMounted(true);
-        setIsCheckingAuth(false);
+        console.log("Legacy Fetch cycle completed.");
       }
     }; // <-- THIS CLOSES THE ASYNC FUNCTION
 
