@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { GuestManager } from '@/lib/auth/guestManager';
+import { GuestManager } from '../../lib/auth/guestManager';
 
 export function BackupRestoreSettings() {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
