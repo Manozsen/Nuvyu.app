@@ -17,6 +17,11 @@ export async function POST() {
       { auth: { persistSession: false } }
     );
 
+    // 🧠 CLEANUP AUDIT: Purge user data tables prior to identity removal to avoid orphaned records
+    await supabaseAdmin.from('telemetry_logs').delete().eq('user_id', user.id);
+    await supabaseAdmin.from('activity_logs').delete().eq('user_id', user.id);
+    await supabaseAdmin.from('profiles').delete().eq('id', user.id);
+
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(user.id);
     if (deleteError) throw deleteError;
 
