@@ -10,7 +10,8 @@ export function useBehavioralOS() {
     const unsubscribe = BehavioralStateStore.subscribe((newState: CanonicalDashboardState) => {
       setState({ ...newState });
     });
-    return () => unsubscribe();
+    // Wrapping in block brackets forces a void return, satisfying React's types
+    return () => { unsubscribe(); };
   }, []);
 
   return state;
