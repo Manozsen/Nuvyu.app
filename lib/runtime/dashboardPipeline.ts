@@ -102,11 +102,33 @@ export class DashboardPipeline {
 
     private static async orchestrateIntelligence(profile: UserProfile, metrics: any, telemetry: any): Promise<InterventionResult | null> {
     const snapshot = ContextEngine.buildSnapshot(profile, metrics.calculatedScore, telemetry.logs, telemetry.pastLogs, metrics.recoveryData);
-    // 🧠 ARCHITECTURE FREEZE: Cast to InterventionResult to safely absorb the AIRuntime fallback object
-    return await AIRuntime.executeSafely(snapshot, (profile.coach_tone as string) || 'supportive') as InterventionResult | null;
+    const aiResult = await AIRuntime.executeSafely(snapshot, (profile.coach_tone as string) || 'supportive');
+    
+    // 🧠 DETERMINISTIC COACHING FALLBACK (Issue 2 & 5)
+    // If AI fails, the coach MUST react to actual user behavior, never a static string.
+    if (!aiResult || aiResult.type === "rule") {
+      let contextualMessage = "System is primed. Execute today's targets.";
+      if (telemetry.totalWater < 1000) contextualMessage = "Hydration is critically low. Drink water immediately to protect your recovery baseline.";
+      else if (telemetry.totalSteps < 3000) contextualMessage = "Hydration secured. Step count is low. Break the friction with a short walk.";
+      else if (metrics.sleepHours < 5) contextualMessage = "Target momentum is good, but sleep debt is high. Prioritize early rest tonight.";
+      else contextualMessage = "Excellent consistency today. Complete your remaining targets and prepare for deep rest.";
+      
+      return { message: contextualMessage, type: "rule", strategy: snapshot.strategy, executionPlan: [] };
+    }
+    
+    return aiResult as InterventionResult | null;
   }
 
   private static commitCanonicalState(profile: UserProfile, telemetry: any, metrics: any, brainOutput: InterventionResult | null) {
+    // 🧠 DETERMINISTIC XP PROGRESSION (Issue 1)
+    const rawXp = Math.max(0, Number(profile.xp) || 0); // Protects against negative legacy values
+    const currentLevel = Number(profile.level) || 1;
+    const nextLevelThreshold = currentLevel * 250;
+    const currentLevelBase = (currentLevel - 1) * 250;
+    const xpIntoLevel = Math.max(0, rawXp - currentLevelBase);
+    const xpToNext = Math.max(0, nextLevelThreshold - rawXp);
+    const progressPercent = Math.min(100, Math.floor((xpIntoLevel / 250) * 100));
+
     BehavioralStateStore.dispatch({ 
       type: 'StateUpdated', 
       payload: {
@@ -114,14 +136,22 @@ export class DashboardPipeline {
         user: { profile },
         score: { current: metrics.calculatedScore },
         dashboard: { scoreSummary: this.breakdownToSummary(metrics.scoreBreakdown) },
-                coach: { 
+        coach: { 
           message: brainOutput?.message || "Focus on maintaining your baseline today.", 
           type: brainOutput?.type || "rule", 
           strategy: brainOutput?.strategy || null, 
           executionPlan: brainOutput?.executionPlan || [] 
         },
-        // 🧠 ARCHITECTURE FREEZE: Explicit Number cast to resolve unknown type fallback
-        analytics: { xp: Number(profile.xp) || 0, level: Number(profile.level) || 1, todayXP: Math.min(telemetry.logs.length, 3) * 5, streak_count: Number(profile.streak_count) || 0, best_streak: Number(profile.best_streak) || 0 },
+        analytics: { 
+          xp: rawXp, 
+          level: currentLevel, 
+          todayXP: Math.min(telemetry.logs.length, 3) * 5, 
+          streak_count: Number(profile.streak_count) || 0, 
+          best_streak: Number(profile.best_streak) || 0,
+          progress_percent: progressPercent,
+          xp_to_next_level: xpToNext,
+          next_level_threshold: nextLevelThreshold
+        },
         progress: { logsCount: telemetry.logs.length, today_logs: telemetry.logs },
         activity: { steps: telemetry.totalSteps, energy_burned: metrics.energyStats?.totalBurn || 0 },
         nutrition: { energy_intake: metrics.energyStats?.intakeCalories || 0, energy_balance: metrics.energyStats?.energyBalance || 0, energy_stats: metrics.energyStats, proteinHit: false },
