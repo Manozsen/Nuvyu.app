@@ -28,33 +28,43 @@ export interface DomainEvent {
   timestamp: number;
 }
 
-export interface CanonicalDashboardState {
-  identity: { goal: string; level: number; xp: number };
-  recovery: { state: 'optimal' | 'moderate' | 'poor'; score: number };
-  fatigue: { risk: 'low' | 'elevated' | 'high'; mentalLoad: string };
-  momentum: { score: number; trend: string };
-  nutrition: { caloriesIn: number; proteinHit: boolean };
+// 🧠 ARCHITECTURE FREEZE: CANONICAL BEHAVIORAL STATE
+// The Single Source of Truth for the entire Operating System.
+export interface BehavioralState {
+  session: { loadingState: 'loading' | 'ready' | 'syncing' | 'error' };
+  sync: { isOffline: boolean; lastSync: number };
+  runtime: { activeTasks: string[]; lastError: string | null };
+  user: { profile: any | null };
+  dashboard: { scoreSummary: string };
+  score: { current: number };
+  coach: { message: string; type: string; strategy: any; executionPlan: any[] };
+  targets: { goal_packet: any; capacity_packet: any; capacity_budget: any; adaptation_mode: string };
+  progress: { logsCount: number; today_logs: any[] };
+  activity: { steps: number; energy_burned: number };
+  nutrition: { energy_intake: number; energy_balance: number; energy_stats: any; proteinHit: boolean };
   hydration: { waterIntake: number };
-  movement: { steps: number; activeBurn: number };
-  sleep: { hours: number };
-  targets: any[]; 
-  progress: { score: number; scoreSummary: string };
-  notifications: any[];
-  syncStatus: { isOffline: boolean; lastSync: number };
-  aiContext: { coachMessage: string; interventionMode: string };
-  healthContext: { [key: string]: any };
-  lastUpdated: number;
-  loadingState: 'loading' | 'ready' | 'syncing' | 'error';
-  errorState: string | null;
-  // 🧠 PHASE 7: RUNTIME BINDING EXTENSIONS (Headless UI Support)
-  legacy_metrics?: any;
-  legacy_retention?: any;
-  legacy_userProfile?: any;
-  legacy_coachMessage?: string;
-  legacy_coachType?: string;
+  workout: { workoutLogsCount: number };
+  recovery: { sleep_hours: number; recovery_score: number; recovery_state: string; fatigue_risk: string; burnout_risk: string };
+  analytics: { xp: number; level: number; todayXP: number; streak_count: number; best_streak: number };
 }
 
-const initialState: CanonicalDashboardState = {
+const initialState: BehavioralState = {
+  session: { loadingState: 'loading' },
+  sync: { isOffline: false, lastSync: 0 },
+  runtime: { activeTasks: [], lastError: null },
+  user: { profile: null },
+  dashboard: { scoreSummary: 'Initializing OS...' },
+  score: { current: 0 },
+  coach: { message: '', type: 'rule', strategy: null, executionPlan: [] },
+  targets: { goal_packet: null, capacity_packet: null, capacity_budget: null, adaptation_mode: 'maintain' },
+  progress: { logsCount: 0, today_logs: [] },
+  activity: { steps: 0, energy_burned: 0 },
+  nutrition: { energy_intake: 0, energy_balance: 0, energy_stats: null, proteinHit: false },
+  hydration: { waterIntake: 0 },
+  workout: { workoutLogsCount: 0 },
+  recovery: { sleep_hours: 0, recovery_score: 0, recovery_state: 'moderate', fatigue_risk: 'low', burnout_risk: 'low' },
+  analytics: { xp: 0, level: 1, todayXP: 0, streak_count: 0, best_streak: 0 }
+};
   identity: { goal: 'maintenance', level: 1, xp: 0 },
   recovery: { state: 'moderate', score: 50 },
   fatigue: { risk: 'low', mentalLoad: 'optimal' },
