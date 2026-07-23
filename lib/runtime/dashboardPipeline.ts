@@ -15,12 +15,13 @@ import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.share
 // Orchestrates Domain Engines and AI cleanly outside of React.
 export class DashboardPipeline {
   
-  public static async run(router: AppRouterInstance): Promise<void> {
+    public static async run(router: AppRouterInstance): Promise<void> {
     try {
       const userProfile = await this.authenticateUser(router);
       if (!userProfile) return; // Router redirect handled internally
 
-      const telemetry = await this.fetchTelemetryData(userProfile.id);
+      // 🧠 ARCHITECTURE FREEZE: Explicit string cast to satisfy strict unknown fallback
+      const telemetry = await this.fetchTelemetryData(userProfile.id as string);
       const metrics = this.computeDomainMetrics(userProfile, telemetry);
       const brainOutput = await this.orchestrateIntelligence(userProfile, metrics, telemetry);
 
@@ -112,13 +113,14 @@ export class DashboardPipeline {
         user: { profile },
         score: { current: metrics.calculatedScore },
         dashboard: { scoreSummary: this.breakdownToSummary(metrics.scoreBreakdown) },
-        coach: { 
+                coach: { 
           message: brainOutput?.message || "Focus on maintaining your baseline today.", 
           type: brainOutput?.type || "rule", 
           strategy: brainOutput?.strategy || null, 
           executionPlan: brainOutput?.executionPlan || [] 
         },
-        analytics: { xp: profile.xp || 0, level: profile.level || 1, todayXP: Math.min(telemetry.logs.length, 3) * 5, streak_count: profile.streak_count || 0, best_streak: profile.best_streak || 0 },
+        // 🧠 ARCHITECTURE FREEZE: Explicit Number cast to resolve unknown type fallback
+        analytics: { xp: Number(profile.xp) || 0, level: Number(profile.level) || 1, todayXP: Math.min(telemetry.logs.length, 3) * 5, streak_count: Number(profile.streak_count) || 0, best_streak: Number(profile.best_streak) || 0 },
         progress: { logsCount: telemetry.logs.length, today_logs: telemetry.logs },
         activity: { steps: telemetry.totalSteps, energy_burned: metrics.energyStats?.totalBurn || 0 },
         nutrition: { energy_intake: metrics.energyStats?.intakeCalories || 0, energy_balance: metrics.energyStats?.energyBalance || 0, energy_stats: metrics.energyStats, proteinHit: false },
