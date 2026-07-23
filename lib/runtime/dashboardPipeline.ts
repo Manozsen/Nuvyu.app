@@ -100,9 +100,10 @@ export class DashboardPipeline {
     return { energyStats, recoveryData, burnoutRisk, calculatedScore, scoreBreakdown, adaptiveGoals, sleepHours, computedScore, recState };
   }
 
-  private static async orchestrateIntelligence(profile: UserProfile, metrics: any, telemetry: any): Promise<InterventionResult | null> {
+    private static async orchestrateIntelligence(profile: UserProfile, metrics: any, telemetry: any): Promise<InterventionResult | null> {
     const snapshot = ContextEngine.buildSnapshot(profile, metrics.calculatedScore, telemetry.logs, telemetry.pastLogs, metrics.recoveryData);
-    return await AIRuntime.executeSafely(snapshot, profile.coach_tone || 'supportive');
+    // 🧠 ARCHITECTURE FREEZE: Cast to InterventionResult to safely absorb the AIRuntime fallback object
+    return await AIRuntime.executeSafely(snapshot, (profile.coach_tone as string) || 'supportive') as InterventionResult | null;
   }
 
   private static commitCanonicalState(profile: UserProfile, telemetry: any, metrics: any, brainOutput: InterventionResult | null) {
