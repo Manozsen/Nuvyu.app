@@ -7,7 +7,8 @@ import { calculateAdaptiveGoals } from '../personalization/engine';
 import { ContextEngine, UserProfile, BehaviorLog, InterventionResult } from '../intelligence/brain';
 import { AIRuntime } from './ai';
 import { BehavioralStateStore, EnergyStats } from '../infrastructure/store';
-import { safeSleepHours, safeSleepQuality, safeRecoveryScore, safeNumber } from '../utils/safe';
+import { safeNumber } from '../utils/safe';
+import { safeSleepHours, safeSleepQuality, safeRecoveryScore } from '../utils/sleep';
 import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 
 // 🧠 ARCHITECTURE FREEZE: DASHBOARD PIPELINE
