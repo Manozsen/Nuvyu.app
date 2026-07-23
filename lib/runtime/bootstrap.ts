@@ -1,10 +1,20 @@
 import { RuntimeManager } from './runtimeManager';
 import { DashboardPipeline } from './dashboardPipeline';
+import { EventBus } from '../infrastructure/core';
 
 // 🧠 ARCHITECTURE FREEZE: SYSTEM BOOTSTRAPPER
 export class Bootstrap {
   static initDashboard(router: any) {
-    // Triggers the headless execution pipeline decoupled from React
-    RuntimeManager.execute('dashboard_pipeline', () => DashboardPipeline.run(router));
+    const executePipeline = () => RuntimeManager.execute('dashboard_pipeline', () => DashboardPipeline.run(router));
+    
+    // 1. Initial Boot Execution
+    executePipeline();
+
+    // 2. 🧠 REAL-TIME SYNCHRONIZATION LOOP
+    // Instantly closes the feedback loop on every user action without a page refresh.
+    // Safe from double-execution due to RuntimeManager's activeTasks lock.
+    EventBus.subscribe('ActionLogged', executePipeline);
+    EventBus.subscribe('TelemetrySynced', executePipeline);
+    EventBus.subscribe('TargetOverridden', executePipeline);
   }
 }
