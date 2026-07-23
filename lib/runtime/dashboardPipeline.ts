@@ -66,14 +66,20 @@ export class DashboardPipeline {
     const pastLogs: BehaviorLog[] = pastLogsRes.data || [];
     
     let totalSteps = 0, totalWater = 0, workoutLogsCount = 0;
+    let totalProtein = 0, energyIntake = 0;
+    
     logs.forEach(log => {
       const val = Number(log.data?.amount) || 0;
       if (log.log_type === 'steps') totalSteps += val;
       if (log.log_type === 'water') totalWater += val;
       if (log.log_type === 'workout') workoutLogsCount += 1;
+      if (log.log_type === 'food') {
+         energyIntake += val;
+         totalProtein += Number(log.data?.protein) || 0;
+      }
     });
 
-    return { logs, pastLogs, latestSleep: latestSleepRes.data, totalSteps, totalWater, workoutLogsCount };
+    return { logs, pastLogs, latestSleep: latestSleepRes.data, totalSteps, totalWater, workoutLogsCount, totalProtein, energyIntake };
   }
 
   private static computeDomainMetrics(profile: UserProfile, telemetry: any) {
@@ -100,33 +106,43 @@ export class DashboardPipeline {
     return { energyStats, recoveryData, burnoutRisk, calculatedScore, scoreBreakdown, adaptiveGoals, sleepHours, computedScore, recState };
   }
 
-    private static async orchestrateIntelligence(profile: UserProfile, metrics: any, telemetry: any): Promise<InterventionResult | null> {
+      private static async orchestrateIntelligence(profile: UserProfile, metrics: any, telemetry: any): Promise<InterventionResult | null> {
     const snapshot = ContextEngine.buildSnapshot(profile, metrics.calculatedScore, telemetry.logs, telemetry.pastLogs, metrics.recoveryData);
-    const aiResult = await AIRuntime.executeSafely(snapshot, (profile.coach_tone as string) || 'supportive');
-    
-    // 🧠 DETERMINISTIC COACHING FALLBACK (Issue 2 & 5)
-    // If AI fails, the coach MUST react to actual user behavior, never a static string.
+    const aiResult = await AIRuntime.executeSafely(snapshot, (profile.coach_tone as string) || 'supportive') as InterventionResult | null;
+
+    // 🧠 DETERMINISTIC COACHING FALLBACK 
     if (!aiResult || aiResult.type === "rule") {
       let contextualMessage = "System is primed. Execute today's targets.";
       if (telemetry.totalWater < 1000) contextualMessage = "Hydration is critically low. Drink water immediately to protect your recovery baseline.";
+      else if (telemetry.energyIntake > 0 && telemetry.totalProtein < 50) contextualMessage = "Nutrition logged, but protein is low. Prioritize protein in your next meal.";
       else if (telemetry.totalSteps < 3000) contextualMessage = "Hydration secured. Step count is low. Break the friction with a short walk.";
-      else if (metrics.sleepHours < 5) contextualMessage = "Target momentum is good, but sleep debt is high. Prioritize early rest tonight.";
+      else if (metrics.sleepHours > 0 && metrics.sleepHours < 5) contextualMessage = "Target momentum is good, but sleep debt is high. Prioritize early rest tonight.";
       else contextualMessage = "Excellent consistency today. Complete your remaining targets and prepare for deep rest.";
-      
-      return { message: contextualMessage, type: "rule", strategy: snapshot.strategy, executionPlan: [] };
+
+      return { message: contextualMessage, type: "rule", strategy: snapshot?.strategy || null, executionPlan: [] };
     }
-    
-    return aiResult as InterventionResult | null;
+    return aiResult;
   }
 
   private static commitCanonicalState(profile: UserProfile, telemetry: any, metrics: any, brainOutput: InterventionResult | null) {
-    // 🧠 DETERMINISTIC XP PROGRESSION (Issue 1)
-    const rawXp = Math.max(0, Number(profile.xp) || 0); // Protects against negative legacy values
+    // 🧠 DETERMINISTIC XP PROGRESSION ENGINE
+    let todayXP = Math.min(telemetry.logs.length, 3) * 5;
+    const cappedSteps = Math.min(telemetry.totalSteps, 12000);
+    if (cappedSteps >= 6000) todayXP += 20;
+    else if (cappedSteps >= 3000) todayXP += 10;
+    if (telemetry.totalWater >= 2000) todayXP += 15;
+    else if (telemetry.totalWater >= 1000) todayXP += 8;
+    todayXP += telemetry.workoutLogsCount * 10;
+    todayXP = Math.min(todayXP, 50);
+
+    const baseRawXp = Math.max(0, Number(profile.xp) || 0);
+    const effectiveRawXp = baseRawXp + todayXP; // Add today's action XP to total
     const currentLevel = Number(profile.level) || 1;
-    const nextLevelThreshold = currentLevel * 250;
     const currentLevelBase = (currentLevel - 1) * 250;
-    const xpIntoLevel = Math.max(0, rawXp - currentLevelBase);
-    const xpToNext = Math.max(0, nextLevelThreshold - rawXp);
+    const nextLevelThreshold = currentLevel * 250;
+    
+    const xpIntoLevel = Math.max(0, effectiveRawXp - currentLevelBase);
+    const xpToNext = Math.max(0, nextLevelThreshold - effectiveRawXp);
     const progressPercent = Math.min(100, Math.floor((xpIntoLevel / 250) * 100));
 
     BehavioralStateStore.dispatch({ 
@@ -143,18 +159,24 @@ export class DashboardPipeline {
           executionPlan: brainOutput?.executionPlan || [] 
         },
         analytics: { 
-          xp: rawXp, 
+          xp: effectiveRawXp, 
           level: currentLevel, 
-          todayXP: Math.min(telemetry.logs.length, 3) * 5, 
+          todayXP: todayXP, 
           streak_count: Number(profile.streak_count) || 0, 
           best_streak: Number(profile.best_streak) || 0,
           progress_percent: progressPercent,
+          xp_into_level: xpIntoLevel,
           xp_to_next_level: xpToNext,
           next_level_threshold: nextLevelThreshold
         },
         progress: { logsCount: telemetry.logs.length, today_logs: telemetry.logs },
         activity: { steps: telemetry.totalSteps, energy_burned: metrics.energyStats?.totalBurn || 0 },
-        nutrition: { energy_intake: metrics.energyStats?.intakeCalories || 0, energy_balance: metrics.energyStats?.energyBalance || 0, energy_stats: metrics.energyStats, proteinHit: false },
+        nutrition: { 
+          energy_intake: telemetry.energyIntake || metrics.energyStats?.intakeCalories || 0, 
+          energy_balance: metrics.energyStats?.energyBalance || 0, 
+          energy_stats: metrics.energyStats, 
+          proteinHit: telemetry.totalProtein >= (Number(profile.target_protein) || 50) 
+        },
         hydration: { waterIntake: telemetry.totalWater },
         workout: { workoutLogsCount: telemetry.workoutLogsCount },
         recovery: { sleep_hours: metrics.sleepHours, recovery_score: metrics.computedScore, recovery_state: metrics.recState, fatigue_risk: metrics.recoveryData?.fatigue_risk || 'low', burnout_risk: metrics.burnoutRisk },
