@@ -37,7 +37,7 @@ export interface CanonicalDashboardState {
   hydration: { waterIntake: number };
   movement: { steps: number; activeBurn: number };
   sleep: { hours: number };
-  targets: any[]; // CanonicalTarget[]
+  targets: any[]; 
   progress: { score: number; scoreSummary: string };
   notifications: any[];
   syncStatus: { isOffline: boolean; lastSync: number };
@@ -46,6 +46,12 @@ export interface CanonicalDashboardState {
   lastUpdated: number;
   loadingState: 'loading' | 'ready' | 'syncing' | 'error';
   errorState: string | null;
+  // 🧠 PHASE 7: RUNTIME BINDING EXTENSIONS (Headless UI Support)
+  legacy_metrics?: any;
+  legacy_retention?: any;
+  legacy_userProfile?: any;
+  legacy_coachMessage?: string;
+  legacy_coachType?: string;
 }
 
 const initialState: CanonicalDashboardState = {
