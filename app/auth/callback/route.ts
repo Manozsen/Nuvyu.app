@@ -19,7 +19,7 @@ export async function GET(request: Request) {
             try { cookieStore.set({ name, value, ...options }) } catch (error) {}
           },
           remove(name: string, options: any) {
-            try { cookieStore.set({ name, value: '', ...options }) } catch (error) {}
+            try { cookieStore.delete(name) } catch (error) {}
           },
         },
       }
