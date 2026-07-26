@@ -16,6 +16,7 @@ import { NuvyuTargets, TodayProgress, FuelAndBurnInsight } from '../../component
 import { BehaviorTimeline } from '../../components/dashboard/Timeline';
 import { targetIntelligenceEngine, TargetEngineContext } from '../../lib/target/engine';
 import { DashboardTargetMapper } from '../../lib/presentation/mappers';
+import { GuestManager } from '../../lib/auth/guestManager';
 
 // 🧠 ARCHITECTURE FREEZE: PRODUCTION RUNTIME BINDINGS
 import { useBehavioralOS } from '../../lib/runtime/react';
@@ -36,9 +37,14 @@ export default function Dashboard() {
     Bootstrap.initDashboard(router);
   }, [router]);
 
-  const handleLogout = async () => {
+    const handleLogout = async () => {
     setIsLoggingOut(true);
-    await dashboardRepository.getClient().auth.signOut();
+    try {
+      await dashboardRepository.getClient().auth.signOut();
+    } catch (error) {
+      console.error("Supabase signout failed, proceeding with local cleanup", error);
+    }
+    GuestManager.clearLocalData();
     window.location.href = '/login';
   };
 
