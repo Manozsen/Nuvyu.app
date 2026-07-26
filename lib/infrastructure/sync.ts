@@ -23,7 +23,7 @@ export class SyncScheduler {
     BehavioralStateStore.dispatch({ type: 'StateUpdated', payload: { lastSync: Date.now() }, timestamp: Date.now() });
   }
 
-  static flushQueue() {
+    static flushQueue() {
     if (this.isOnline() && this.offlineQueue.length > 0) {
       const queue = [...this.offlineQueue];
       this.offlineQueue = [];
@@ -31,3 +31,10 @@ export class SyncScheduler {
     }
   }
 }
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('online', () => {
+    SyncScheduler.flushQueue();
+  });
+}
+
