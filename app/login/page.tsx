@@ -1,21 +1,32 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { createBrowserClient } from '@supabase/ssr';
 import { GuestManager } from '../../lib/auth/guestManager';
+import { createClient } from '../../lib/supabase/client';
 
 export default function Login() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
 
-  // Initialize Supabase Client directly in browser
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  // Use the singleton client instead of creating a new one on every render
+  const supabase = createClient();
+
+  // Patch: Auto-Login / Session Hydration
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        window.location.href = '/dashboard';
+      } else {
+        setIsCheckingSession(false);
+      }
+    };
+    checkSession();
+  }, [supabase.auth]);
 
   async function handleForm(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault(); 
@@ -44,6 +55,15 @@ export default function Login() {
       setError("Network error. Please try again.");
       setLoading(false); 
     }
+  }
+
+  // Prevent UI flashing while checking for an existing session
+  if (isCheckingSession) {
+    return (
+      <div className="min-h-screen bg-black flex justify-center items-center">
+        <Loader2 className="animate-spin text-mint" size={40} />
+      </div>
+    );
   }
 
   return (
