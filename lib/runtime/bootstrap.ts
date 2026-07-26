@@ -4,11 +4,16 @@ import { EventBus } from '../infrastructure/core';
 
 // 🧠 ARCHITECTURE FREEZE: SYSTEM BOOTSTRAPPER
 export class Bootstrap {
+  private static isInitialized = false;
+
   static initDashboard(router: any) {
     const executePipeline = () => RuntimeManager.execute('dashboard_pipeline', () => DashboardPipeline.run(router));
     
     // 1. Initial Boot Execution
     executePipeline();
+
+    if (this.isInitialized) return;
+    this.isInitialized = true;
 
     // 2. 🧠 REAL-TIME SYNCHRONIZATION LOOP
     // Instantly closes the feedback loop on every user action without a page refresh.
